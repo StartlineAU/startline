@@ -1,25 +1,16 @@
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "amplify_assume" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["amplify.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "amplify" {
-  name_prefix        = "${var.project_name}-amplify-"
-  assume_role_policy = data.aws_iam_policy_document.amplify_assume.json
-}
-
-resource "aws_iam_role_policy_attachment" "amplify_admin" {
-  role       = aws_iam_role.amplify.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
-}
+# Amplify Hosting needs the AWSServiceRoleForAmplify service-linked role to
+# orchestrate builds. AWS does not expose a SLR template for amplify, so it
+# can't be created with `aws_iam_service_linked_role` either — it's
+# auto-created by AWS the first time you visit the Amplify console / start a
+# build via the console. On a Terraform-only fresh account this leaves builds
+# failing with "Unable to assume specified IAM Role" until that one console
+# trip. After that, every subsequent terraform-triggered build works.
+#
+# The AdministratorAccess-Amplify managed policy (originally attached here)
+# is for the Amplify CLI deploying Gen 1 backends, NOT the Hosting service
+# role, so we don't reintroduce it here.
 
 locals {
   # coalesce(null, "") errors (empty strings are skipped); test explicitly instead.
@@ -49,8 +40,6 @@ resource "aws_amplify_app" "this" {
   name       = var.project_name
   platform   = "WEB_COMPUTE"
   build_spec = local.build_spec
-
-  iam_service_role_arn = aws_iam_role.amplify.arn
 
   repository   = local.connect_repository ? var.amplify_repository_url : null
   access_token = local.connect_repository ? var.amplify_repository_access_token : null
