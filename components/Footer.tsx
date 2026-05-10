@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#000000] border-t border-dark-lighter">
+    <footer className="bg-gray-50 border-t border-gray-200">
       <div className="max-w-[1440px] mx-auto px-6 py-10">
         {/* Top row: brand + links */}
         <div className="flex flex-col sm:flex-row sm:items-start gap-10 mb-10">
@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="flex-shrink-0 w-48">
             <Link href="/" className="inline-flex items-center mb-4">
               <Image
-                src="/images/logo-title.svg"
+                src="/images/logo-title-dark.svg"
                 alt="StartLine"
                 width={160}
                 height={40}
@@ -87,7 +87,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-dark-lighter pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted">
             © {new Date().getFullYear()} StartLine. All Rights Reserved.
           </p>

@@ -36,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} ${chakraPetch.variable} bg-dark-darker text-light font-sans font-normal antialiased`}>
+    <html lang="en">
+      <body className={`${inter.variable} ${chakraPetch.variable} bg-white text-gray-900 font-sans font-normal antialiased`}>
         <Header />
         {children}
         <Footer />

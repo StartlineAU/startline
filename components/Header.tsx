@@ -20,11 +20,11 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-light border-b border-dark-lighter">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
       <div className="flex justify-between items-center w-full px-6 py-4 max-w-[1440px] mx-auto">
         <Link href="/" className="flex items-center">
           <Image
-            src="/images/logo-title.svg"
+            src="/images/logo-title-dark.svg"
             alt="StartLine"
             width={160}
             height={40}
@@ -46,8 +46,8 @@ export default function Header() {
                 href={item.href}
                 className={`font-headline text-[14px] uppercase tracking-tighter font-medium transition-all duration-100 ${
                   isActive
-                    ? "text-primary border-b-2 border-primary pb-1"
-                    : "text-muted hover:text-primary hover:-translate-y-0.5 hover:-translate-x-0.5"
+                    ? "text-lime-600 border-b-2 border-lime-500 pb-1"
+                    : "text-gray-500 hover:text-gray-900 hover:-translate-y-0.5 hover:-translate-x-0.5"
                 }`}
               >
                 {item.label}
@@ -59,18 +59,16 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <Button
             disabled
-            className="hidden md:inline-flex h-auto px-4 py-1.5 rounded font-headline text-[14px] font-bold tracking-normal normal-case text-muted bg-transparent border border-dark-lighter hover:bg-transparent disabled:opacity-50 cursor-not-allowed"
+            className="hidden md:inline-flex h-auto px-4 py-1.5 rounded font-headline text-[14px] font-bold tracking-normal normal-case text-gray-400 bg-transparent border border-gray-200 hover:bg-transparent disabled:opacity-50 cursor-not-allowed"
           >
             SIGN IN
           </Button>
         </div>
 
-        {/* Mobile menu button. Override the Button's default `[&_svg]:size-4`
-            so the menu / close icon renders at its intended 24px. */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-auto w-auto p-2 text-light hover:text-primary hover:bg-transparent transition-colors [&_svg]:size-6"
+          className="md:hidden h-auto w-auto p-2 text-gray-900 hover:text-lime-600 hover:bg-transparent transition-colors [&_svg]:size-6"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -80,13 +78,13 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-dark-lighter py-4 px-6 animate-fade-in">
+        <div className="md:hidden border-t border-gray-200 py-4 px-6 animate-fade-in">
           <div className="flex flex-col gap-3">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="font-headline text-sm uppercase tracking-tighter text-muted hover:text-primary py-2"
+                className="font-headline text-sm uppercase tracking-tighter text-gray-500 hover:text-gray-900 py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}
@@ -94,7 +92,7 @@ export default function Header() {
             ))}
             <Button
               disabled
-              className="font-headline text-sm font-bold tracking-normal normal-case text-muted bg-transparent border border-dark-lighter px-4 py-3 h-auto text-center mt-2 rounded hover:bg-transparent disabled:opacity-50 cursor-not-allowed"
+              className="font-headline text-sm font-bold tracking-normal normal-case text-gray-400 bg-transparent border border-gray-200 px-4 py-3 h-auto text-center mt-2 rounded hover:bg-transparent disabled:opacity-50 cursor-not-allowed"
             >
               SIGN IN
             </Button>

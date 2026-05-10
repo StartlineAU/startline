@@ -76,7 +76,7 @@ export function ScrollCarousel({ title, eyebrow, viewAllHref, arrowTopClass = "t
         <button
           onClick={() => scroll("left")}
           aria-label="Scroll left"
-          className={`absolute left-0 ${arrowTopClass} -translate-y-1/2 -translate-x-1/2 z-10 w-12 h-12 rounded-full bg-dark border border-dark-lighter flex items-center justify-center text-muted hover:text-primary hover:border-primary shadow-lg transition-all duration-150 ${canLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`absolute left-0 ${arrowTopClass} -translate-y-1/2 -translate-x-1/2 z-10 w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-lime-600 hover:border-lime-400 shadow-lg transition-all duration-150 ${canLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -85,7 +85,7 @@ export function ScrollCarousel({ title, eyebrow, viewAllHref, arrowTopClass = "t
         <button
           onClick={() => scroll("right")}
           aria-label="Scroll right"
-          className={`absolute right-0 ${arrowTopClass} -translate-y-1/2 translate-x-1/2 z-10 w-12 h-12 rounded-full bg-dark border border-dark-lighter flex items-center justify-center text-muted hover:text-primary hover:border-primary shadow-lg transition-all duration-150 ${canRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`absolute right-0 ${arrowTopClass} -translate-y-1/2 translate-x-1/2 z-10 w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-lime-600 hover:border-lime-400 shadow-lg transition-all duration-150 ${canRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <ChevronRight className="w-5 h-5" />
         </button>

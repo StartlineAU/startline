@@ -170,7 +170,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex items-center gap-3 bg-machined text-dark font-headline text-sm font-bold uppercase tracking-widest px-10 py-4 rounded-xl machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 active:translate-x-0 active:translate-y-0"
+                    className="inline-flex items-center gap-3 bg-lime-400 hover:bg-lime-500 text-gray-900 font-headline text-sm font-bold uppercase tracking-widest px-10 py-4 rounded-xl machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 active:translate-x-0 active:translate-y-0"
                   >
                     {isSubmitting ? "Sending..." : "Send Message"}
                     <Send className="w-4 h-4" />
@@ -274,7 +274,7 @@ export default function ContactPage() {
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
             <Link
               href="/events"
-              className="bg-machined text-dark font-headline text-sm font-bold uppercase tracking-widest px-8 py-4 rounded-xl machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 flex items-center gap-2"
+              className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-headline text-sm font-bold uppercase tracking-widest px-8 py-4 rounded-xl machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 flex items-center gap-2"
             >
               <Search className="w-4 h-4" />
               Browse Events

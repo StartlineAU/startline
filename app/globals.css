@@ -7,22 +7,22 @@
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 :root {
-  /* Dark mode primary - matching logo green (#B3E153) */
-  --color-primary: 179 225 83;
-  --color-primary-light: 194 236 119;
-  --color-primary-dark: 164 214 47;
+  /* Primary — lime-500 for better contrast on white */
+  --color-primary: 132 204 22;
+  --color-primary-light: 163 230 53;
+  --color-primary-dark: 101 163 13;
 
-  /* Dark theme tokens */
-  --color-dark: 31 31 31;
-  --color-darker: 20 20 20;
-  --color-dark-light: 42 42 42;
-  --color-dark-lighter: 53 53 53;
-  --color-light: 245 247 250;
-  --color-light-dark: 232 235 240;
-  --color-muted: 138 143 152;
-  --color-muted-light: 160 165 174;
-  --color-muted-dark: 110 115 123;
-  color-scheme: dark;
+  /* Light theme tokens */
+  --color-dark: 249 250 251;      /* gray-50  — surface / card bg */
+  --color-darker: 255 255 255;    /* white    — page bg */
+  --color-dark-light: 255 255 255;/* white    — header bg */
+  --color-dark-lighter: 229 231 235; /* gray-200 — borders */
+  --color-light: 17 24 39;        /* gray-900 — main text */
+  --color-light-dark: 55 65 81;   /* gray-700 */
+  --color-muted: 107 114 128;     /* gray-500 */
+  --color-muted-light: 156 163 175; /* gray-400 */
+  --color-muted-dark: 75 85 99;   /* gray-600 */
+  color-scheme: light;
 }
 
 * {
@@ -40,10 +40,9 @@ body {
 body {
   color: rgb(var(--color-light));
   background: rgb(var(--color-darker));
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Custom scrollbar - dark theme */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -54,7 +53,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--color-muted));
+  background: rgb(var(--color-dark-lighter));
   border-radius: 4px;
 }
 

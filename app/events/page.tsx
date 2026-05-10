@@ -36,7 +36,6 @@ function FilterChip({ label, value, options, isOpen, onOpen, onClose, onChange }
   const ref = useRef<HTMLDivElement>(null);
   const active = value !== "";
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     function handleOutsideClick(e: MouseEvent) {
@@ -54,15 +53,15 @@ function FilterChip({ label, value, options, isOpen, onOpen, onClose, onChange }
         onClick={isOpen ? onClose : onOpen}
         className={`flex items-center gap-2 px-4 py-2 font-headline text-sm font-medium uppercase tracking-widest border transition-colors duration-100 rounded-full ${
           active
-            ? "border-primary text-primary bg-primary/5"
-            : "border-dark-lighter text-muted bg-dark hover:border-primary/50 hover:text-light"
+            ? "border-lime-500 text-lime-600 bg-lime-50"
+            : "border-gray-200 text-gray-500 bg-white hover:border-lime-400 hover:text-gray-900"
         }`}
       >
         {currentLabel}
         {active && (
           <span
             onClick={(e) => { e.stopPropagation(); onChange(""); onClose(); }}
-            className="ml-1 text-primary hover:text-light"
+            className="ml-1 text-lime-600 hover:text-gray-900"
           >
             <X className="w-3.5 h-3.5" />
           </span>
@@ -71,15 +70,15 @@ function FilterChip({ label, value, options, isOpen, onOpen, onClose, onChange }
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-dark border border-dark-lighter min-w-[200px] shadow-xl rounded-xl overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 min-w-[200px] shadow-xl rounded-xl overflow-hidden">
           {options.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { onChange(opt.value); onClose(); }}
               className={`w-full text-left px-4 py-3 font-headline text-sm font-medium uppercase tracking-widest transition-colors ${
                 value === opt.value
-                  ? "bg-primary text-dark"
-                  : "text-muted hover:bg-dark-light hover:text-light"
+                  ? "bg-lime-400 text-gray-900"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               {opt.label}
@@ -93,7 +92,6 @@ function FilterChip({ label, value, options, isOpen, onOpen, onClose, onChange }
 
 // ── Events page ───────────────────────────────────────────────────────────
 
-// Pre-build dropdown option arrays once (stable references for useMemo)
 const DISCIPLINE_OPTIONS = [
   { value: "", label: "Discipline" },
   ...EVENT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
@@ -145,7 +143,6 @@ function EventsPageInner() {
   const displayEvents = useMemo(() => {
     let results = filterEvents(liveEvents, filterState);
     results = sortEventsByDate(results);
-    // Location filter is applied after the main filter since it targets a separate field
     if (whereQuery.trim()) {
       const q = whereQuery.toLowerCase();
       results = results.filter(
@@ -163,7 +160,6 @@ function EventsPageInner() {
     [liveEvents, selectedId]
   );
 
-  // Auto-select first result when filters change and nothing is selected
   useEffect(() => {
     if (!selectedId && displayEvents.length > 0) {
       setSelectedId(displayEvents[0].id);
@@ -181,48 +177,48 @@ function EventsPageInner() {
   const bannerUrl = selectedEvent ? getEventImage(selectedEvent.type, selectedEvent.id, 1200, 80) : "";
 
   return (
-    <div className="bg-dark-darker flex flex-col" style={{ height: "100dvh" }}>
+    <div className="bg-white flex flex-col" style={{ height: "100dvh" }}>
 
       {/* ── Sticky search + filter bar ── */}
-      <div className="sticky top-0 z-40 bg-dark-darker border-b border-dark-lighter flex-shrink-0 pt-16">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 flex-shrink-0 pt-16">
         {/* Row 1: What / Where / Search */}
         <div className="max-w-[1440px] mx-auto px-6 pt-5 pb-4">
-          <div className="flex items-stretch gap-0.5 bg-dark-darker rounded-3xl overflow-hidden">
-            <div className="flex-1 bg-dark px-5 py-3 border-r border-dark-lighter min-w-0">
-              <label className="font-headline text-xs font-black uppercase tracking-widest text-primary block mb-2">Event</label>
+          <div className="flex items-stretch gap-0.5 bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
+            <div className="flex-1 bg-gray-50 px-5 py-3 border-r border-gray-200 min-w-0">
+              <label className="font-headline text-xs font-black uppercase tracking-widest text-lime-600 block mb-2">Event</label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Event name, type or keyword"
                   value={whatQuery}
                   onChange={(e) => setWhatQuery(e.target.value)}
-                  className="w-full bg-transparent text-light font-headline text-xl placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none"
+                  className="w-full bg-transparent text-gray-900 font-headline text-xl placeholder:text-gray-400 border-0 focus:ring-0 focus:outline-none"
                 />
                 {whatQuery && (
-                  <button onClick={() => setWhatQuery("")} className="text-muted hover:text-light flex-shrink-0">
+                  <button onClick={() => setWhatQuery("")} className="text-gray-400 hover:text-gray-900 flex-shrink-0">
                     <X className="w-5 h-5" />
                   </button>
                 )}
               </div>
             </div>
-            <div className="flex-1 bg-dark px-5 py-3 border-r border-dark-lighter min-w-0">
-              <label className="font-headline text-xs font-black uppercase tracking-widest text-primary block mb-2">Where</label>
+            <div className="flex-1 bg-gray-50 px-5 py-3 border-r border-gray-200 min-w-0">
+              <label className="font-headline text-xs font-black uppercase tracking-widest text-lime-600 block mb-2">Where</label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="State, city, or suburb"
                   value={whereQuery}
                   onChange={(e) => setWhereQuery(e.target.value)}
-                  className="w-full bg-transparent text-light font-headline text-xl placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none"
+                  className="w-full bg-transparent text-gray-900 font-headline text-xl placeholder:text-gray-400 border-0 focus:ring-0 focus:outline-none"
                 />
                 {whereQuery && (
-                  <button onClick={() => setWhereQuery("")} className="text-muted hover:text-light flex-shrink-0">
+                  <button onClick={() => setWhereQuery("")} className="text-gray-400 hover:text-gray-900 flex-shrink-0">
                     <X className="w-5 h-5" />
                   </button>
                 )}
               </div>
             </div>
-            <button className="flex items-center gap-2 bg-machined text-dark font-headline text-base font-bold uppercase tracking-widest px-10 machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 active:translate-x-0 active:translate-y-0 flex-shrink-0">
+            <button className="flex items-center gap-2 bg-lime-400 hover:bg-lime-500 text-gray-900 font-headline text-base font-bold uppercase tracking-widest px-10 transition-colors duration-100 flex-shrink-0">
               <Search className="w-5 h-5" />
               Search
             </button>
@@ -267,7 +263,7 @@ function EventsPageInner() {
             onClose={() => setOpenDropdown(null)}
             onChange={(v) => { setDateFilter((v || "all") as FilterState["dateRange"]); setSelectedId(null); }}
           />
-          <span className="ml-auto font-headline text-sm font-medium uppercase tracking-widest text-muted">
+          <span className="ml-auto font-headline text-sm font-medium uppercase tracking-widest text-gray-400">
             {displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -277,14 +273,14 @@ function EventsPageInner() {
       <div className="flex flex-1 overflow-hidden max-w-[1440px] w-full mx-auto">
 
         {/* LEFT: event list */}
-        <div className="w-[420px] flex-shrink-0 overflow-y-auto bg-dark-darker border-r border-dark-lighter">
+        <div className="w-[420px] flex-shrink-0 overflow-y-auto bg-white border-r border-gray-200">
           {displayEvents.length === 0 ? (
             <div className="p-10 text-center">
-              <p className="font-headline text-sm font-medium uppercase tracking-widest text-muted mb-3">No Results</p>
-              <p className="font-headline text-2xl font-black italic tracking-tighter text-light mb-4">No events found.</p>
+              <p className="font-headline text-sm font-medium uppercase tracking-widest text-gray-400 mb-3">No Results</p>
+              <p className="font-headline text-2xl font-black italic tracking-tighter text-gray-900 mb-4">No events found.</p>
               <button
                 onClick={clearFilters}
-                className="font-headline text-sm font-medium uppercase tracking-widest border border-primary text-primary px-5 py-2.5 hover:bg-primary hover:text-dark transition-colors rounded-full"
+                className="font-headline text-sm font-medium uppercase tracking-widest border border-lime-500 text-lime-600 px-5 py-2.5 hover:bg-lime-50 transition-colors rounded-full"
               >
                 Clear Filters
               </button>
@@ -300,40 +296,40 @@ function EventsPageInner() {
                     key={event.id}
                     onClick={() => setSelectedId(event.id)}
                     className={`w-full text-left rounded-2xl overflow-hidden transition-all duration-150 ${
-                      isSelected ? "ring-2 ring-primary" : "ring-1 ring-dark-lighter hover:ring-primary/50"
+                      isSelected ? "ring-2 ring-lime-400" : "ring-1 ring-gray-200 hover:ring-lime-300"
                     }`}
                   >
                     <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/6" }}>
                       <img src={img} alt={event.title} className="w-full h-full object-cover brightness-50" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/30 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                       <div className="absolute top-3 left-3">
-                        <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-dark bg-primary px-2 py-0.5 rounded-full">
+                        <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-gray-900 bg-lime-400 px-2 py-0.5 rounded-full">
                           {EVENT_TYPE_LABELS[event.type]}
                         </span>
                       </div>
                       <div className="absolute top-3 right-3">
-                        <span className="font-headline text-xs font-medium text-light bg-dark/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                        <span className="font-headline text-xs font-medium text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
                           {eDay} {eMonth}
                         </span>
                       </div>
                     </div>
-                    <div className="bg-dark px-4 pt-3 pb-4">
-                      <h3 className={`font-headline text-base font-black italic tracking-tighter leading-tight mb-2 ${isSelected ? "text-primary" : "text-light"}`}>
+                    <div className="bg-white px-4 pt-3 pb-4">
+                      <h3 className={`font-headline text-base font-black italic tracking-tighter leading-tight mb-2 ${isSelected ? "text-lime-600" : "text-gray-900"}`}>
                         {event.title}
                       </h3>
                       <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 font-headline text-xs text-muted uppercase tracking-widest">
+                        <div className="flex items-center gap-3 font-headline text-xs text-gray-500 uppercase tracking-widest">
                           <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+                            <MapPin className="w-3 h-3 text-lime-500 flex-shrink-0" />
                             {event.city}, {STATE_LABELS[event.state]}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+                            <Clock className="w-3 h-3 text-lime-500 flex-shrink-0" />
                             {formatTime(event.time)}
                           </span>
                         </div>
                         {event.ticketDrops && event.ticketDrops.length > 0 && (
-                          <span className="font-headline text-xs font-bold text-light flex-shrink-0">
+                          <span className="font-headline text-xs font-bold text-gray-900 flex-shrink-0">
                             From {event.ticketDrops[0].price}
                           </span>
                         )}
@@ -347,11 +343,11 @@ function EventsPageInner() {
         </div>
 
         {/* RIGHT: event detail panel */}
-        <div className="flex-1 overflow-y-auto bg-dark-darker">
+        <div className="flex-1 overflow-y-auto bg-white">
           {!selectedEvent ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-12">
-              <ArrowRight className="w-10 h-10 text-muted rotate-180" />
-              <p className="font-headline text-xl font-medium uppercase tracking-widest text-muted">
+              <ArrowRight className="w-10 h-10 text-gray-300 rotate-180" />
+              <p className="font-headline text-xl font-medium uppercase tracking-widest text-gray-400">
                 Select an event to view details
               </p>
             </div>
@@ -361,33 +357,33 @@ function EventsPageInner() {
               {/* Hero banner */}
               <div className="relative rounded-3xl overflow-hidden" style={{ aspectRatio: "16/7" }}>
                 <img src={bannerUrl} alt={selectedEvent.title} className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-dark-darker via-dark-darker/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                 <div className="absolute top-4 left-5 flex items-center gap-2 flex-wrap">
                   <span className={`font-headline text-xs font-medium uppercase tracking-widest px-3 py-1.5 rounded-full ${status?.style}`}>
                     {status?.label}
                   </span>
-                  <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted bg-dark/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                  <span className="font-headline text-xs font-medium uppercase tracking-widest text-white bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
                     {EVENT_TYPE_LABELS[selectedEvent.type]}
                   </span>
                   {selectedEvent.isOfficial && (
-                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-primary border border-primary/40 bg-dark/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-lime-400 border border-lime-400/40 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-full">
                       Official
                     </span>
                   )}
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <Link href={`/events/${selectedEvent.id}`} className="group">
-                    <h2 className="font-headline text-3xl font-black italic tracking-tighter text-light group-hover:text-primary transition-colors leading-none mb-2 inline-block">
+                    <h2 className="font-headline text-3xl font-black italic tracking-tighter text-white group-hover:text-lime-400 transition-colors leading-none mb-2 inline-block">
                       {selectedEvent.title}
                     </h2>
                   </Link>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
-                      <MapPin className="w-3.5 h-3.5 text-primary" />
+                    <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-white/70">
+                      <MapPin className="w-3.5 h-3.5 text-lime-400" />
                       {selectedEvent.location}, {STATE_LABELS[selectedEvent.state]}
                     </span>
-                    <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
-                      <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-white/70">
+                      <Calendar className="w-3.5 h-3.5 text-lime-400" />
                       {formatEventDate(selectedEvent.date)}
                     </span>
                   </div>
@@ -395,30 +391,30 @@ function EventsPageInner() {
               </div>
 
               {/* Detail sections */}
-              <div className="flex flex-col divide-y divide-dark-lighter pb-6">
+              <div className="flex flex-col divide-y divide-gray-100 pb-6">
 
                 {/* Schedule & config */}
                 <div className="grid grid-cols-2 py-7 gap-8">
                   <div>
-                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-3">Schedule</p>
-                    <p className="font-headline text-5xl font-black text-primary leading-none mb-1">{day}</p>
-                    <p className="font-headline text-base font-bold uppercase tracking-wider text-light">{month}</p>
-                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mt-2">
+                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Schedule</p>
+                    <p className="font-headline text-5xl font-black text-lime-500 leading-none mb-1">{day}</p>
+                    <p className="font-headline text-base font-bold uppercase tracking-wider text-gray-900">{month}</p>
+                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mt-2">
                       {formatTime(selectedEvent.time)}
                       {selectedEvent.endTime && ` — ${formatTime(selectedEvent.endTime)}`}
                     </p>
                   </div>
                   <div>
-                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-3">Race Config</p>
-                    <p className="font-headline text-2xl font-black italic tracking-tighter text-light mb-2 leading-tight">
+                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Race Config</p>
+                    <p className="font-headline text-2xl font-black italic tracking-tighter text-gray-900 mb-2 leading-tight">
                       {formatCompetitionFormat(selectedEvent.format)}
                     </p>
                     {selectedEvent.distance && (
-                      <p className="font-headline text-xs uppercase tracking-widest text-primary mb-2">{selectedEvent.distance}</p>
+                      <p className="font-headline text-xs uppercase tracking-widest text-lime-600 mb-2">{selectedEvent.distance}</p>
                     )}
                     <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-primary" />
-                      <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted">
+                      <Users className="w-3.5 h-3.5 text-lime-500" />
+                      <span className="font-headline text-xs font-medium uppercase tracking-widest text-gray-500">
                         {selectedEvent.level === "elite" ? "Elite" : selectedEvent.level === "beginner" ? "Beginner" : "Open"}
                       </span>
                     </div>
@@ -427,11 +423,11 @@ function EventsPageInner() {
 
                 {/* Location */}
                 <div className="py-7">
-                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-3">Location</p>
-                  <h3 className="font-headline text-xl font-black italic tracking-tighter text-light mb-1 leading-tight">
+                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Location</p>
+                  <h3 className="font-headline text-xl font-black italic tracking-tighter text-gray-900 mb-1 leading-tight">
                     {selectedEvent.location}
                   </h3>
-                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-4">
+                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-500 mb-4">
                     {selectedEvent.city}, {STATE_LABELS[selectedEvent.state]}
                   </p>
                   <a
@@ -440,7 +436,7 @@ function EventsPageInner() {
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 font-headline text-xs uppercase tracking-widest text-primary hover:text-primary/70 transition-colors"
+                    className="inline-flex items-center gap-2 font-headline text-xs uppercase tracking-widest text-lime-600 hover:text-lime-700 transition-colors"
                   >
                     <MapPin className="w-3.5 h-3.5" />
                     View on Maps
@@ -449,17 +445,17 @@ function EventsPageInner() {
 
                 {/* Overview */}
                 <div className="py-7">
-                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-3">Event Overview</p>
-                  <p className="text-sm font-medium text-muted leading-relaxed mb-4">{selectedEvent.description}</p>
+                  <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Event Overview</p>
+                  <p className="text-sm font-medium text-gray-500 leading-relaxed mb-4">{selectedEvent.description}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-dark bg-primary px-3 py-1 rounded-full">
+                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-gray-900 bg-lime-400 px-3 py-1 rounded-full">
                       {EVENT_TYPE_LABELS[selectedEvent.type]}
                     </span>
-                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted border border-dark-lighter px-3 py-1 rounded-full">
+                    <span className="font-headline text-xs font-medium uppercase tracking-widest text-gray-500 border border-gray-200 px-3 py-1 rounded-full">
                       {formatCompetitionFormat(selectedEvent.format)}
                     </span>
                     {selectedEvent.isOfficial && (
-                      <span className="font-headline text-xs uppercase tracking-widest text-primary border border-primary/40 px-3 py-1 rounded-full">
+                      <span className="font-headline text-xs uppercase tracking-widest text-lime-600 border border-lime-400/40 px-3 py-1 rounded-full">
                         Official Event
                       </span>
                     )}
@@ -469,9 +465,9 @@ function EventsPageInner() {
                 {/* Registration */}
                 <div className="py-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-1">Registration</p>
+                    <p className="font-headline text-xs font-medium uppercase tracking-widest text-gray-400 mb-1">Registration</p>
                     {selectedEvent.organizer && (
-                      <p className="font-headline text-base font-medium uppercase tracking-widest text-light">
+                      <p className="font-headline text-base font-medium uppercase tracking-widest text-gray-900">
                         By {selectedEvent.organizer}
                       </p>
                     )}
@@ -479,7 +475,7 @@ function EventsPageInner() {
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <Link
                       href={`/events/${selectedEvent.id}`}
-                      className="inline-flex items-center gap-2 border border-dark-lighter text-muted font-headline text-sm font-bold uppercase tracking-widest px-6 py-3 rounded-xl hover:border-primary/50 hover:text-light transition-colors"
+                      className="inline-flex items-center gap-2 border border-gray-200 text-gray-500 font-headline text-sm font-bold uppercase tracking-widest px-6 py-3 rounded-xl hover:border-lime-400 hover:text-gray-900 transition-colors"
                     >
                       More Info
                     </Link>
@@ -487,7 +483,7 @@ function EventsPageInner() {
                       href={selectedEvent.registrationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-3 bg-machined text-dark font-headline text-sm font-bold uppercase tracking-widest px-8 py-3 rounded-xl machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 transition-transform duration-100 active:translate-x-0 active:translate-y-0"
+                      className="inline-flex items-center gap-3 bg-lime-400 hover:bg-lime-500 text-gray-900 font-headline text-sm font-bold uppercase tracking-widest px-8 py-3 rounded-xl transition-colors duration-100"
                     >
                       Register Now
                       <ExternalLink className="w-4 h-4" />
