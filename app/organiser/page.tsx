@@ -1,14 +1,22 @@
-"use client";
+﻿"use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { signIn, signOut, confirmSignIn } from "aws-amplify/auth";
+import { useAuthContext } from "@/context/AuthContext";
 
 function SignInForm() {
   const router = useRouter();
+  const { user, status } = useAuthContext();
+
+  useEffect(() => {
+    if (status === "authenticated" && user?.isOrganiser) {
+      router.replace("/organiser/dashboard");
+    }
+  }, [status, user, router]);
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
@@ -113,7 +121,7 @@ function SignInForm() {
 
   return (
     <main className="min-h-screen grid lg:grid-cols-2">
-      {/* ── LEFT — form ── */}
+      {/* ── LEFT - form ── */}
       <section className="flex items-center justify-center px-6 py-16 lg:py-24 bg-dark-darker">
         <div className="w-full max-w-[440px]">
           <div className="flex items-center gap-2 mb-10">
@@ -202,14 +210,14 @@ function SignInForm() {
 
           <p className="mt-8 text-center font-headline text-[12px] uppercase tracking-widest text-muted">
             New organiser?{" "}
-            <Link href="/organiser/register" className="text-primary hover:underline">Apply for an account</Link>
+            <Link href="/organiser/register" className="text-primary hover:underline">Create an account</Link>
           </p>
           </>
           )}
         </div>
       </section>
 
-      {/* ── RIGHT — visual ── */}
+      {/* ── RIGHT - visual ── */}
       <section className="hidden lg:flex items-center justify-center relative overflow-hidden hero-topo">
 <div className="absolute inset-0 scan-grid opacity-60" />
         <div className="relative z-10 text-center px-12">

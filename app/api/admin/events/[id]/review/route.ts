@@ -39,7 +39,7 @@ export async function POST(
       );
     }
 
-    // Per ToS §3.4 — marketplace listings cannot go live until Stripe onboarding is complete
+    // Per ToS §3.4 - marketplace listings cannot go live until Stripe onboarding is complete
     if (action === "approve" && event.registrationType === "startline") {
       if (!event.organiser.stripeOnboardingComplete) {
         return NextResponse.json(

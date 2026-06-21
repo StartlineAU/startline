@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getOrganiserSession } from "@/lib/amplify-server";
 // GET /api/organiser/notifications
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 // PATCH /api/organiser/notifications
-// Body: { ids?: string[] } — if ids omitted, marks ALL as read
+// Body: { ids?: string[] } - if ids omitted, marks ALL as read
 export async function PATCH(req: NextRequest) {
   const session = await getOrganiserSession();
   if (!session) return NextResponse.json({ error: "Unauthorised." }, { status: 401 });

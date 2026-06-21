@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+﻿import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
 import { C, CLAMP } from '../lib/colors';
 import { useSceneTransition, fadeUp, scaleIn, fadeIn } from '../lib/transition';
 import { FONT_HEADLINE, FONT_BODY } from '../lib/fonts';
@@ -246,7 +246,7 @@ export const ReviewScene: React.FC<{ durationInFrames: number }> = ({ durationIn
           zIndex: 1,
         }}
       >
-        {/* Left — text */}
+        {/* Left - text */}
         <div>
           <div
             style={{
@@ -260,7 +260,7 @@ export const ReviewScene: React.FC<{ durationInFrames: number }> = ({ durationIn
               opacity: tag.opacity,
             }}
           >
-            Step 03 — Submit for Review
+            Step 03 - Submit for Review
           </div>
 
           <div
@@ -364,7 +364,7 @@ export const ReviewScene: React.FC<{ durationInFrames: number }> = ({ durationIn
           </div>
         </div>
 
-        {/* Right — timeline card */}
+        {/* Right - timeline card */}
         <div style={{ opacity: card.opacity, transform: `scale(${card.scale})` }}>
           <div
             style={{

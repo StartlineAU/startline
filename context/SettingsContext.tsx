@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { createContext, useContext, useState } from "react";
 
@@ -10,7 +10,7 @@ interface SettingsCtx {
   open:       (section?: SettingsSection) => void;
   close:      () => void;
   setSection: (s: SettingsSection) => void;
-  // bumped each time the profile is saved — profile page watches this to re-fetch
+  // bumped each time the profile is saved - profile page watches this to re-fetch
   profileSavedAt:     number;
   notifyProfileSaved: () => void;
 }
@@ -37,8 +37,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const NOOP_SETTINGS: SettingsCtx = {
+  isOpen: false,
+  section: "personal",
+  open: () => {},
+  close: () => {},
+  setSection: () => {},
+  profileSavedAt: 0,
+  notifyProfileSaved: () => {},
+};
+
 export function useSettings(): SettingsCtx {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useSettings must be used inside SettingsProvider");
-  return ctx;
+  return useContext(Ctx) ?? NOOP_SETTINGS;
 }

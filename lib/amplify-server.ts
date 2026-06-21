@@ -113,12 +113,11 @@ export async function getOrganiserSession(): Promise<OrganiserSession | null> {
   if (!cognitoSession) return null;
 
   try {
-    const organiser = await prisma.organiser.upsert({
+    const organiser = await prisma.organiser.findUnique({
       where:  { cognitoSub: cognitoSession.sub },
-      update: {},
-      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email, status: "APPROVED", orgName: cognitoSession.email, abn: "", photos: [] },
       select: { id: true, email: true, status: true },
     });
+    if (!organiser) return null;
     return { sub: organiser.id, email: organiser.email, status: String(organiser.status) };
   } catch {
     return null;

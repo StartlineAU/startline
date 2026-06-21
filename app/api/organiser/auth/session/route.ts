@@ -16,7 +16,7 @@ export async function POST() {
         cognitoSub: session.sub,
         email:      session.email,
         status:     "APPROVED",
-        orgName:    session.email,
+        orgName:    null,
         abn:        "",
         photos:     [],
       },

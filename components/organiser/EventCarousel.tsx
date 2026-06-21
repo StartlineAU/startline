@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef } from "react";
 import { MapPin, ChevronLeft, ChevronRight, Bookmark, BookmarkCheck } from "lucide-react";
@@ -35,7 +35,7 @@ function formatDate(dateStr: string) {
       year:  d.getFullYear(),
     };
   } catch {
-    return { day: "—", month: "", year: new Date().getFullYear() };
+    return { day: "-", month: "", year: new Date().getFullYear() };
   }
 }
 
@@ -74,7 +74,7 @@ export default function EventCarousel({ events, pinnedIds, isOrganiser, onPin }:
       <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-dark-darker to-transparent z-10" />
       <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-dark-darker to-transparent z-10" />
 
-      {/* Nav arrows — visible on hover */}
+      {/* Nav arrows - visible on hover */}
       {sorted.length > 3 && (
         <>
           <button

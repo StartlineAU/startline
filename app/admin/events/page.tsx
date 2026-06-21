@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -245,7 +245,7 @@ function EventRow({
         </div>
       </div>
 
-      {/* Stripe gate error — shown when organiser hasn't completed onboarding (ToS §3.4) */}
+      {/* Stripe gate error - shown when organiser hasn't completed onboarding (ToS §3.4) */}
       {approveError && (
         <div className="px-5 pb-4">
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">

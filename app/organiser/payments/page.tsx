@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertCircle, CreditCard, ArrowRight, ExternalLink, ShieldCheck, RefreshCw, UserCog } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 const inputCls =
-  "w-full bg-white border border-gray-200 rounded-md px-4 py-3 text-[15px] text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none transition-colors";
+  "w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[15px] text-light placeholder:text-muted-dark focus:border-primary/60 focus:outline-none transition-colors";
 
 interface Profile {
   orgName: string | null;
@@ -141,11 +141,10 @@ function PaymentsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <OrganiserTopBar />
-        <main className="pt-16">
+      <div className="min-h-screen">
+        <main className="pt-24">
           <div className="max-w-[760px] mx-auto px-6 py-16 text-center">
-            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto" />
+            <div className="w-5 h-5 border-2 border-dark-lighter border-t-primary rounded-full animate-spin mx-auto" />
           </div>
         </main>
       </div>
@@ -157,56 +156,55 @@ function PaymentsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrganiserTopBar />
 
-      <main className="pt-16">
+      <main className="pt-24">
         <div className="max-w-[760px] mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 lg:pb-12 page-in">
 
           {/* Header */}
           <div className="mb-6 sm:mb-8">
-            <div className="font-headline text-[10px] font-bold uppercase tracking-[0.25em] text-lime-600 mb-2">
+            <div className="font-headline text-[10px] font-bold uppercase tracking-[0.25em] text-primary mb-2">
               Payments
             </div>
-            <h1 className="font-headline text-[32px] sm:text-[44px] font-black italic tracking-tighter leading-none text-gray-900 mb-3">
-              Get paid for<br /><span className="text-lime-500">your events.</span>
+            <h1 className="font-headline text-[32px] sm:text-[44px] font-black italic tracking-tighter leading-none text-light mb-3">
+              Get paid for<br /><span className="text-primary">your events.</span>
             </h1>
-            <p className="text-gray-500 text-[14px] sm:text-[15px] max-w-lg">
-              To accept registrations and receive payouts through Startline, you need to connect a Stripe Express account. This is only required for marketplace listings — directory listings linking to an external platform don't need this.
+            <p className="text-muted text-[14px] sm:text-[15px] max-w-lg">
+              To accept registrations and receive payouts through Startline, you need to connect a Stripe Express account. This is only required for marketplace listings - directory listings linking to an external platform don't need this.
             </p>
           </div>
 
           {/* Refresh banner (returned from Stripe before completing) */}
           {refreshed && !isConnected && (
-            <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-              <RefreshCw className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            <div className="mb-6 flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4">
+              <RefreshCw className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
-                <div className="font-headline text-[13px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">Setup not complete</div>
-                <div className="text-[13px] text-amber-700">It looks like you left Stripe before finishing. Click continue below to pick up where you left off.</div>
+                <div className="font-headline text-[13px] font-bold text-amber-400 uppercase tracking-widest mb-0.5">Setup not complete</div>
+                <div className="text-[13px] text-amber-300/80">It looks like you left Stripe before finishing. Click continue below to pick up where you left off.</div>
               </div>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-4">
-              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-              <div className="text-[13px] text-red-700">{error}</div>
+            <div className="mb-6 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-4">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+              <div className="text-[13px] text-red-400">{error}</div>
             </div>
           )}
 
           {/* ── State 1: Connected ── */}
           {isConnected && (
-            <Card className="mb-6 border-lime-200 bg-lime-50">
+            <Card className="mb-6 border-primary/30 bg-primary/10">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-lime-500 flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-5 h-5 text-dark" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-lime-800 mb-1">
+                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-primary mb-1">
                       Stripe account connected
                     </div>
-                    <div className="text-[13px] text-lime-700 mb-3">
+                    <div className="text-[13px] text-primary/80 mb-3">
                       Your Stripe Express account is verified and ready to receive payouts.
                       Account: <span className="font-mono">{maskAccountId(profile?.stripeAccountId ?? "")}</span>
                     </div>
@@ -214,7 +212,7 @@ function PaymentsContent() {
                       href="https://connect.stripe.com/express_login"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-headline text-[12px] font-bold uppercase tracking-widest text-lime-800 hover:text-lime-900 transition-colors"
+                      className="inline-flex items-center gap-1.5 font-headline text-[12px] font-bold uppercase tracking-widest text-primary hover:text-primary-light transition-colors"
                     >
                       Manage payouts in Stripe <ExternalLink className="w-3 h-3" />
                     </a>
@@ -226,17 +224,17 @@ function PaymentsContent() {
 
           {/* ── State 2: In progress ── */}
           {inProgress && (
-            <Card className="mb-6 border-blue-200 bg-blue-50">
+            <Card className="mb-6 border-blue-500/30 bg-blue-500/10">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-blue-300 flex items-center justify-center shrink-0">
-                    <CreditCard className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 border-2 border-blue-500/40 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-5 h-5 text-blue-300" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-blue-800 mb-1">
+                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-blue-300 mb-1">
                       Stripe setup in progress
                     </div>
-                    <div className="text-[13px] text-blue-700 mb-4">
+                    <div className="text-[13px] text-blue-300/80 mb-4">
                       Your Stripe account has been created but identity verification is not yet complete. Continue where you left off to start accepting payments.
                     </div>
                     <button
@@ -256,19 +254,19 @@ function PaymentsContent() {
 
           {/* Profile-incomplete warning */}
           {profileIncomplete && (
-            <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-              <UserCog className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            <div className="mb-6 flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4">
+              <UserCog className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
-                <div className="font-headline text-[13px] font-bold text-amber-800 uppercase tracking-widest mb-0.5">
+                <div className="font-headline text-[13px] font-bold text-amber-400 uppercase tracking-widest mb-0.5">
                   Complete your profile first
                 </div>
-                <div className="text-[13px] text-amber-700 mb-2">
+                <div className="text-[13px] text-amber-300/80 mb-2">
                   Your organiser profile is missing required fields (organisation name, contact name, phone, and contact email).
                   These are needed before you can connect Stripe.
                 </div>
                 <Link
                   href="/organiser/profile"
-                  className="inline-flex items-center gap-1.5 font-headline text-[12px] font-bold uppercase tracking-widest text-amber-800 underline hover:text-amber-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 font-headline text-[12px] font-bold uppercase tracking-widest text-amber-400 underline hover:text-amber-300 transition-colors"
                 >
                   Go to profile <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -280,16 +278,16 @@ function PaymentsContent() {
           {/* Always shown so organiser can update details even if connected */}
           <Card>
             <CardContent className="p-4 sm:p-6 lg:p-8">
-              <h2 className="font-headline text-xl font-black italic tracking-tighter text-gray-900 mb-1">
-                {isConnected ? "Your details" : "Step 1 — Your details"}
+              <h2 className="font-headline text-xl font-black italic tracking-tighter text-light mb-1">
+                {isConnected ? "Your details" : "Step 1 - Your details"}
               </h2>
-              <p className="text-[13px] text-gray-500 mb-6">
-                Required for ATO tax reporting under the Sharing Economy Reporting Regime (SERR). Stripe holds your bank account and identity details — Startline only stores your legal name, ABN, and a Stripe account reference.
+              <p className="text-[13px] text-muted mb-6">
+                Required for ATO tax reporting under the Sharing Economy Reporting Regime (SERR). Stripe holds your bank account and identity details - Startline only stores your legal name, ABN, and a Stripe account reference.
               </p>
 
               <div className="space-y-5">
                 <div>
-                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-gray-700 block mb-2">
+                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
                     Legal name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -299,11 +297,11 @@ function PaymentsContent() {
                     placeholder="Jane Smith"
                     className={inputCls}
                   />
-                  <p className="text-[11px] text-gray-400 mt-1.5">Your legal first and last name as it appears on your ID. Required for ATO SERR reporting.</p>
+                  <p className="text-[11px] text-muted-dark mt-1.5">Your legal first and last name as it appears on your ID. Required for ATO SERR reporting.</p>
                 </div>
 
                 <div>
-                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-gray-700 block mb-2">
+                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
                     ABN or ACN <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -313,13 +311,13 @@ function PaymentsContent() {
                     placeholder="12 345 678 901"
                     className={inputCls}
                   />
-                  <p className="text-[11px] text-gray-400 mt-1.5">
+                  <p className="text-[11px] text-muted-dark mt-1.5">
                     Required under ATO PAYG withholding rules. Without a valid ABN, Startline is legally required to withhold 47% of payouts (ToS §3.2).
                   </p>
                 </div>
 
                 <div>
-                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-gray-700 block mb-2">
+                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
                     Date of birth
                   </label>
                   <input
@@ -328,20 +326,20 @@ function PaymentsContent() {
                     onChange={(e) => setDob(e.target.value)}
                     className={inputCls}
                   />
-                  <p className="text-[11px] text-gray-400 mt-1.5">Used for identity verification with Stripe and ATO SERR reporting. Not required if you only list external-link events.</p>
+                  <p className="text-[11px] text-muted-dark mt-1.5">Used for identity verification with Stripe and ATO SERR reporting. Not required if you only list external-link events.</p>
                 </div>
               </div>
 
               {/* Insurance declaration */}
-              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-5">
+              <div className="mt-6 bg-dark border border-dark-lighter rounded-xl p-5">
                 <div className="flex items-start gap-4">
-                  <ShieldCheck className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                  <ShieldCheck className="w-5 h-5 text-muted-dark mt-0.5 shrink-0" />
                   <div className="flex-1">
-                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-gray-700 mb-2">
+                    <div className="font-headline text-[13px] font-bold uppercase tracking-widest text-muted mb-2">
                       Public liability insurance declaration
                     </div>
-                    <p className="text-[13px] text-gray-500 leading-relaxed mb-4">
-                      Before listing events on Startline, you must hold and maintain current public liability insurance with a minimum coverage of <strong>$10 million per occurrence</strong>, underwritten by an APRA-registered insurer, covering the full duration of each event. Startline does not collect or verify insurance certificates — this is a self-declaration on your honour (ToS §5.3).
+                    <p className="text-[13px] text-muted leading-relaxed mb-4">
+                      Before listing events on Startline, you must hold and maintain current public liability insurance with a minimum coverage of <strong>$10 million per occurrence</strong>, underwritten by an APRA-registered insurer, covering the full duration of each event. Startline does not collect or verify insurance certificates - this is a self-declaration on your honour (ToS §5.3).
                     </p>
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <div className="relative flex-shrink-0 mt-0.5">
@@ -351,7 +349,7 @@ function PaymentsContent() {
                           onChange={(e) => setInsuranceDeclared(e.target.checked)}
                           className="sr-only"
                         />
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${insuranceDeclared ? "bg-lime-500 border-lime-500" : "bg-white border-gray-300 group-hover:border-gray-500"}`}>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${insuranceDeclared ? "bg-primary border-primary" : "bg-dark-light border-dark-lighter group-hover:border-muted"}`}>
                           {insuranceDeclared && (
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -359,7 +357,7 @@ function PaymentsContent() {
                           )}
                         </div>
                       </div>
-                      <span className="text-[13px] text-gray-700 leading-relaxed">
+                      <span className="text-[13px] text-muted leading-relaxed">
                         I declare that I currently hold public liability insurance meeting Startline's minimum requirements, and I will maintain this coverage for the full duration of every event I list.
                       </span>
                     </label>
@@ -369,17 +367,17 @@ function PaymentsContent() {
 
               {/* Connect / update button */}
               {!isConnected && (
-                <div className="mt-8 pt-6 border-t border-gray-100">
-                  <h2 className="font-headline text-xl font-black italic tracking-tighter text-gray-900 mb-1">
-                    Step 2 — Connect Stripe
+                <div className="mt-8 pt-6 border-t border-dark-lighter">
+                  <h2 className="font-headline text-xl font-black italic tracking-tighter text-light mb-1">
+                    Step 2 - Connect Stripe
                   </h2>
-                  <p className="text-[13px] text-gray-500 mb-5">
+                  <p className="text-[13px] text-muted mb-5">
                     You'll be taken to Stripe's secure, hosted onboarding. Stripe will collect your date of birth (for identity verification) and bank account details for payouts. Startline never sees or stores this information.
                   </p>
                   <button
                     onClick={saveAndConnect}
                     disabled={saving || connecting}
-                    className="w-full inline-flex items-center justify-center gap-2 font-headline text-[13px] font-bold uppercase tracking-widest bg-gray-900 text-white px-8 py-4 rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full inline-flex items-center justify-center gap-2 font-headline text-[13px] font-bold uppercase tracking-widest bg-primary text-dark px-8 py-4 rounded-md hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving || connecting
                       ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {saving ? "Saving…" : "Opening Stripe…"}</>

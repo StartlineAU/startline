@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen grid lg:grid-cols-2 page-in">
-      {/* ── LEFT — form ── */}
+      {/* ── LEFT - form ── */}
       <section className="flex items-center justify-center px-6 py-16 lg:py-24 bg-dark-darker">
         <div className="w-full max-w-[440px]">
           <Link href="/organiser" className="flex items-center gap-2 mb-10 text-muted hover:text-primary transition-colors w-fit">
@@ -127,7 +127,7 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      {/* ── RIGHT — steps overview ── */}
+      {/* ── RIGHT - steps overview ── */}
       <section className="hidden lg:flex items-center justify-center relative overflow-hidden hero-topo px-12">
         <div className="absolute inset-0 scan-grid opacity-40" />
         <div className="relative z-10 max-w-sm">

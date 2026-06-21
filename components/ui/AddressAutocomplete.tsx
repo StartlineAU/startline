@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
@@ -81,7 +81,7 @@ export default function AddressAutocomplete({
 }: Props) {
   const apiKey = apiKeyProp ?? process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
-  // Stable refs for callbacks — never cause the Autocomplete to rebuild
+  // Stable refs for callbacks - never cause the Autocomplete to rebuild
   const onChangeRef = useRef(onChange);
   const onSelectRef = useRef(onSelect);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
@@ -104,7 +104,7 @@ export default function AddressAutocomplete({
       .catch(() => setError(true));
   }, [apiKey, ready]);
 
-  // Attach Autocomplete once — never rebuild it
+  // Attach Autocomplete once - never rebuild it
   useEffect(() => {
     if (!ready || !inputRef.current || acRef.current) return;
 

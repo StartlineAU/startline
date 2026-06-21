@@ -1,13 +1,13 @@
-// Exact design tokens from the app's CSS vars and globals.css
+﻿// Exact design tokens from the app's CSS vars and globals.css
 export const C = {
-  // Primary — rgb(179, 225, 83) #B3E153
+  // Primary - rgb(179, 225, 83) #B3E153
   primary:      '#B3E153',
   primaryLight: '#C2EC77',
   primaryDark:  '#A4D62F',
 
   // Dark theme backgrounds
-  darker:      '#141414',  // rgb(20,20,20)   — body bg
-  dark:        '#1f1f1f',  // rgb(31,31,31)   — card bg
+  darker:      '#141414',  // rgb(20,20,20)   - body bg
+  dark:        '#1f1f1f',  // rgb(31,31,31)   - card bg
   darkLight:   '#2a2a2a',  // rgb(42,42,42)
   darkLighter: '#353535',  // rgb(53,53,53)
 

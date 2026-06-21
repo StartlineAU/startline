@@ -4,8 +4,9 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
 
 export type AuthUser = {
-  sub:   string;
-  email: string;
+  sub:         string;
+  email:       string;
+  isOrganiser: boolean;
 };
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -40,9 +41,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const current = await getCurrentUser();
+
+      // Check if the user has an organiser profile (non-mutating GET)
+      const organiserRes = await fetch("/api/organiser/profile").catch(() => null);
+      const isOrganiser  = organiserRes?.ok === true;
+
       setUser({
-        sub:   current.userId,
-        email: current.signInDetails?.loginId ?? "",
+        sub:         current.userId,
+        email:       current.signInDetails?.loginId ?? "",
+        isOrganiser,
       });
       setStatus("authenticated");
     } catch {

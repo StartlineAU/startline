@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/amplify-server";
 
-// PATCH /api/admin/reviews/[id]  — moderate a review (publish / verify toggles)
+// PATCH /api/admin/reviews/[id]  - moderate a review (publish / verify toggles)
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

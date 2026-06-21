@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
+﻿import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C } from '../lib/colors';
 import { useSceneTransition, fadeUp, scaleIn, fadeIn } from '../lib/transition';
 import { FONT_HEADLINE, FONT_BODY } from '../lib/fonts';
@@ -7,7 +7,7 @@ export const CTAScene: React.FC<{ durationInFrames: number }> = ({ durationInFra
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // CTA is the last scene — entrance only, no exit
+  // CTA is the last scene - entrance only, no exit
   const { translateX, opacity, scale } = useSceneTransition(frame, fps, durationInFrames + 100);
 
   const logo   = scaleIn(frame, fps, 0);
@@ -29,7 +29,7 @@ export const CTAScene: React.FC<{ durationInFrames: number }> = ({ durationInFra
         overflow: 'hidden',
       }}
     >
-      {/* Full-bleed lime glow — more intense for the final CTA */}
+      {/* Full-bleed lime glow - more intense for the final CTA */}
       <div
         style={{
           position: 'absolute',
@@ -57,7 +57,7 @@ export const CTAScene: React.FC<{ durationInFrames: number }> = ({ durationInFra
         }}
       />
 
-      {/* Corner brackets — HUD style */}
+      {/* Corner brackets - HUD style */}
       {[
         { top: 60, left: 80, borderLeft: true, borderTop: true },
         { top: 60, right: 80, borderRight: true, borderTop: true },

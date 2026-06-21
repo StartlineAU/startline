@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,7 +26,7 @@ function VerifyEmailForm() {
 
     try {
       await confirmSignUp({ username: email, confirmationCode: code.trim() });
-      // Verified — send to sign-in
+      // Verified - send to sign-in
       router.push("/organiser");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";

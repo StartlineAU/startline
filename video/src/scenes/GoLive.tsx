@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+﻿import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
 import { C, CLAMP } from '../lib/colors';
 import { useSceneTransition, fadeUp, scaleIn, fadeIn } from '../lib/transition';
 import { FONT_HEADLINE, FONT_BODY } from '../lib/fonts';
@@ -392,7 +392,7 @@ export const GoLiveScene: React.FC<{ durationInFrames: number }> = ({ durationIn
           zIndex: 1,
         }}
       >
-        {/* Left — text */}
+        {/* Left - text */}
         <div>
           <div
             style={{
@@ -406,7 +406,7 @@ export const GoLiveScene: React.FC<{ durationInFrames: number }> = ({ durationIn
               opacity: tag.opacity,
             }}
           >
-            Step 04 — Go Live
+            Step 04 - Go Live
           </div>
 
           <div
@@ -519,7 +519,7 @@ export const GoLiveScene: React.FC<{ durationInFrames: number }> = ({ durationIn
           </div>
         </div>
 
-        {/* Right — browser mockup */}
+        {/* Right - browser mockup */}
         <div
           style={{
             opacity: browser.opacity,

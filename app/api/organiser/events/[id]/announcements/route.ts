@@ -72,4 +72,4 @@ export async function POST(
   }
 }
 
-// DELETE /api/organiser/events/[id]/announcements/[announcementId] — handled separately
+// DELETE /api/organiser/events/[id]/announcements/[announcementId] - handled separately

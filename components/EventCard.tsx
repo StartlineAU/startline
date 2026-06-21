@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { MapPin, Clock, Users, Calendar } from "lucide-react";
 import type { CustomerEvent } from "@/types";
 import { EVENT_TYPE_LABELS, STATE_LABELS } from "@/types";
@@ -117,7 +117,7 @@ export default function EventCard({ event, variant = "default" }: EventCardProps
             <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
               <Clock className="w-3 h-3 text-primary flex-shrink-0" />
               <span>{formatTime(event.time)}</span>
-              {event.endTime && <span>&mdash; {formatTime(event.endTime)}</span>}
+              {event.endTime && <span>- {formatTime(event.endTime)}</span>}
             </div>
             <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
               <Users className="w-3 h-3 text-primary flex-shrink-0" />

@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+﻿import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
 import { C, CLAMP } from '../lib/colors';
 import { useSceneTransition, fadeUp, scaleIn } from '../lib/transition';
 import { FONT_HEADLINE, FONT_BODY } from '../lib/fonts';
@@ -179,7 +179,7 @@ export const NewListingScene: React.FC<{ durationInFrames: number }> = ({ durati
           zIndex: 1,
         }}
       >
-        {/* Left — text */}
+        {/* Left - text */}
         <div>
           <div
             style={{
@@ -194,7 +194,7 @@ export const NewListingScene: React.FC<{ durationInFrames: number }> = ({ durati
               transform: `translateY(${tag.translateY}px)`,
             }}
           >
-            Step 02 — Create a Listing
+            Step 02 - Create a Listing
           </div>
 
           <div
@@ -240,7 +240,7 @@ export const NewListingScene: React.FC<{ durationInFrames: number }> = ({ durati
               transform: `translateY(${sub.translateY}px)`,
             }}
           >
-            A guided five-step form — details, venue, tickets, media
+            A guided five-step form - details, venue, tickets, media
             and review. Save a draft at any stage.
           </p>
 
@@ -298,7 +298,7 @@ export const NewListingScene: React.FC<{ durationInFrames: number }> = ({ durati
           </div>
         </div>
 
-        {/* Right — form card */}
+        {/* Right - form card */}
         <div
           style={{
             backgroundColor: C.dark,

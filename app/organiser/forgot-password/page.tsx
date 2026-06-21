@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +20,8 @@ function ForgotPasswordForm() {
   const [showPw,      setShowPw]      = useState(false);
   const [error,       setError]       = useState("");
   const [loading,     setLoading]     = useState(false);
+  const [resending,   setResending]   = useState(false);
+  const [resendSent,  setResendSent]  = useState(false);
 
   // ── Step 1: Request reset code ─────────────────────────────────────────────
   const handleRequest = async (e: React.FormEvent) => {
@@ -32,13 +34,28 @@ function ForgotPasswordForm() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("UserNotFoundException") || msg.includes("NotAuthorizedException")) {
-        // Don't reveal whether the email exists — show generic message
+        // Don't reveal whether the email exists - show generic message
         setStep("confirm");
       } else {
         setError("Could not send reset code. Please try again.");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Resend code ───────────────────────────────────────────────────────────
+  const handleResend = async () => {
+    setResendSent(false);
+    setError("");
+    setResending(true);
+    try {
+      await resetPassword({ username: email });
+      setResendSent(true);
+    } catch {
+      setError("Could not resend the code. Please try again.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -141,6 +158,7 @@ function ForgotPasswordForm() {
                 <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">Reset code</label>
                 <input
                   type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} required
+                  autoComplete="off"
                   value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light tracking-[0.5em] text-center placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors font-headline font-black"
@@ -150,7 +168,7 @@ function ForgotPasswordForm() {
                 <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">New password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type={showPw ? "text" : "password"} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                  <input type={showPw ? "text" : "password"} required autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min 8 characters"
                     className="w-full bg-dark border border-dark-lighter rounded-md pl-10 pr-11 py-3 text-[15px] text-light placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors" />
                   <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-dark hover:text-primary transition-colors">
@@ -162,7 +180,7 @@ function ForgotPasswordForm() {
                 <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">Confirm new password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type={showPw ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                  <input type={showPw ? "text" : "password"} required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)}
                     placeholder="Re-enter password"
                     className="w-full bg-dark border border-dark-lighter rounded-md pl-10 pr-4 py-3 text-[15px] text-light placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors" />
                 </div>
@@ -173,10 +191,21 @@ function ForgotPasswordForm() {
               </button>
             </form>
 
-            <button onClick={() => { setStep("request"); setError(""); }}
-              className="mt-6 w-full text-center font-headline text-[12px] uppercase tracking-widest text-muted hover:text-primary transition-colors">
-              ← Use a different email
-            </button>
+            <div className="mt-6 flex flex-col items-center gap-3">
+              {resendSent && (
+                <p className="font-headline text-[12px] uppercase tracking-widest text-primary">
+                  New code sent — check your inbox.
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="font-headline text-[12px] uppercase tracking-widest text-muted hover:text-primary transition-colors disabled:opacity-50"
+              >
+                {resending ? "Sending…" : "Resend code"}
+              </button>
+            </div>
           </>
         )}
 

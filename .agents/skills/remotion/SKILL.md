@@ -1,11 +1,11 @@
----
+﻿---
 name: remotion
 description: Work with the Startline Remotion product demo video. Use when the user wants to preview, edit, or render the video, or mentions "remotion", "the video", or "product demo".
 ---
 
-# Remotion — Startline Product Demo
+# Remotion - Startline Product Demo
 
-The video project lives in `video/` at the repo root. It is a self-contained npm project with its own `node_modules` and `package.json` — always run commands from inside `video/`.
+The video project lives in `video/` at the repo root. It is a self-contained npm project with its own `node_modules` and `package.json` - always run commands from inside `video/`.
 
 ## Quick start
 
@@ -42,12 +42,12 @@ To add a scene: create the component in `scenes/`, import it in `Video.tsx`, and
 
 ## Shared utilities
 
-- `lib/colors.ts` — brand colour tokens (matches the main app's Tailwind theme)
-- `lib/fonts.ts` — loads Chakra Petch + Inter; import this in `Root.tsx` as a side effect before rendering
-- `lib/transition.ts` — easing helpers for cross-scene motion
+- `lib/colors.ts` - brand colour tokens (matches the main app's Tailwind theme)
+- `lib/fonts.ts` - loads Chakra Petch + Inter; import this in `Root.tsx` as a side effect before rendering
+- `lib/transition.ts` - easing helpers for cross-scene motion
 
 ## Conventions
 
-- All animation values derive from `useCurrentFrame()` and `interpolate()` — no CSS transitions.
+- All animation values derive from `useCurrentFrame()` and `interpolate()` - no CSS transitions.
 - Frame arithmetic uses the exported `OVERLAP`, `SCENE_STARTS`, and `TOTAL_FRAMES` constants from `Video.tsx`; never hardcode frame offsets.
 - Brand primary colour is `#B3E153`. Dark background is `#0A0A0A`.

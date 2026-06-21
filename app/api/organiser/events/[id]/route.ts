@@ -20,7 +20,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/organiser/events/[id] — update an existing draft
+// PATCH /api/organiser/events/[id] - update an existing draft
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

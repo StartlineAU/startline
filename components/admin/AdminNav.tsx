@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -72,7 +72,7 @@ export default function AdminNav() {
             </span>
           </Link>
 
-          {/* Nav links — centred */}
+          {/* Nav links - centred */}
           <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {NAV.map(({ href, label, icon: Icon }) => {
               const isActive = pathname === href || (pathname?.startsWith(href + "/") ?? false);
@@ -93,7 +93,7 @@ export default function AdminNav() {
             })}
           </div>
 
-          {/* User — right */}
+          {/* User - right */}
           <div ref={menuRef} className="ml-auto relative shrink-0">
             <button
               onClick={() => setOpen((o) => !o)}

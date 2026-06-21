@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -139,12 +139,12 @@ export default function OrganiserTopBar() {
           {/* Single pill */}
           <div className="pointer-events-auto bg-[#0f0f0f] rounded-xl shadow-lg h-12 flex items-center px-2 relative">
 
-            {/* Logo — left */}
+            {/* Logo - left */}
             <Link href="/organiser/dashboard" className="shrink-0 px-3 py-2">
               <Image src="/images/logo-title.svg" alt="Startline" width={110} height={28} className="h-6 w-auto" />
             </Link>
 
-            {/* Nav links — absolute centre */}
+            {/* Nav links - absolute centre */}
             <div className="hidden lg:flex items-center gap-0.5 absolute left-1/2 -translate-x-1/2">
               {NAV.map(({ href, label }) => {
                 const isActive = pathname === href || (pathname?.startsWith(href + "/") ?? false);
@@ -161,7 +161,7 @@ export default function OrganiserTopBar() {
               })}
             </div>
 
-            {/* Right side — bell + actions */}
+            {/* Right side - bell + actions */}
             <div className="ml-auto flex items-center gap-1 shrink-0">
 
               {/* ── Notification bell ── */}

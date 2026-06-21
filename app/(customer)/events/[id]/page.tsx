@@ -118,7 +118,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Time</p>
                   <p className="font-headline text-base font-black italic text-light">
                     {formatTime(event.time)}
-                    {event.endTime && ` — ${formatTime(event.endTime)}`}
+                    {event.endTime && ` - ${formatTime(event.endTime)}`}
                   </p>
                 </div>
                 <div>
@@ -145,7 +145,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
 
-            {/* CTAs — visible on desktop in sidebar, hidden on mobile (moved to sticky bar) */}
+            {/* CTAs - visible on desktop in sidebar, hidden on mobile (moved to sticky bar) */}
             <div className="hidden lg:flex flex-col gap-3">
               {event.registrationType === "startline" && event.ticketDrops && event.ticketDrops.length > 0 && (
                 <Button asChild variant="machined" size="ctaLg">

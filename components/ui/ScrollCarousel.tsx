@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
@@ -65,7 +65,7 @@ export function ScrollCarousel({ title, eyebrow, viewAllHref, arrowTopClass = "t
         )}
       </div>
 
-      {/* Arrow buttons are hidden on mobile — users swipe natively */}
+      {/* Arrow buttons are hidden on mobile - users swipe natively */}
       <div className="relative group/carousel">
         <button
           onClick={() => scroll("left")}

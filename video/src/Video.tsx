@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence } from 'remotion';
+﻿import { AbsoluteFill, Sequence } from 'remotion';
 import { IntroScene }      from './scenes/Intro';
 import { StatsScene }      from './scenes/Stats';
 import { DashboardScene }  from './scenes/Dashboard';
@@ -7,7 +7,7 @@ import { ReviewScene }     from './scenes/Review';
 import { GoLiveScene }     from './scenes/GoLive';
 import { CTAScene }        from './scenes/CTA';
 
-// Frames two adjacent scenes overlap — this is the motion-cut window.
+// Frames two adjacent scenes overlap - this is the motion-cut window.
 // During this window Scene A exits left while Scene B enters from right.
 export const OVERLAP = 18;
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageIcon, X, Play } from "lucide-react";
@@ -47,7 +47,7 @@ export default function PhotoCarousel({ photos, isOrganiser, onUpload, uploading
         )}
 
         {photos.length === 0 ? (
-          /* Empty state — only shown to organiser */
+          /* Empty state - only shown to organiser */
           <div className="p-8 flex flex-col items-center justify-center gap-3 text-center">
             <ImageIcon className="w-8 h-8 text-gray-300" />
             <div>
@@ -101,7 +101,7 @@ export default function PhotoCarousel({ photos, isOrganiser, onUpload, uploading
               </button>
             ))}
 
-            {/* Upload more — organiser only */}
+            {/* Upload more - organiser only */}
             {isOrganiser && (
               <>
                 <button

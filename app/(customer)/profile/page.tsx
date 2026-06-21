@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -79,7 +79,7 @@ export default function ProfilePage() {
             Saved &amp; registered
           </h1>
           <p className="text-muted text-sm mt-3 max-w-xl leading-relaxed">
-            Saved events and interest you register are stored in this browser only &mdash; nothing is sent to an account server.
+            Saved events and interest you register are stored in this browser only - nothing is sent to an account server.
           </p>
         </div>
       </section>
@@ -95,7 +95,7 @@ export default function ProfilePage() {
               <span className="ml-auto font-headline text-xs text-muted">{savedEvents.length}</span>
             </div>
             <p className="text-muted text-xs mb-6 leading-relaxed">
-              Events you&apos;ve bookmarked with the heart icon &mdash; your personal shortlist to revisit later.
+              Events you&apos;ve bookmarked with the heart icon - your personal shortlist to revisit later.
             </p>
             {savedEvents.length === 0 ? (
               <div className="text-center py-8">
@@ -150,7 +150,7 @@ export default function ProfilePage() {
               <span className="ml-auto font-headline text-xs text-muted">{registeredEvents.length}</span>
             </div>
             <p className="text-muted text-xs mb-6 leading-relaxed">
-              Events where you tapped &quot;Register interest&quot; &mdash; stored locally in this browser. This is separate from saving a bookmark.
+              Events where you tapped &quot;Register interest&quot; - stored locally in this browser. This is separate from saving a bookmark.
             </p>
             {registeredEvents.length === 0 ? (
               <div className="text-center py-8">

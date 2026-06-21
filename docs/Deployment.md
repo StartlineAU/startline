@@ -1,4 +1,4 @@
-# Deployment & CI/CD
+﻿# Deployment & CI/CD
 
 How code and infrastructure changes flow from a feature branch to production.
 
@@ -7,8 +7,8 @@ How code and infrastructure changes flow from a feature branch to production.
 | Branch                                 | Purpose                                    | What deploys                               |
 | -------------------------------------- | ------------------------------------------ | ------------------------------------------ |
 | `main`                                 | Source of truth for app code AND terraform | Terraform applies (no app deploy)          |
-| `non-production`                       | Staging — features tested live             | Amplify nonprod environment                |
-| `production`                           | Live — real users                          | Amplify prod environment (startlineau.com) |
+| `non-production`                       | Staging - features tested live             | Amplify nonprod environment                |
+| `production`                           | Live - real users                          | Amplify prod environment (startlineau.com) |
 | `feature/*`, `fix/*`, `claude/*`, etc. | Work branches                              | Nothing                                    |
 
 `main` is _not_ an Amplify deploy branch. Code on `main` only goes live after it's promoted into `non-production` or `production`. Terraform changes, however, do apply at merge-to-main.
@@ -25,7 +25,7 @@ Each environment is independently provisioned by terraform via `module.env[*]` (
 | Postgres `db_name`          | `startline_prod`             | `startline_nonprod`                    |
 | VPC CIDR                    | `10.20.0.0/16`               | `10.21.0.0/16`                         |
 | Cognito user pool           | `startline-prod-users`       | `startline-nonprod-users`              |
-| Custom domain               | startlineau.com (apex + www) | none — uses default `*.amplifyapp.com` |
+| Custom domain               | startlineau.com (apex + www) | none - uses default `*.amplifyapp.com` |
 | RDS deletion protection     | on                           | off                                    |
 | Cognito deletion protection | on                           | off                                    |
 | Final snapshot on destroy   | yes                          | no                                     |
@@ -53,7 +53,7 @@ non-production ────────────► Amplify deploys nonprod e
 production ────────────────► Amplify deploys prod env (startlineau.com)
 ```
 
-Changes always flow downstream — `feature` → `main` → `non-production` → `production`. Never the other way.
+Changes always flow downstream - `feature` → `main` → `non-production` → `production`. Never the other way.
 
 ### Resetting non-production
 
@@ -98,7 +98,7 @@ Both workflows authenticate via OIDC, assuming the `startline-terraform-ci` IAM 
 | ------------------------------------------ | --------------------------------------- |
 | Open PR against `main` (terraform changed) | `terraform-plan` runs, posts PR comment |
 | Merge PR to `main` (terraform changed)     | `terraform-apply` runs, infra updates   |
-| Merge PR to `main` (only app code changed) | Nothing — wait for promotion to deploy  |
+| Merge PR to `main` (only app code changed) | Nothing - wait for promotion to deploy  |
 | Push to `non-production`                   | Amplify rebuilds & deploys nonprod      |
 | Push to `production`                       | Amplify rebuilds & deploys prod         |
 
@@ -117,7 +117,7 @@ The standard flow gives you this for free: `terraform-apply` runs at merge-to-ma
 
 ## Local terraform workflow
 
-You generally shouldn't run `terraform apply` locally — let CI do it. But for previewing:
+You generally shouldn't run `terraform apply` locally - let CI do it. But for previewing:
 
 ```bash
 cd terraform
@@ -139,9 +139,9 @@ You'll need AWS credentials in your shell and a `terraform.tfvars` with sensitiv
 
 These aren't yet enforced but should be configured in GitHub repo settings:
 
-- **`main`** — require PR + green CI before merge; no direct pushes.
-- **`non-production`** — require PR; source must be `main`.
-- **`production`** — require PR; source must be `non-production`; no force-push.
+- **`main`** - require PR + green CI before merge; no direct pushes.
+- **`non-production`** - require PR; source must be `main`.
+- **`production`** - require PR; source must be `non-production`; no force-push.
 
 ## Disaster recovery
 
