@@ -255,7 +255,7 @@ export default function ProfilePage() {
           <div className="mb-6 pb-6 border-b border-gray-200">
             {profile.bio
               ? <p className="text-[14px] text-gray-700 leading-relaxed">{profile.bio}</p>
-              : <p className="text-[14px] text-gray-400 italic">No bio yet — add one in Edit Profile.</p>}
+              : <p className="text-[14px] text-gray-400 italic">No bio yet - add one in Edit Profile.</p>}
           </div>
 
           {/* Main content */}

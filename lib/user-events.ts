@@ -70,6 +70,7 @@ export function toUserEvent(event: PublicEvent): UserEvent {
     tagline: event.tagline,
     coverImageUrl: event.coverImageUrl,
     organiser: event.organiser,
+    registrationCount: event.registrationCount,
   };
 }
 

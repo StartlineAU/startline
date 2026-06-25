@@ -9,6 +9,7 @@ import HeroCarousel from "@/components/HeroCarousel";
 import HeroSearch from "@/components/HeroSearch";
 import { ScrollCarousel } from "@/components/ui/ScrollCarousel";
 import { Button } from "@/components/ui/button";
+import type { UserEvent } from "@/types";
 
 export const revalidate = 60;
 
@@ -21,9 +22,70 @@ const CATEGORIES = [
 
 const EVENT_TYPE_ORDER = ["fitness-racing", "running", "crossfit", "hybrid"] as const;
 
+const CITY_SECTIONS = [
+  { city: "Melbourne", state: "VIC" },
+  { city: "Sydney",    state: "NSW" },
+  { city: "Brisbane",  state: "QLD" },
+] as const;
+
+function EventCard({ event, width = "w-[220px] sm:w-[260px]" }: { event: UserEvent; width?: string }) {
+  const [day, month] = formatShortDate(event.date).split(" ");
+  const img = getEventImage(event.type, event.id);
+  return (
+    <Link
+      href={`/events/${event.id}`}
+      className={`group flex-shrink-0 ${width}`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <div>
+        <div className="relative w-full aspect-[4/3] overflow-hidden bg-dark mb-3 rounded-2xl sm:rounded-3xl">
+          <img
+            src={img}
+            alt={event.title}
+            className="w-full h-full object-cover brightness-75 group-hover:brightness-90 transition-all duration-500"
+          />
+          <div className="absolute top-2.5 left-2.5">
+            <span className="font-headline text-[9px] sm:text-[10px] font-bold uppercase tracking-widest bg-primary text-dark px-2 py-1 rounded-full">
+              {EVENT_TYPE_LABELS[event.type]}
+            </span>
+          </div>
+        </div>
+        <div className="px-0.5">
+          <h3 className="font-headline text-sm sm:text-base font-black italic tracking-tighter text-light group-hover:text-primary transition-colors leading-tight mb-1">
+            {truncateTitle(event.title)}
+          </h3>
+          <div className="flex items-center gap-1.5 font-headline text-[10px] sm:text-xs text-muted uppercase tracking-widest mb-0.5">
+            <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+            {event.city}, {event.state.toUpperCase()}
+          </div>
+          <div className="flex items-center gap-1.5 font-headline text-[10px] sm:text-xs text-muted uppercase tracking-widest">
+            <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
+            {day} {month}
+          </div>
+          {event.ticketDrops && event.ticketDrops.length > 0 && (
+            <p className="font-headline text-xs font-bold text-light mt-1.5">
+              From {event.ticketDrops[0].price}
+            </p>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default async function Home() {
   const raw = await getAllEvents();
   const events = toUserEvents(raw);
+
+  const popularEvents = [...events]
+    .sort((a, b) => (b.registrationCount ?? 0) - (a.registrationCount ?? 0))
+    .slice(0, 12);
+
+  const cityEvents = CITY_SECTIONS.map(({ city, state }) => ({
+    city,
+    state,
+    events: events.filter((e) => e.city.toLowerCase() === city.toLowerCase()),
+  })).filter((s) => s.events.length > 0);
 
   const categories = CATEGORIES.map((c) => ({
     ...c,
@@ -58,51 +120,27 @@ export default async function Home() {
           viewAllHref="/events"
           arrowTopClass="top-[98px]"
         >
-          {events.map((event) => {
-            const [day, month] = formatShortDate(event.date).split(" ");
-            const img = getEventImage(event.type, event.id);
-            return (
-              <Link
-                key={event.id}
-                href={`/events/${event.id}`}
-                className="group flex-shrink-0 w-[220px] sm:w-[260px]"
-                style={{ scrollSnapAlign: "start" }}
-              >
-                <div className="relative w-full aspect-[4/3] overflow-hidden bg-dark mb-3 rounded-2xl sm:rounded-3xl">
-                  <img
-                    src={img}
-                    alt={event.title}
-                    className="w-full h-full object-cover brightness-75 group-hover:brightness-90 transition-all duration-500"
-                  />
-                  <div className="absolute top-2.5 left-2.5">
-                    <span className="font-headline text-[9px] sm:text-[10px] font-bold uppercase tracking-widest bg-primary text-dark px-2 py-1 rounded-full">
-                      {EVENT_TYPE_LABELS[event.type]}
-                    </span>
-                  </div>
-                </div>
-                <div className="px-0.5">
-                  <h3 className="font-headline text-sm sm:text-base font-black italic tracking-tighter text-light group-hover:text-primary transition-colors leading-tight mb-1">
-                    {truncateTitle(event.title)}
-                  </h3>
-                  <div className="flex items-center gap-1.5 font-headline text-[10px] sm:text-xs text-muted uppercase tracking-widest mb-0.5">
-                    <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
-                    {event.city}, {event.state.toUpperCase()}
-                  </div>
-                  <div className="flex items-center gap-1.5 font-headline text-[10px] sm:text-xs text-muted uppercase tracking-widest">
-                    <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
-                    {day} {month}
-                  </div>
-                  {event.ticketDrops && event.ticketDrops.length > 0 && (
-                    <p className="font-headline text-xs font-bold text-light mt-1.5">
-                      From {event.ticketDrops[0].price}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+          {popularEvents.map((event) => (
+            <EventCard key={event.id} event={event} width="w-[220px] sm:w-[260px]" />
+          ))}
         </ScrollCarousel>
       </section>
+
+      {/* ── City Carousels ── */}
+      {cityEvents.map(({ city, state, events: cityEvts }) => (
+        <section key={city} className="max-w-[1440px] mx-auto px-4 sm:px-6 pb-10 sm:pb-16">
+          <ScrollCarousel
+            eyebrow={state}
+            title={`Events in ${city}`}
+            viewAllHref={`/events?search=${city}`}
+            arrowTopClass="top-[98px]"
+          >
+            {cityEvts.map((event) => (
+              <EventCard key={event.id} event={event} width="w-[220px] sm:w-[260px]" />
+            ))}
+          </ScrollCarousel>
+        </section>
+      ))}
 
       {/* ── Event Categories ── */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-6 pb-10 sm:pb-16">
@@ -132,7 +170,7 @@ export default async function Home() {
                 </div>
               </div>
               <div className="px-0.5">
-                <h3 className="font-headline text-sm sm:text-base font-black italic tracking-tighter text-light group-hover:text-primary transition-colors mb-0.5">
+                <h3 className="font-headline text-sm sm:text-base font-black italic tracking-tighter text-light group-hover:text-primary mb-0.5">
                   {cat.label}
                 </h3>
                 <p className="font-headline text-[10px] sm:text-xs text-muted tracking-wide">{cat.description}</p>
@@ -194,8 +232,7 @@ export default async function Home() {
       <section className="bg-dark border-t border-dark-lighter">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-12 sm:py-16 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
           <div className="max-w-xl">
-            <p className="font-headline text-xs font-medium uppercase tracking-widest text-primary flex items-center gap-3 mb-4">
-              <span className="w-8 h-px bg-primary inline-block" />
+            <p className="font-headline text-xs font-medium uppercase tracking-widest text-primary mb-4">
               Australia&apos;s Fitness Event Calendar
             </p>
             <h2 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-black italic tracking-tighter text-light leading-tight mb-3">
@@ -203,7 +240,7 @@ export default async function Home() {
               <span className="text-primary">next start line?</span>
             </h2>
             <p className="text-muted text-sm leading-relaxed">
-              Fitness racing, CrossFit, running and hybrid events across Australia &mdash; all in one place.
+              Fitness racing, CrossFit, running and hybrid events across Australia - all in one place.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">

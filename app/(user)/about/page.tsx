@@ -63,7 +63,7 @@ export default function AboutPage() {
                 </p>
                 <p className="text-light/85 text-sm leading-relaxed">
                   StartLine isn&apos;t limited to one kind of effort. We list endurance events across
-                  distances and formats &mdash; road, trail, turf, and longer tests &mdash; right next to comps and
+                  distances and formats - road, trail, turf, and longer tests - right next to comps and
                   community sessions, so your next start line matches how you actually train.
                 </p>
               </div>
@@ -87,7 +87,7 @@ export default function AboutPage() {
               <p className="text-muted text-lg leading-relaxed max-w-2xl">
                 Too many running events, functional fitness competitions, and community-based training
                 groups go unrecognised until someone posts a finish-line photo. With a centralised fitness
-                competition platform, StartLine helps connect users to organisers &mdash; so you hear about the
+                competition platform, StartLine helps connect users to organisers - so you hear about the
                 opportunity when it matters, not only after the fact.
               </p>
             </div>
@@ -118,7 +118,7 @@ export default function AboutPage() {
               <span className="text-primary">next start line?</span>
             </h2>
             <p className="text-muted text-sm leading-relaxed">
-              Fitness racing, CrossFit, running and hybrid events across Australia &mdash; all in one place.
+              Fitness racing, CrossFit, running and hybrid events across Australia - all in one place.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">

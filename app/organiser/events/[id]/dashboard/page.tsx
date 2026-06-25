@@ -363,7 +363,7 @@ export default function EventDashboardPage({
                         type="text"
                         value={annTitle}
                         onChange={e => setAnnTitle(e.target.value)}
-                        placeholder="e.g. Schedule update — Saturday heat times"
+                        placeholder="e.g. Schedule update - Saturday heat times"
                         className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none transition-colors"
                       />
                     </div>

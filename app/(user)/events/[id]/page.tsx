@@ -118,7 +118,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Time</p>
                   <p className="font-headline text-base font-black italic text-light">
                     {formatTime(event.time)}
-                    {event.endTime && ` — ${formatTime(event.endTime)}`}
+                    {event.endTime && ` - ${formatTime(event.endTime)}`}
                   </p>
                 </div>
                 <div>

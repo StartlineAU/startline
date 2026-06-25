@@ -171,7 +171,7 @@ function PaymentsContent() {
               Get paid for<br /><span className="text-lime-500">your events.</span>
             </h1>
             <p className="text-gray-500 text-[14px] sm:text-[15px] max-w-lg">
-              To accept registrations and receive payouts through Startline, you need to connect a Stripe Express account. This is only required for marketplace listings — directory listings linking to an external platform don't need this.
+              To accept registrations and receive payouts through Startline, you need to connect a Stripe Express account. This is only required for marketplace listings - directory listings linking to an external platform don&apos;t need this.
             </p>
           </div>
 
@@ -281,10 +281,10 @@ function PaymentsContent() {
           <Card>
             <CardContent className="p-4 sm:p-6 lg:p-8">
               <h2 className="font-headline text-xl font-black italic tracking-tighter text-gray-900 mb-1">
-                {isConnected ? "Your details" : "Step 1 — Your details"}
+                {isConnected ? "Your details" : "Step 1 - Your details"}
               </h2>
               <p className="text-[13px] text-gray-500 mb-6">
-                Required for ATO tax reporting under the Sharing Economy Reporting Regime (SERR). Stripe holds your bank account and identity details — Startline only stores your legal name, ABN, and a Stripe account reference.
+                Required for ATO tax reporting under the Sharing Economy Reporting Regime (SERR). Stripe holds your bank account and identity details - Startline only stores your legal name, ABN, and a Stripe account reference.
               </p>
 
               <div className="space-y-5">
@@ -341,7 +341,7 @@ function PaymentsContent() {
                       Public liability insurance declaration
                     </div>
                     <p className="text-[13px] text-gray-500 leading-relaxed mb-4">
-                      Before listing events on Startline, you must hold and maintain current public liability insurance with a minimum coverage of <strong>$10 million per occurrence</strong>, underwritten by an APRA-registered insurer, covering the full duration of each event. Startline does not collect or verify insurance certificates — this is a self-declaration on your honour (ToS §5.3).
+                      Before listing events on Startline, you must hold and maintain current public liability insurance with a minimum coverage of <strong>$10 million per occurrence</strong>, underwritten by an APRA-registered insurer, covering the full duration of each event. Startline does not collect or verify insurance certificates - this is a self-declaration on your honour (ToS §5.3).
                     </p>
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <div className="relative flex-shrink-0 mt-0.5">
@@ -371,7 +371,7 @@ function PaymentsContent() {
               {!isConnected && (
                 <div className="mt-8 pt-6 border-t border-gray-100">
                   <h2 className="font-headline text-xl font-black italic tracking-tighter text-gray-900 mb-1">
-                    Step 2 — Connect Stripe
+                    Step 2 - Connect Stripe
                   </h2>
                   <p className="text-[13px] text-gray-500 mb-5">
                     You'll be taken to Stripe's secure, hosted onboarding. Stripe will collect your date of birth (for identity verification) and bank account details for payouts. Startline never sees or stores this information.

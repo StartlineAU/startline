@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, LogOut, User, Building2, Plus } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import SignInModal from "@/components/SignInModal";
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -117,27 +117,27 @@ export default function Header() {
               {isUserOpen && (
                 <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-dark-darker/95 backdrop-blur-xl border border-white/[0.05] rounded-xl shadow-2xl overflow-hidden animate-fade-in">
                   <Link href="/profile" onClick={() => setIsUserOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <User className="w-4 h-4" /> Profile
+                    className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    Profile
                   </Link>
 
                   {hasOrganiser ? (
                     <Link href="/organiser/dashboard" onClick={() => setIsUserOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                      <Building2 className="w-4 h-4" /> Organiser Dashboard
+                      className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                      Organiser Dashboard
                     </Link>
                   ) : (
                     <Link href="/organiser-setup" onClick={() => setIsUserOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
-                      <Plus className="w-4 h-4" /> Setup Organiser
+                      className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
+                      Setup Organiser
                     </Link>
                   )}
 
                   <div className="border-t border-white/10" />
 
                   <button onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
-                    <LogOut className="w-4 h-4" /> Sign Out
+                    className="w-full flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
+                    Sign Out
                   </button>
                 </div>
               )}
@@ -183,13 +183,13 @@ export default function Header() {
                 <div className="border-t border-white/10 my-1.5" />
                 {hasOrganiser ? (
                   <Link href="/organiser/dashboard" onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <Building2 className="w-4 h-4" /> Organiser Dashboard
+                    className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    Organiser Dashboard
                   </Link>
                 ) : (
                   <Link href="/organiser-setup" onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
-                    <Plus className="w-4 h-4" /> Setup Organiser
+                    className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
+                    Setup Organiser
                   </Link>
                 )}
               </>
@@ -198,8 +198,8 @@ export default function Header() {
             <div className="border-t border-white/10 mt-1.5 pt-3 pb-2">
               {status === "authenticated" ? (
                 <button onClick={() => { setIsMenuOpen(false); handleSignOut(); }}
-                  className="w-full flex items-center justify-center gap-2 h-10 rounded-lg font-headline text-[12px] font-bold uppercase tracking-widest text-red-400/80 border border-white/10 hover:text-red-400 hover:border-red-400/30 transition-colors">
-                  <LogOut className="w-4 h-4" /> Sign Out
+                  className="w-full flex items-center justify-center h-10 rounded-lg font-headline text-[12px] font-bold uppercase tracking-widest text-red-400/80 border border-white/10 hover:text-red-400 hover:border-red-400/30 transition-colors">
+                  Sign Out
                 </button>
               ) : (
                 <button

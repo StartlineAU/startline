@@ -56,6 +56,7 @@ export interface UserEvent {
   isOfficial?: boolean;
   ticketDrops?: TicketDrop[];
   fromPrice: number | null;
+  registrationCount?: number;
   tagline?: string | null;
   coverImageUrl?: string | null;
   organiser?: {
