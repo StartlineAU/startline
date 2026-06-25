@@ -12,15 +12,19 @@ export const { runWithAmplifyServerContext } = createServerRunner({
 });
 
 export type ServerSession = {
-  sub:    string;
-  email:  string;
-  groups: string[];
+  sub:         string;
+  email:       string;
+  groups:      string[];
+  phoneNumber: string | null;
+  birthdate:   string | null;
 };
 
 export type UserSession = {
-  sub:   string; // Prisma User.id
-  email: string;
-  name:  string | null;
+  sub:         string; // Prisma User.id
+  email:       string;
+  name:        string | null;
+  phoneNumber: string | null;
+  birthdate:   string | null;
 };
 
 export type OrganiserSession = {
@@ -47,6 +51,21 @@ const jwksClient = new JwksClientModule.JwksClient({
   requestHeaders: {},
   timeout: 10000,
 });
+
+function isEmail(value: string | undefined | null): value is string {
+  return !!value && value.includes("@");
+}
+
+function resolveSessionEmail(
+  idPayload: jwt.JwtPayload | null,
+  accessPayload: jwt.JwtPayload,
+  lastAuthUser: string
+): string {
+  if (isEmail(idPayload?.email as string | undefined)) return idPayload!.email as string;
+  if (isEmail(lastAuthUser)) return lastAuthUser;
+  if (isEmail(accessPayload.email as string | undefined)) return accessPayload.email as string;
+  return "";
+}
 
 function verifyToken(token: string): Promise<jwt.JwtPayload> {
   return new Promise((resolve, reject) => {
@@ -76,18 +95,22 @@ export async function getServerSession(): Promise<ServerSession | null> {
     )?.value;
     if (!lastAuthUser) return null;
 
-    const accessToken = cookieStore.get(
-      `CognitoIdentityServiceProvider.${clientId}.${encodeURIComponent(lastAuthUser)}.accessToken`
-    )?.value;
+    const cookiePrefix = `CognitoIdentityServiceProvider.${clientId}.${encodeURIComponent(lastAuthUser)}`;
+
+    const accessToken = cookieStore.get(`${cookiePrefix}.accessToken`)?.value;
     if (!accessToken) return null;
 
-    const payload = await verifyToken(accessToken);
+    const idToken = cookieStore.get(`${cookiePrefix}.idToken`)?.value;
+    const accessPayload = await verifyToken(accessToken);
+    const idPayload = idToken ? await verifyToken(idToken).catch(() => null) : null;
 
-    const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
-    const sub   = payload.sub as string;
-    const email = lastAuthUser;
+    const groups = (accessPayload["cognito:groups"] as string[] | undefined) ?? [];
+    const sub = accessPayload.sub as string;
+    const email = resolveSessionEmail(idPayload, accessPayload, lastAuthUser);
+    const phoneNumber = (idPayload?.phone_number as string | undefined) ?? null;
+    const birthdate = (idPayload?.birthdate as string | undefined) ?? null;
 
-    return { sub, email, groups };
+    return { sub, email, groups, phoneNumber, birthdate };
   } catch {
     return null;
   }
@@ -98,13 +121,31 @@ export async function getUserSession(): Promise<UserSession | null> {
   if (!cognitoSession) return null;
 
   try {
+    const existing = await prisma.user.findUnique({
+      where:  { cognitoSub: cognitoSession.sub },
+      select: { email: true },
+    });
+
+    const emailForDb = isEmail(cognitoSession.email)
+      ? cognitoSession.email
+      : (isEmail(existing?.email) ? existing!.email : cognitoSession.email);
+
     const user = await prisma.user.upsert({
       where:  { cognitoSub: cognitoSession.sub },
-      update: { email: cognitoSession.email },
-      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
+      update: isEmail(cognitoSession.email) ? { email: cognitoSession.email } : {},
+      create: { cognitoSub: cognitoSession.sub, email: emailForDb },
       select: { id: true, email: true, name: true },
     });
-    return { sub: user.id, email: user.email, name: user.name };
+
+    const email = isEmail(cognitoSession.email) ? cognitoSession.email : user.email;
+
+    return {
+      sub:         user.id,
+      email,
+      name:        user.name,
+      phoneNumber: cognitoSession.phoneNumber,
+      birthdate:   cognitoSession.birthdate,
+    };
   } catch {
     return null;
   }
@@ -140,11 +181,12 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     const admin = await prisma.admin.upsert({
       where:  { cognitoSub: cognitoSession.sub },
-      update: { email: cognitoSession.email },
+      update: isEmail(cognitoSession.email) ? { email: cognitoSession.email } : {},
       create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
       select: { id: true, email: true, name: true },
     });
-    return { sub: admin.id, email: admin.email, name: admin.name };
+    const email = isEmail(cognitoSession.email) ? cognitoSession.email : admin.email;
+    return { sub: admin.id, email, name: admin.name };
   } catch {
     return null;
   }

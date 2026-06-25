@@ -40,9 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const current = await getCurrentUser();
+      const idPayload = session.tokens.idToken?.payload;
+      const loginId = current.signInDetails?.loginId ?? "";
+      const email =
+        (typeof idPayload?.email === "string" && idPayload.email.includes("@")
+          ? idPayload.email
+          : loginId.includes("@")
+            ? loginId
+            : "");
+
       setUser({
         sub:   current.userId,
-        email: current.signInDetails?.loginId ?? "",
+        email,
       });
       setStatus("authenticated");
     } catch {

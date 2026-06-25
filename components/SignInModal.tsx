@@ -13,6 +13,7 @@ type View = "signin" | "signup" | "onboarding";
 interface SignInModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 function calcAge(dobStr: string): number {
@@ -24,7 +25,7 @@ function calcAge(dobStr: string): number {
   return age;
 }
 
-export default function SignInModal({ isOpen, onClose }: SignInModalProps) {
+export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalProps) {
   const router      = useRouter();
   const { refresh } = useAuthContext();
 
@@ -103,6 +104,7 @@ export default function SignInModal({ isOpen, onClose }: SignInModalProps) {
       } catch {}
 
       await refresh();
+      onSuccess?.();
       onClose();
     } catch (err: unknown) {
       const errName = (err as { name?: string })?.name ?? "";
