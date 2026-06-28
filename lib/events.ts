@@ -30,6 +30,7 @@ export interface PublicEvent {
   registrationUrl: string | null;
   feeStructure: string;
   fromPrice: number | null;
+  registrationCount: number;
   organiserId: string;
   organiser: {
     id: string;
@@ -79,12 +80,14 @@ export async function getAllEvents(): Promise<PublicEvent[]> {
         organiser: {
           select: { id: true, orgName: true, logoUrl: true, stripeAccountId: true, stripeOnboardingComplete: true },
         },
+        _count: { select: { registrations: true } },
       },
     });
 
     return events.map((e) => ({
       ...e,
       fromPrice: lowestPrice(e.waves),
+      registrationCount: e._count.registrations,
     }));
   } catch {
     return [];

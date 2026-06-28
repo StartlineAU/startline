@@ -70,7 +70,7 @@ export default function OrganiserSetupPage() {
   const steps = [
     { icon: Users, label: "Publish events", desc: "List events on Australia's fitness calendar and reach thousands of athletes." },
     { icon: CreditCard, label: "Sell tickets", desc: "Sell tickets directly on Startline with Stripe-powered payouts." },
-    { icon: ShieldCheck, label: "Verification", desc: "Verified organisers publish immediately. Unverified events need admin approval — a quick review to ensure quality." },
+    { icon: ShieldCheck, label: "Verification", desc: "Verified organisers publish immediately. Unverified events need admin approval - a quick review to ensure quality." },
   ];
 
   return (
@@ -113,7 +113,7 @@ export default function OrganiserSetupPage() {
               <div className="space-y-4 text-muted text-[13px] leading-relaxed">
                 <div>
                   <p className="font-headline text-[12px] font-bold text-light mb-1">How does verification work?</p>
-                  <p>New organisers start unverified. Events you create will be reviewed by our admin team before going live. Once you&apos;ve built a track record, we may grant verified status — letting you publish immediately.</p>
+                  <p>New organisers start unverified. Events you create will be reviewed by our admin team before going live. Once you&apos;ve built a track record, we may grant verified status - letting you publish immediately.</p>
                 </div>
                 <div>
                   <p className="font-headline text-[12px] font-bold text-light mb-1">How long does review take?</p>

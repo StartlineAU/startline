@@ -62,7 +62,7 @@ function StepPill({ n, label }: { n: string; label: string }) {
         {n}
       </span>
       <span className="font-headline text-[11px] font-bold uppercase tracking-[0.2em] text-lime-600">
-        Step {n} — {label}
+        Step {n} - {label}
       </span>
     </div>
   );
@@ -162,7 +162,7 @@ export default function HowItWorksPage() {
                     Launch your first<br />event in <span className="text-lime-500">four<br />steps.</span>
                   </h1>
                   <p className="text-gray-500 text-[17px] leading-relaxed max-w-[480px]">
-                    From building your organiser profile to going live on Australia&apos;s competitive fitness calendar — here&apos;s exactly how it works.
+                    From building your organiser profile to going live on Australia&apos;s competitive fitness calendar - here&apos;s exactly how it works.
                   </p>
                 </Reveal>
               </div>
@@ -216,7 +216,7 @@ export default function HowItWorksPage() {
                   Build your<br />organiser profile.
                 </h2>
                 <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
-                  Before your first event goes live, set up your organiser profile. Athletes don&apos;t just sign up for events — they choose organisers they trust.
+                  Before your first event goes live, set up your organiser profile. Athletes don&apos;t just sign up for events - they choose organisers they trust.
                 </p>
                 <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
                   Upload your logo, write a short bio, and link your website and socials. Your profile appears on every event you list, building credibility with every click.
@@ -370,7 +370,7 @@ export default function HowItWorksPage() {
                     Create your<br />event listing.
                   </h2>
                   <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
-                    Use our guided five-step form to build your listing. Enter your event details, venue, ticket categories and what&apos;s included — everything an athlete needs to decide and register.
+                    Use our guided five-step form to build your listing. Enter your event details, venue, ticket categories and what&apos;s included - everything an athlete needs to decide and register.
                   </p>
                   <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
                     Save a draft at any stage and come back later. Your listing won&apos;t go live until you choose to submit for review.
@@ -409,7 +409,7 @@ export default function HowItWorksPage() {
                   Submit for<br />review.
                 </h2>
                 <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
-                  When you&apos;re happy with your listing, hit submit. Our team reviews every event for accuracy and community standards — usually within 48 hours.
+                  When you&apos;re happy with your listing, hit submit. Our team reviews every event for accuracy and community standards - usually within 48 hours.
                 </p>
                 <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
                   You&apos;ll receive an email the moment your event is approved and goes live on the platform. From there, athletes can find and register immediately.
@@ -689,7 +689,7 @@ export default function HowItWorksPage() {
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { icon: Eye,    title: "Homepage featured",       body: "New and upcoming events appear on the homepage, seen by every visitor."          },
-                { icon: Search, title: "Search & filter",         body: "Athletes filter by discipline, state, date and format — matching to your event." },
+                { icon: Search, title: "Search & filter",         body: "Athletes filter by discipline, state, date and format - matching to your event." },
                 { icon: Award,  title: "Discipline pages",        body: "Your event is listed on dedicated CrossFit, Running, Cycling and Swimming pages." },
               ].map(({ icon: Icon, title, body }, i) => (
                 <Reveal key={title} delay={i * 70}>
@@ -723,7 +723,7 @@ export default function HowItWorksPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { icon: BarChart2, n: "01", title: "Track registrations",   body: "Live count of registrations across all your events from the dashboard."                 },
-                { icon: FileEdit,  n: "02", title: "Edit anytime",           body: "Update pricing, dates, descriptions or images — changes reflect immediately."             },
+                { icon: FileEdit,  n: "02", title: "Edit anytime",           body: "Update pricing, dates, descriptions or images - changes reflect immediately."             },
                 { icon: Ticket,    n: "03", title: "Multiple ticket tiers",  body: "Add early-bird, general and VIP waves with individual closing dates. Free events too."    },
                 { icon: Layers,    n: "04", title: "Pin your best events",   body: "Pin flagship events to the top of your listing page for maximum visibility."              },
               ].map(({ icon: Icon, n, title, body }, i) => (

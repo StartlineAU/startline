@@ -342,7 +342,7 @@ export default function ProfilePage() {
             Your events
           </p>
           <p className="text-muted text-sm leading-relaxed">
-            Saved events and interest you register are stored in this browser only &mdash; nothing is sent to an account server.
+            Saved events and interest you register are stored in this browser only - nothing is sent to an account server.
           </p>
         </div>
 
@@ -356,7 +356,7 @@ export default function ProfilePage() {
               <span className="ml-auto font-headline text-xs text-muted">{savedEvents.length}</span>
             </div>
             <p className="text-muted text-xs mb-6 leading-relaxed">
-              Events you&apos;ve bookmarked with the heart icon &mdash; your personal shortlist to revisit later.
+              Events you&apos;ve bookmarked with the heart icon - your personal shortlist to revisit later.
             </p>
             {eventsLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -409,7 +409,7 @@ export default function ProfilePage() {
               <span className="ml-auto font-headline text-xs text-muted">{registeredEvents.length}</span>
             </div>
             <p className="text-muted text-xs mb-6 leading-relaxed">
-              Events where you tapped &quot;Register interest&quot; &mdash; stored locally in this browser.
+              Events where you tapped &quot;Register interest&quot; - stored locally in this browser.
             </p>
             {eventsLoading ? (
               <div className="flex items-center justify-center py-8">

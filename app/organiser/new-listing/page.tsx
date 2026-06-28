@@ -190,7 +190,7 @@ function DatePickerPopover({
   const displayValue = isRange
     ? value
       ? rangeEnd && rangeEnd !== value
-        ? `${fmtDateShort(value)} — ${fmtDateShort(rangeEnd)}`
+        ? `${fmtDateShort(value)} - ${fmtDateShort(rangeEnd)}`
         : rangeEnd && rangeEnd === value
           ? fmtDateShort(value) + " (1 day)"
           : fmtDateShort(value) + " → pick end date"
@@ -453,7 +453,7 @@ function TimePicker({ value, onChange, placeholder = "Select time" }: {
 
           {/* Divider */}
           <div className="px-4 py-2 font-headline text-[9px] uppercase tracking-widest text-gray-400 text-center">
-            — or pick a slot —
+            - or pick a slot -
           </div>
 
           {/* 30-min slot list */}
@@ -770,7 +770,7 @@ function FormatStep({ form, update }: { form: FormState; update: (p: Partial<For
             placeholder="e.g. 4200" className={`${inputCls} w-40`} />
         )}
         {capMode === "unlimited" && (
-          <p className="font-headline text-[11px] uppercase tracking-widest text-gray-400">No cap — open registrations until you close manually.</p>
+          <p className="font-headline text-[11px] uppercase tracking-widest text-gray-400">No cap - open registrations until you close manually.</p>
         )}
       </Field>
 
@@ -822,7 +822,7 @@ function FormatStep({ form, update }: { form: FormState; update: (p: Partial<For
           </div>
         )}
         {ageMode === "open" && (
-          <p className="font-headline text-[11px] uppercase tracking-widest text-gray-400">No age restriction — open to all ages.</p>
+          <p className="font-headline text-[11px] uppercase tracking-widest text-gray-400">No age restriction - open to all ages.</p>
         )}
       </Field>
     </div>
@@ -1172,7 +1172,7 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
                   rows={3}
                   value={form.activations.trim() === "" ? "" : form.activations}
                   onChange={e => update({ activations: e.target.value })}
-                  placeholder="Describe the activations available — e.g. recovery zone, supplement sampling, athlete village, sponsor booths…"
+                  placeholder="Describe the activations available - e.g. recovery zone, supplement sampling, athlete village, sponsor booths…"
                   className={textareaCls}
                 />
               </div>
@@ -1316,7 +1316,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: { form: FormState; 
     { k: "Discipline",    v: form.discipline ? form.discipline.toUpperCase() : "—",                          step: 0 },
     { k: "Date",          v: form.date
         ? form.endDate && form.endDate !== form.date
-          ? `${new Date(form.date + "T00:00:00").toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short", year:"numeric" })} — ${new Date(form.endDate + "T00:00:00").toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short", year:"numeric" })}`
+          ? `${new Date(form.date + "T00:00:00").toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short", year:"numeric" })} - ${new Date(form.endDate + "T00:00:00").toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short", year:"numeric" })}`
           : new Date(form.date + "T00:00:00").toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short", year:"numeric" })
         : "—", step: 1 },
     { k: "Start / End",   v: form.startTime ? `${fmt24to12(form.startTime)}${form.endTime ? ` → ${fmt24to12(form.endTime)}` : ""}` : "—", step: 1 },
@@ -1400,7 +1400,7 @@ function LivePreview({ form }: { form: FormState }) {
 
   const dateLabel = form.date
     ? form.endDate && form.endDate !== form.date
-      ? `${sDay} ${sMon} — ${eDay} ${eMon}`
+      ? `${sDay} ${sMon} - ${eDay} ${eMon}`
       : `${sDay} ${sMon}${sp[0] ? ` ${sp[0]}` : ""}`
     : "Date TBC";
 
@@ -1549,7 +1549,7 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
           <div className="flex items-center gap-3">
             <Eye className="w-4 h-4 text-primary" />
             <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-primary">Athlete view preview</span>
-            <span className="font-headline text-[10px] uppercase tracking-widest text-muted-dark hidden sm:block">— This is how your listing will appear to athletes</span>
+            <span className="font-headline text-[10px] uppercase tracking-widest text-muted-dark hidden sm:block">- This is how your listing will appear to athletes</span>
           </div>
           <button onClick={onClose}
             className="flex items-center gap-2 font-headline text-[11px] font-bold uppercase tracking-widest text-muted hover:text-light transition-colors">
@@ -2022,7 +2022,7 @@ export default function NewListingPage() {
                     {step === 5 && <>Review, then<br /><span className="text-primary">hit publish.</span></>}
                   </h1>
                   <p className="text-gray-500 mt-2 max-w-lg text-[14px]">
-                    {step === 0 && "Keep it short and sharp — this is what athletes will see first."}
+                    {step === 0 && "Keep it short and sharp - this is what athletes will see first."}
                     {step === 1 && "Athletes will search your event by city, state and date."}
                     {step === 2 && "You can enable multiple formats. Functional fitness events commonly offer Individual and Doubles."}
                     {step === 3 && "Add ticket categories with pricing. You can edit dates and prices anytime before opening sales."}
@@ -2054,7 +2054,7 @@ export default function NewListingPage() {
                       {submitErrors.map(i => (
                         <li key={i} className="flex items-start justify-between gap-4 py-2.5 px-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
                           <div>
-                            <p className="font-headline text-[12px] font-bold uppercase tracking-widest text-orange-600">{STEPS[i].n} — {STEPS[i].label}</p>
+                            <p className="font-headline text-[12px] font-bold uppercase tracking-widest text-orange-600">{STEPS[i].n} - {STEPS[i].label}</p>
                             <p className="text-orange-500 text-[12px] mt-0.5">{STEP_ERRORS[i]}</p>
                           </div>
                           <button

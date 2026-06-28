@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, LogOut, Plus, Settings, Bell, CheckCircle2, XCircle, Menu, X, LayoutDashboard, CalendarDays, CreditCard, BookOpen, ArrowLeft } from "lucide-react";
+import { User, Bell, CheckCircle2, XCircle, Menu, X } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 
 const NAV = [
@@ -250,33 +250,33 @@ export default function OrganiserTopBar() {
 
                 <div className="py-1.5">
                   {[
-                    { href: "/organiser/dashboard",    label: "Dashboard",  Icon: LayoutDashboard },
-                    { href: "/organiser/listings",     label: "Listings",   Icon: CalendarDays    },
-                    { href: "/organiser/profile",      label: "Profile",    Icon: User            },
-                    { href: "/organiser/payments",     label: "Payments",   Icon: CreditCard      },
-                    { href: "/organiser/how-it-works", label: "Guide",      Icon: BookOpen        },
-                    { href: "/organiser/new-listing",  label: "Post an event", Icon: Plus         },
-                  ].map(({ href, label, Icon }) => (
+                    { href: "/organiser/dashboard",    label: "Dashboard"     },
+                    { href: "/organiser/listings",     label: "Listings"      },
+                    { href: "/organiser/profile",      label: "Profile"       },
+                    { href: "/organiser/payments",     label: "Payments"      },
+                    { href: "/organiser/how-it-works", label: "Guide"         },
+                    { href: "/organiser/new-listing",  label: "Post an event" },
+                  ].map(({ href, label }) => (
                     <Link key={href} href={href} onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                      <Icon className="w-4 h-4 shrink-0" /> {label}
+                      className="flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                      {label}
                     </Link>
                   ))}
                 </div>
 
                 <div className="border-t border-white/10 py-1.5">
                   <button onClick={openSettings}
-                    className="w-full flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <Settings className="w-4 h-4 shrink-0" /> Settings
+                    className="w-full flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    Settings
                   </button>
                   <Link href={CUSTOMER_URL}
                     onClick={() => setOpen(false)}
-                    className="w-full flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
-                    <ArrowLeft className="w-4 h-4 shrink-0" /> Switch to User
+                    className="w-full flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
+                    Switch to User
                   </Link>
                   <button onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
-                    <LogOut className="w-4 h-4 shrink-0" /> Sign out
+                    className="w-full flex items-center px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
+                    Sign out
                   </button>
                 </div>
               </div>
@@ -312,29 +312,27 @@ export default function OrganiserTopBar() {
                 </div>
                 <div className="py-1.5">
                   <Link href="/organiser/profile" onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <User className="w-4 h-4 shrink-0" /> My Profile
+                    className="flex items-center px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    My Profile
                   </Link>
                   <Link href="/organiser/new-listing" onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <Plus className="w-4 h-4 shrink-0" /> Post an Event
+                    className="flex items-center px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    Post an Event
                   </Link>
                   <button onClick={openSettings}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <Settings className="w-4 h-4 shrink-0" /> Settings
+                    className="w-full flex items-center px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                    Settings
                   </button>
                 </div>
                 <div className="border-t border-white/10 py-1.5">
                   <Link href={CUSTOMER_URL}
                     onClick={() => setOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
-                    <ArrowLeft className="w-4 h-4 shrink-0" />
+                    className="w-full flex items-center px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
                     Switch to User
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
-                    <LogOut className="w-4 h-4 shrink-0" />
+                    className="w-full flex items-center px-4 py-2.5 font-headline text-[13px] font-bold uppercase tracking-widest text-red-400/80 hover:text-red-400 hover:bg-white/5 transition-colors">
                     Sign out
                   </button>
                 </div>
