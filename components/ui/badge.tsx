@@ -7,13 +7,13 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default:  "bg-gray-100 text-gray-500",
-        live:     "bg-lime-50 text-lime-700",
-        pending:  "bg-blue-50 text-blue-600",
-        draft:    "bg-gray-100 text-gray-500",
-        rejected: "bg-red-50 text-red-600",
-        archived: "bg-gray-100 text-gray-400",
-        primary:  "bg-lime-500 text-white",
+        default:  "bg-white/10 text-white/50",
+        live:     "bg-lime-500/20 text-lime-400",
+        pending:  "bg-blue-500/20 text-blue-400",
+        draft:    "bg-white/10 text-white/50",
+        rejected: "bg-red-500/20 text-red-400",
+        archived: "bg-white/[0.06] text-white/30",
+        primary:  "bg-primary text-dark",
       },
     },
     defaultVariants: { variant: "default" },

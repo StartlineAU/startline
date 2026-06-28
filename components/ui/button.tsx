@@ -9,17 +9,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gray-900 text-white hover:bg-gray-800 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
+          "bg-dark-lighter text-white hover:bg-white/15 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
         primary:
           "bg-gradient-to-br from-[rgb(194,236,119)] to-[rgb(179,225,83)] text-[rgb(31,31,31)] hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
         outline:
-          "border border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:text-gray-900 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
+          "border border-white/[0.12] bg-dark-light text-white/70 hover:border-white/25 hover:text-white hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
         ghost:
-          "text-gray-500 hover:text-gray-900 hover:bg-gray-100 hover:scale-[1.01] active:scale-100",
+          "text-white/50 hover:text-white hover:bg-white/10 hover:scale-[1.01] active:scale-100",
         destructive:
           "bg-red-500 text-white hover:bg-red-600 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
         lime:
-          "border border-lime-400 bg-lime-50 text-lime-700 hover:bg-lime-100 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
+          "border border-lime-500/50 bg-lime-500/15 text-lime-400 hover:bg-lime-500/25 hover:border-lime-500 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl active:translate-y-0 active:scale-100 active:shadow-none",
         machined:
           "bg-machined text-dark machined-button-shadow hover:-translate-y-0.5 hover:-translate-x-0.5 active:translate-x-0 active:translate-y-0",
         link: "text-lime-600 underline-offset-4 hover:underline",

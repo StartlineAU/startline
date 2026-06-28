@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, LogOut, User, Building2, Plus } from "lucide-react";
+import { Menu, X, LogOut, User, Plus, LayoutDashboard, CalendarDays, BookOpen } from "lucide-react";
 import SignInModal from "@/components/SignInModal";
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -12,6 +12,13 @@ const navItems = [
   { href: "/", label: "HOME" },
   { href: "/events", label: "EVENTS" },
   { href: "/about", label: "ABOUT" },
+];
+
+const organiserSubNav = [
+  { href: "/organiser/dashboard",    label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/organiser/listings",     label: "Listings",  Icon: CalendarDays    },
+  { href: "/organiser/profile",      label: "Profile",   Icon: User            },
+  { href: "/organiser/how-it-works", label: "Guide",     Icon: BookOpen        },
 ];
 
 export default function Header() {
@@ -80,6 +87,20 @@ export default function Header() {
               </Link>
             );
           })}
+
+          {/* Organiser tab */}
+          {status === "authenticated" && hasOrganiser && (
+            <Link
+              href="/organiser/dashboard"
+              className={`px-3 py-2 rounded-md font-headline text-[12px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors duration-150 ${
+                pathname?.startsWith("/organiser")
+                  ? "bg-white/15 text-white"
+                  : "text-white/50 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              ORGANISER
+            </Link>
+          )}
         </div>
 
         {/* Right side */}
@@ -121,12 +142,7 @@ export default function Header() {
                     <User className="w-4 h-4" /> Profile
                   </Link>
 
-                  {hasOrganiser ? (
-                    <Link href="/organiser/dashboard" onClick={() => setIsUserOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                      <Building2 className="w-4 h-4" /> Organiser Dashboard
-                    </Link>
-                  ) : (
+                  {!hasOrganiser && (
                     <Link href="/organiser-setup" onClick={() => setIsUserOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
                       <Plus className="w-4 h-4" /> Setup Organiser
@@ -182,10 +198,15 @@ export default function Header() {
               <>
                 <div className="border-t border-white/10 my-1.5" />
                 {hasOrganiser ? (
-                  <Link href="/organiser/dashboard" onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
-                    <Building2 className="w-4 h-4" /> Organiser Dashboard
-                  </Link>
+                  <>
+                    <div className="px-4 py-1.5 font-headline text-[10px] font-bold uppercase tracking-widest text-white/30">Organiser</div>
+                    {organiserSubNav.map(({ href, label, Icon }) => (
+                      <Link key={href} href={href} onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                        <Icon className="w-4 h-4 shrink-0" /> {label}
+                      </Link>
+                    ))}
+                  </>
                 ) : (
                   <Link href="/organiser-setup" onClick={() => setIsMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary hover:bg-white/5 transition-colors">
@@ -216,6 +237,30 @@ export default function Header() {
       )}
 
       <SignInModal isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} />
+
+      {/* Organiser sub-nav bar */}
+      {pathname?.startsWith("/organiser") && status === "authenticated" && hasOrganiser && (
+        <div className="fixed top-14 left-0 right-0 z-40 h-10 bg-dark-darker/90 backdrop-blur-xl border-b border-white/[0.05]">
+          <div className="flex items-center h-full max-w-[1200px] mx-auto px-4 sm:px-6 gap-0.5">
+            {organiserSubNav.map(({ href, label }) => {
+              const isActive = pathname === href || pathname?.startsWith(href + "/");
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`px-3 py-1.5 rounded-md font-headline text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors duration-150 ${
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "text-white/50 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
