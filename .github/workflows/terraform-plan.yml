@@ -35,7 +35,13 @@ jobs:
       - run: terraform validate
 
       - id: plan
-        run: terraform plan -no-color -lock=false -input=false -out=tfplan
+        run: |
+          terraform plan -no-color -lock=false -input=false -out=tfplan
+          # terraform exit code 2 = success with changes (expected on PRs)
+          # only exit 1 means a real error
+          rc=$?
+          if [ $rc -eq 2 ]; then exit 0; fi
+          exit $rc
         continue-on-error: true
         env:
           TF_VAR_amplify_repository_access_token: ${{ secrets.AMPLIFY_REPOSITORY_ACCESS_TOKEN }}
