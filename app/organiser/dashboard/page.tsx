@@ -1,10 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ArrowRight, MapPin } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,11 +40,11 @@ function formatEventDate(dateStr: string, startTime: string) {
 }
 
 const STATUS_STYLE: Record<EventStatus, { bg: string; text: string; label: string }> = {
-  DRAFT:    { bg: "bg-gray-200",  text: "text-gray-700",  label: "Draft"      },
-  PENDING:  { bg: "bg-blue-200",  text: "text-blue-900",  label: "Pending"    },
-  APPROVED: { bg: "bg-lime-200",  text: "text-lime-900",  label: "Published"  },
-  REJECTED: { bg: "bg-red-200",   text: "text-red-900",   label: "Rejected"   },
-  ARCHIVED: { bg: "bg-gray-200",  text: "text-gray-500",  label: "Archived"   },
+  DRAFT:    { bg: "bg-dark-lighter",  text: "text-white/70",  label: "Draft"      },
+  PENDING:  { bg: "bg-blue-500/20",  text: "text-blue-300",  label: "Pending"    },
+  APPROVED: { bg: "bg-lime-500/20",  text: "text-lime-300",  label: "Published"  },
+  REJECTED: { bg: "bg-red-500/20",   text: "text-red-300",   label: "Rejected"   },
+  ARCHIVED: { bg: "bg-dark-lighter",  text: "text-white/50",  label: "Archived"   },
 };
 
 function StatCard({
@@ -54,9 +53,9 @@ function StatCard({
   return (
     <Card className="hover:shadow-sm transition-shadow stagger-item" style={{ animationDelay: `${delay}ms` }}>
       <CardContent className="p-4 sm:p-6">
-        <div className="font-headline text-[10px] uppercase tracking-widest text-gray-500 mb-1.5">{label}</div>
-        <div className="font-headline text-2xl sm:text-5xl font-black italic tracking-tighter text-gray-900 mb-1.5">{value}</div>
-        <div className="text-[11px] sm:text-[12px] text-gray-500">{sub}</div>
+        <div className="font-headline text-[10px] uppercase tracking-widest text-white/50 mb-1.5">{label}</div>
+        <div className="font-headline text-2xl sm:text-5xl font-black italic tracking-tighter text-light mb-1.5">{value}</div>
+        <div className="text-[11px] sm:text-[12px] text-white/50">{sub}</div>
       </CardContent>
     </Card>
   );
@@ -90,10 +89,9 @@ export default function DashboardPage() {
     .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <OrganiserTopBar />
+    <div className="min-h-screen bg-dark">
 
-      <main className="pt-14">
+      <main className="pt-24">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-5 sm:py-10 pb-24 lg:pb-12 page-in">
 
           {/* Header */}
@@ -102,10 +100,10 @@ export default function DashboardPage() {
               <div className="font-headline text-[10px] font-bold uppercase tracking-[0.25em] text-lime-600 mb-2">
                 Welcome back
               </div>
-              <h1 className="font-headline text-[36px] sm:text-[44px] lg:text-[56px] font-black italic tracking-tighter leading-none text-gray-900">
+              <h1 className="font-headline text-[36px] sm:text-[44px] lg:text-[56px] font-black italic tracking-tighter leading-none text-light">
                 Hi there.<br /><span className="text-lime-500">Here's your day.</span>
               </h1>
-              <p className="text-gray-500 mt-3 text-[14px] sm:text-[15px]">
+              <p className="text-white/50 mt-3 text-[14px] sm:text-[15px]">
                 {loading
                   ? "Loading your events…"
                   : stats.live > 0
@@ -132,15 +130,15 @@ export default function DashboardPage() {
           {/* Recent events */}
           <section className="stagger-item" style={{ animationDelay: "160ms" }}>
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="font-headline text-lg sm:text-xl font-black italic tracking-tighter text-gray-900">Your upcoming events</h2>
-              <Link href="/organiser/listings" className="font-headline text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors">
+              <h2 className="font-headline text-lg sm:text-xl font-black italic tracking-tighter text-light">Your upcoming events</h2>
+              <Link href="/organiser/listings" className="font-headline text-[11px] uppercase tracking-widest text-white/50 hover:text-light flex items-center gap-1 transition-colors">
                 See all <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
             <Card>
               {/* Desktop table header */}
-              <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 border-b border-gray-200 font-headline font-bold text-[11px] uppercase tracking-widest text-gray-700 rounded-t-lg">
+              <div className="hidden sm:grid grid-cols-12 gap-4 px-5 py-3 bg-dark-darker border-b border-white/[0.08] font-headline font-bold text-[11px] uppercase tracking-widest text-white/70 rounded-t-lg">
                 <div className="col-span-5">Event</div>
                 <div className="col-span-2 text-center">Date</div>
                 <div className="col-span-2 text-center">Status</div>
@@ -150,15 +148,15 @@ export default function DashboardPage() {
 
               {loading && (
                 <div className="p-10 text-center">
-                  <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-3" />
-                  <div className="font-headline text-sm text-gray-500 uppercase tracking-widest">Loading…</div>
+                  <div className="w-5 h-5 border-2 border-white/[0.08] border-t-white/60 rounded-full animate-spin mx-auto mb-3" />
+                  <div className="font-headline text-sm text-white/50 uppercase tracking-widest">Loading…</div>
                 </div>
               )}
 
               {!loading && recent.length === 0 && (
                 <div className="p-10 text-center">
-                  <div className="font-headline text-lg font-black italic text-gray-900 mb-1">Nothing here yet</div>
-                  <div className="text-gray-500 text-sm mb-5">Create your first listing to get started.</div>
+                  <div className="font-headline text-lg font-black italic text-light mb-1">Nothing here yet</div>
+                  <div className="text-white/50 text-sm mb-5">Create your first listing to get started.</div>
                   <Button asChild>
                     <Link href="/organiser/new-listing">
                       <CalendarDays className="w-4 h-4" /> Add new listing
@@ -172,74 +170,74 @@ export default function DashboardPage() {
                 const price = (e.waves as { price: string }[])?.[0]?.price;
                 const href  = e.status === "APPROVED" ? `/organiser/events/${e.id}/dashboard` : `/organiser/events/${e.id}`;
                 return (
-                  <div key={e.id} className={i < recent.length - 1 ? "border-b border-gray-100" : ""}>
+                  <div key={e.id} className={i < recent.length - 1 ? "border-b border-white/[0.05]" : ""}>
 
                     {/* Mobile card (< sm) */}
                     <div
-                      className="sm:hidden flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-gray-50 transition-colors"
+                      className="sm:hidden flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-dark-darker transition-colors"
                       onClick={() => router.push(href)}
                     >
-                      <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
                         {e.coverImageUrl
                           ? <img src={e.coverImageUrl} alt={e.title} className="w-full h-full object-cover" />
-                          : <div className="font-mono text-[9px] text-gray-400 uppercase">{e.discipline.slice(0, 4)}</div>}
+                          : <div className="font-mono text-[9px] text-white/40 uppercase">{e.discipline.slice(0, 4)}</div>}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-2 mb-0.5">
-                          <div className="font-headline text-[14px] font-black italic tracking-tighter text-gray-900 leading-tight line-clamp-1 flex-1">{e.title}</div>
+                          <div className="font-headline text-[14px] font-black italic tracking-tighter text-light leading-tight line-clamp-1 flex-1">{e.title}</div>
                           <Badge className={`${s.bg} ${s.text} border-0 text-[10px] shrink-0`}>{s.label}</Badge>
                         </div>
-                        <div className="flex items-center gap-1 font-headline text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                        <div className="flex items-center gap-1 font-headline text-[10px] text-white/40 uppercase tracking-widest mb-1">
                           <MapPin className="w-3 h-3 text-lime-500 shrink-0" /> {e.city}, {e.state.toUpperCase()}
                         </div>
                         <div className="flex items-center justify-between">
-                          <div className="font-headline text-[11px] text-gray-500">{formatEventDate(e.eventDate, e.startTime)}</div>
-                          <div className="font-headline text-[11px] text-gray-600">
-                            {(e.registrationCount ?? 0)}{e.cap ? `/${e.cap}` : ""}<span className="text-gray-400"> reg</span>
+                          <div className="font-headline text-[11px] text-white/50">{formatEventDate(e.eventDate, e.startTime)}</div>
+                          <div className="font-headline text-[11px] text-white/60">
+                            {(e.registrationCount ?? 0)}{e.cap ? `/${e.cap}` : ""}<span className="text-white/40"> reg</span>
                           </div>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-gray-300 shrink-0" />
+                      <ArrowRight className="w-4 h-4 text-white/30 shrink-0" />
                     </div>
 
                     {/* Desktop table row (≥ sm) */}
                     <div
                       className={`hidden sm:grid grid-cols-12 gap-4 px-5 py-4 items-center cursor-pointer transition-all
                         ${e.status === "APPROVED"
-                          ? "hover:bg-lime-50 hover:border-l-2 hover:border-l-lime-400"
-                          : "hover:bg-gray-50 hover:border-l-2 hover:border-l-gray-300"}`}
+                          ? "hover:bg-lime-500/10 hover:border-l-2 hover:border-l-lime-500"
+                          : "hover:bg-white/5 hover:border-l-2 hover:border-l-white/20"}`}
                       onClick={() => router.push(href)}
                     >
                       <div className="col-span-5 flex items-center gap-4 min-w-0">
-                        <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-14 h-14 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
                           {e.coverImageUrl
                             ? <img src={e.coverImageUrl} alt={e.title} className="w-full h-full object-cover" />
-                            : <div className="font-mono text-[9px] text-gray-400 uppercase">{e.discipline.slice(0, 4)}</div>}
+                            : <div className="font-mono text-[9px] text-white/40 uppercase">{e.discipline.slice(0, 4)}</div>}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-headline text-[15px] font-black italic tracking-tighter text-gray-900">{e.title}</div>
-                          <div className="flex items-center gap-1 font-headline text-[11px] text-gray-400 uppercase tracking-widest mt-0.5">
+                          <div className="font-headline text-[15px] font-black italic tracking-tighter text-light">{e.title}</div>
+                          <div className="flex items-center gap-1 font-headline text-[11px] text-white/40 uppercase tracking-widest mt-0.5">
                             <MapPin className="w-3 h-3 text-lime-500" /> {e.city}, {e.state.toUpperCase()}
                           </div>
                         </div>
                       </div>
                       <div className="col-span-2 text-center">
-                        <div className="font-headline text-sm font-bold text-gray-700">{formatEventDate(e.eventDate, e.startTime)}</div>
+                        <div className="font-headline text-sm font-bold text-white/70">{formatEventDate(e.eventDate, e.startTime)}</div>
                       </div>
                       <div className="col-span-2 flex justify-center">
                         <Badge className={`${s.bg} ${s.text} border-0`}>{s.label}</Badge>
                       </div>
                       <div className="col-span-2">
-                        <div className="font-headline text-sm font-bold text-gray-900">
+                        <div className="font-headline text-sm font-bold text-light">
                           {(e.registrationCount ?? 0).toLocaleString()}
                           {e.cap
-                            ? <span className="text-gray-400 font-normal"> / {e.cap.toLocaleString()}</span>
-                            : <span className="text-gray-400 font-normal"> / —</span>}
+                            ? <span className="text-white/40 font-normal"> / {e.cap.toLocaleString()}</span>
+                            : <span className="text-white/40 font-normal"> / —</span>}
                         </div>
-                        {price && <div className="font-headline text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">from A${price}</div>}
+                        {price && <div className="font-headline text-[10px] uppercase tracking-widest text-white/40 mt-0.5">from A${price}</div>}
                       </div>
                       <div className="col-span-1 flex justify-end">
-                        <ArrowRight className="w-4 h-4 text-gray-300" />
+                        <ArrowRight className="w-4 h-4 text-white/30" />
                       </div>
                     </div>
 

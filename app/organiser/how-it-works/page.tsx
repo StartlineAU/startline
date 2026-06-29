@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -9,7 +9,6 @@ import {
   Search, ChevronRight, Award, Layers, UserCircle2,
   BarChart2, Ticket, ImageIcon, Mail, CheckCheck,
 } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -108,15 +107,15 @@ function MockEventCard({ title, type, city, state, date, price, status }: {
 /* ── Browser chrome ──────────────────────────────────────────────────────── */
 function BrowserFrame({ children, url }: { children: React.ReactNode; url: string }) {
   return (
-    <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-xl">
-      <div className="bg-[#f0f0f0] px-4 py-2.5 flex items-center gap-3 border-b border-gray-200">
+    <div className="rounded-2xl overflow-hidden border border-white/[0.08] shadow-xl">
+      <div className="bg-[#f0f0f0] px-4 py-2.5 flex items-center gap-3 border-b border-white/[0.08]">
         <div className="flex gap-1.5 shrink-0">
           <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
           <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
           <div className="w-3 h-3 rounded-full bg-[#28c840]" />
         </div>
-        <div className="flex-1 bg-white rounded-md px-3 py-1 text-[11px] text-gray-400 font-mono flex items-center gap-1.5 border border-gray-200 max-w-xs">
-          <Globe className="w-3 h-3 text-gray-300 shrink-0" />
+        <div className="flex-1 bg-dark rounded-md px-3 py-1 text-[11px] text-white/40 font-mono flex items-center gap-1.5 border border-white/[0.08] max-w-xs">
+          <Globe className="w-3 h-3 text-white/30 shrink-0" />
           {url}
         </div>
       </div>
@@ -129,13 +128,13 @@ function BrowserFrame({ children, url }: { children: React.ReactNode; url: strin
 function StepDivider() {
   return (
     <div className="flex items-center gap-4 my-2">
-      <div className="flex-1 border-t border-dashed border-gray-200" />
+      <div className="flex-1 border-t border-dashed border-white/[0.08]" />
       <div className="flex items-center gap-1">
         <div className="w-1.5 h-1.5 rounded-full bg-lime-300" />
         <div className="w-1.5 h-1.5 rounded-full bg-lime-400" />
         <div className="w-1.5 h-1.5 rounded-full bg-lime-300" />
       </div>
-      <div className="flex-1 border-t border-dashed border-gray-200" />
+      <div className="flex-1 border-t border-dashed border-white/[0.08]" />
     </div>
   );
 }
@@ -147,21 +146,20 @@ export default function HowItWorksPage() {
   const [activeTab, setActiveTab] = useState<"home" | "events">("home");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <OrganiserTopBar />
-      <main className="pt-14 page-in">
+    <div className="min-h-screen bg-dark">
+      <main className="pt-24 page-in">
 
         {/* ── HERO ──────────────────────────────────────────────────────── */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-dark border-b border-white/[0.08]">
           <div className="max-w-[1200px] mx-auto px-6 py-16 lg:py-20">
             <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-end">
               <div>
                 <Reveal>
                   <Label>Organiser Guide</Label>
-                  <h1 className="font-headline text-[52px] lg:text-[68px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-6">
+                  <h1 className="font-headline text-[52px] lg:text-[68px] font-black italic tracking-tighter leading-[0.92] text-light mb-6">
                     Launch your first<br />event in <span className="text-lime-500">four<br />steps.</span>
                   </h1>
-                  <p className="text-gray-500 text-[17px] leading-relaxed max-w-[480px]">
+                  <p className="text-white/50 text-[17px] leading-relaxed max-w-[480px]">
                     From building your organiser profile to going live on Australia&apos;s competitive fitness calendar — here&apos;s exactly how it works.
                   </p>
                 </Reveal>
@@ -175,10 +173,10 @@ export default function HowItWorksPage() {
                     { n: "03", l: "Submit for review"             },
                     { n: "04", l: "Go live on Startline"          },
                   ].map(({ n, l }) => (
-                    <div key={n} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-lime-300 hover:bg-lime-50/40 transition-colors">
+                    <div key={n} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-dark-darker border border-white/[0.08] hover:border-lime-300 hover:bg-lime-500/15/40 transition-colors">
                       <span className="w-7 h-7 rounded-lg bg-lime-500 text-white font-headline font-black italic text-[12px] flex items-center justify-center shrink-0">{n}</span>
-                      <span className="font-headline text-[13px] font-bold uppercase tracking-widest text-gray-700">{l}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-300 ml-auto shrink-0" />
+                      <span className="font-headline text-[13px] font-bold uppercase tracking-widest text-white/70">{l}</span>
+                      <ChevronRight className="w-4 h-4 text-white/30 ml-auto shrink-0" />
                     </div>
                   ))}
                 </div>
@@ -187,7 +185,7 @@ export default function HowItWorksPage() {
 
             {/* Stats row */}
             <Reveal delay={200}>
-              <div className="mt-12 pt-10 border-t border-gray-100 grid grid-cols-3 gap-8 max-w-lg">
+              <div className="mt-12 pt-10 border-t border-white/[0.05] grid grid-cols-3 gap-8 max-w-lg">
                 {[
                   { v: "42K+",   l: "Athletes on platform"      },
                   { v: "< 48h",  l: "Average review time"       },
@@ -195,7 +193,7 @@ export default function HowItWorksPage() {
                 ].map(({ v, l }) => (
                   <div key={l}>
                     <div className="font-headline text-[28px] font-black italic tracking-tighter text-lime-500 leading-none mb-1">{v}</div>
-                    <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400">{l}</div>
+                    <div className="font-headline text-[11px] uppercase tracking-widest text-white/40">{l}</div>
                   </div>
                 ))}
               </div>
@@ -212,13 +210,13 @@ export default function HowItWorksPage() {
               {/* Text */}
               <Reveal>
                 <StepPill n="01" label="Your Profile" />
-                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-6">
+                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-light mb-6">
                   Build your<br />organiser profile.
                 </h2>
-                <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
+                <p className="text-white/50 text-[16px] leading-relaxed mb-5">
                   Before your first event goes live, set up your organiser profile. Athletes don&apos;t just sign up for events — they choose organisers they trust.
                 </p>
-                <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
+                <p className="text-white/50 text-[16px] leading-relaxed mb-8">
                   Upload your logo, write a short bio, and link your website and socials. Your profile appears on every event you list, building credibility with every click.
                 </p>
                 <div className="space-y-3 mb-8">
@@ -229,17 +227,17 @@ export default function HowItWorksPage() {
                     { icon: BarChart2,   text: "Boosts event visibility in search" },
                   ].map(({ icon: Icon, text }) => (
                     <div key={text} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-lime-50 border border-lime-100 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-lime-500/15 border border-lime-500/20 flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4 text-lime-600" />
                       </div>
-                      <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-gray-700">{text}</span>
+                      <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-white/70">{text}</span>
                     </div>
                   ))}
                 </div>
-                <div className="px-4 py-3.5 rounded-xl bg-lime-50 border border-lime-200 flex items-start gap-3">
+                <div className="px-4 py-3.5 rounded-xl bg-lime-500/15 border border-lime-500/30 flex items-start gap-3">
                   <Zap className="w-4 h-4 text-lime-600 shrink-0 mt-0.5" />
-                  <p className="text-[13px] text-gray-600 leading-relaxed">
-                    <span className="font-semibold text-gray-900">Profiles with logos get 3× more clicks.</span>{" "}
+                  <p className="text-[13px] text-white/60 leading-relaxed">
+                    <span className="font-semibold text-light">Profiles with logos get 3× more clicks.</span>{" "}
                     Takes under 5 minutes to complete.
                   </p>
                 </div>
@@ -248,7 +246,7 @@ export default function HowItWorksPage() {
               {/* Profile card mockup */}
               <Reveal delay={150}>
                 <div className="mt-12 lg:mt-0">
-                  <Card className="overflow-hidden shadow-xl border-gray-200">
+                  <Card className="overflow-hidden shadow-xl border-white/[0.08]">
                     {/* Cover */}
                     <div className="h-32 bg-gradient-to-br from-lime-100 to-lime-50 relative overflow-hidden">
                       <div className="absolute inset-0 opacity-25"
@@ -261,24 +259,24 @@ export default function HowItWorksPage() {
                       <div className="w-16 h-16 rounded-2xl bg-lime-500 flex items-center justify-center font-headline font-black italic text-2xl text-white shadow-lg mb-3 border-[3px] border-white">
                         E
                       </div>
-                      <div className="font-headline text-[20px] font-black italic tracking-tight text-gray-900 leading-tight">Endurance Events AU</div>
-                      <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400 mt-1 mb-4">
+                      <div className="font-headline text-[20px] font-black italic tracking-tight text-light leading-tight">Endurance Events AU</div>
+                      <div className="font-headline text-[11px] uppercase tracking-widest text-white/40 mt-1 mb-4">
                         Sydney, NSW · Est. 2019
                       </div>
-                      <p className="text-gray-500 text-[13px] leading-relaxed mb-5">
+                      <p className="text-white/50 text-[13px] leading-relaxed mb-5">
                         Australia&apos;s leading ultra-distance event series, specialising in trail running and hybrid events across all states.
                       </p>
                       <div className="grid grid-cols-3 gap-3 mb-5">
                         {[{ v: "12", l: "Events" }, { v: "3.2K", l: "Athletes" }, { v: "4.8★", l: "Rating" }].map(({ v, l }) => (
-                          <div key={l} className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                          <div key={l} className="bg-dark-darker border border-white/[0.08] rounded-xl p-3 text-center">
                             <div className="font-headline text-[20px] font-black italic tracking-tighter text-lime-600">{v}</div>
-                            <div className="font-headline text-[10px] uppercase tracking-widest text-gray-400">{l}</div>
+                            <div className="font-headline text-[10px] uppercase tracking-widest text-white/40">{l}</div>
                           </div>
                         ))}
                       </div>
                       <div className="flex gap-2">
                         {["Website", "Instagram", "Facebook"].map(l => (
-                          <div key={l} className="flex-1 py-2 rounded-lg border border-gray-200 text-center font-headline text-[10px] uppercase tracking-widest text-gray-500 hover:border-lime-400 hover:text-lime-600 transition-colors cursor-pointer">
+                          <div key={l} className="flex-1 py-2 rounded-lg border border-white/[0.08] text-center font-headline text-[10px] uppercase tracking-widest text-white/50 hover:border-lime-400 hover:text-lime-600 transition-colors cursor-pointer">
                             {l}
                           </div>
                         ))}
@@ -299,60 +297,60 @@ export default function HowItWorksPage() {
 
               {/* Form mockup */}
               <Reveal delay={80} className="order-2 lg:order-1">
-                <Card className="overflow-hidden shadow-xl border-gray-200">
+                <Card className="overflow-hidden shadow-xl border-white/[0.08]">
                   {/* Progress */}
-                  <div className="px-6 pt-5 pb-4 border-b border-gray-100 bg-gray-50/50">
+                  <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] bg-dark-darker/50">
                     <div className="flex items-center gap-1.5 mb-2.5">
                       {[1, 2, 3, 4, 5].map(s => (
-                        <div key={s} className={`flex-1 h-1.5 rounded-full transition-colors ${s <= 2 ? "bg-lime-500" : "bg-gray-200"}`} />
+                        <div key={s} className={`flex-1 h-1.5 rounded-full transition-colors ${s <= 2 ? "bg-lime-500" : "bg-dark-lighter"}`} />
                       ))}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-headline text-[11px] uppercase tracking-widest text-gray-400">Step 2 of 5</span>
+                      <span className="font-headline text-[11px] uppercase tracking-widest text-white/40">Step 2 of 5</span>
                       <span className="font-headline text-[11px] uppercase tracking-widest text-lime-600 font-bold">Event Details</span>
                     </div>
                   </div>
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400 mb-1.5">Event Title</div>
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-[14px] text-gray-800 font-medium">
+                      <div className="font-headline text-[11px] uppercase tracking-widest text-white/40 mb-1.5">Event Title</div>
+                      <div className="bg-dark-darker border border-white/[0.08] rounded-lg px-4 py-3 text-[14px] text-light font-medium">
                         Ultra Trail Hobart 2026
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400 mb-1.5">Date</div>
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-700 flex items-center gap-2">
+                        <div className="font-headline text-[11px] uppercase tracking-widest text-white/40 mb-1.5">Date</div>
+                        <div className="bg-dark-darker border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white/70 flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5 text-lime-500 shrink-0" /> 14 Mar 2026
                         </div>
                       </div>
                       <div>
-                        <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400 mb-1.5">Location</div>
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-700 flex items-center gap-2">
+                        <div className="font-headline text-[11px] uppercase tracking-widest text-white/40 mb-1.5">Location</div>
+                        <div className="bg-dark-darker border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white/70 flex items-center gap-2">
                           <MapPin className="w-3.5 h-3.5 text-lime-500 shrink-0" /> Hobart, TAS
                         </div>
                       </div>
                     </div>
                     <div>
-                      <div className="font-headline text-[11px] uppercase tracking-widest text-gray-400 mb-2">Discipline</div>
+                      <div className="font-headline text-[11px] uppercase tracking-widest text-white/40 mb-2">Discipline</div>
                       <div className="grid grid-cols-3 gap-2">
                         {[["Running", true], ["CrossFit", false], ["Cycling", false]].map(([d, sel]) => (
                           <div key={d as string}
                             className={`rounded-lg px-3 py-2.5 text-center font-headline text-[11px] font-bold uppercase tracking-widest border transition-colors
-                              ${sel ? "bg-lime-50 border-lime-400 text-lime-700" : "bg-white border-gray-200 text-gray-400"}`}>
+                              ${sel ? "bg-lime-500/15 border-lime-400 text-lime-400" : "bg-dark border-white/[0.08] text-white/40"}`}>
                             {d as string}
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                    <div className="rounded-xl bg-dark-darker border border-white/[0.08] p-4">
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-gray-600">Ticket Wave 1</span>
+                        <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-white/60">Ticket Wave 1</span>
                         <span className="font-headline text-[10px] uppercase tracking-widest text-lime-600 font-bold cursor-pointer">+ Add Wave</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="col-span-2 bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-[13px] text-gray-600">General Entry</div>
-                        <div className="bg-white border border-lime-400 rounded-lg px-3 py-2.5 text-[13px] text-lime-700 text-center font-semibold">A$149</div>
+                        <div className="col-span-2 bg-dark border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white/60">General Entry</div>
+                        <div className="bg-dark border border-lime-400 rounded-lg px-3 py-2.5 text-[13px] text-lime-400 text-center font-semibold">A$149</div>
                       </div>
                     </div>
                     <div className="w-full bg-lime-500 hover:bg-lime-600 transition-colors rounded-xl py-3 text-white font-headline text-[12px] font-bold uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer">
@@ -366,13 +364,13 @@ export default function HowItWorksPage() {
               <div className="order-1 lg:order-2 mb-12 lg:mb-0">
                 <Reveal>
                   <StepPill n="02" label="Create a Listing" />
-                  <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-6">
+                  <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-light mb-6">
                     Create your<br />event listing.
                   </h2>
-                  <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
+                  <p className="text-white/50 text-[16px] leading-relaxed mb-5">
                     Use our guided five-step form to build your listing. Enter your event details, venue, ticket categories and what&apos;s included — everything an athlete needs to decide and register.
                   </p>
-                  <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
+                  <p className="text-white/50 text-[16px] leading-relaxed mb-8">
                     Save a draft at any stage and come back later. Your listing won&apos;t go live until you choose to submit for review.
                   </p>
                   <div className="space-y-3">
@@ -383,10 +381,10 @@ export default function HowItWorksPage() {
                       { icon: Layers,   text: "Divisions & categories (Running, Cycling, Swimming)" },
                     ].map(({ icon: Icon, text }) => (
                       <div key={text} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-lime-50 border border-lime-100 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-lime-500/15 border border-lime-500/20 flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4 text-lime-600" />
                         </div>
-                        <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-gray-700">{text}</span>
+                        <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-white/70">{text}</span>
                       </div>
                     ))}
                   </div>
@@ -405,13 +403,13 @@ export default function HowItWorksPage() {
               {/* Text */}
               <Reveal>
                 <StepPill n="03" label="Submit for Review" />
-                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-6">
+                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-light mb-6">
                   Submit for<br />review.
                 </h2>
-                <p className="text-gray-500 text-[16px] leading-relaxed mb-5">
+                <p className="text-white/50 text-[16px] leading-relaxed mb-5">
                   When you&apos;re happy with your listing, hit submit. Our team reviews every event for accuracy and community standards — usually within 48 hours.
                 </p>
-                <p className="text-gray-500 text-[16px] leading-relaxed mb-8">
+                <p className="text-white/50 text-[16px] leading-relaxed mb-8">
                   You&apos;ll receive an email the moment your event is approved and goes live on the platform. From there, athletes can find and register immediately.
                 </p>
                 <div className="space-y-3">
@@ -422,10 +420,10 @@ export default function HowItWorksPage() {
                     { icon: FileEdit,   text: "Edit anytime before you submit"      },
                   ].map(({ icon: Icon, text }) => (
                     <div key={text} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-lime-50 border border-lime-100 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-lime-500/15 border border-lime-500/20 flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4 text-lime-600" />
                       </div>
-                      <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-gray-700">{text}</span>
+                      <span className="font-headline text-[13px] font-bold uppercase tracking-wide text-white/70">{text}</span>
                     </div>
                   ))}
                 </div>
@@ -434,17 +432,17 @@ export default function HowItWorksPage() {
               {/* Review + email mockup */}
               <Reveal delay={150}>
                 <div className="mt-12 lg:mt-0 space-y-4">
-                  <Card className="overflow-hidden shadow-xl border-gray-200">
+                  <Card className="overflow-hidden shadow-xl border-white/[0.08]">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-6">
-                        <span className="font-headline text-[15px] font-black italic tracking-tight text-gray-900">Ultra Trail Hobart 2026</span>
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 font-headline text-[10px] font-bold uppercase tracking-widest">
+                        <span className="font-headline text-[15px] font-black italic tracking-tight text-light">Ultra Trail Hobart 2026</span>
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 font-headline text-[10px] font-bold uppercase tracking-widest">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> Under Review
                         </span>
                       </div>
                       {/* Timeline */}
                       <div className="relative pl-7">
-                        <div className="absolute left-3 top-1 bottom-1 w-px bg-gray-200" />
+                        <div className="absolute left-3 top-1 bottom-1 w-px bg-dark-lighter" />
                         {[
                           { text: "Listing submitted",        sub: "Today at 9:41 am",  done: true,  active: false },
                           { text: "Details verified",          sub: "Today at 10:02 am", done: true,  active: false },
@@ -453,13 +451,13 @@ export default function HowItWorksPage() {
                         ].map(({ text, sub, done, active }) => (
                           <div key={text} className="relative flex items-start gap-3 mb-6 last:mb-0">
                             <div className={`absolute -left-4 w-5 h-5 rounded-full flex items-center justify-center border-2 shrink-0 mt-0.5
-                              ${done ? "bg-lime-500 border-lime-500" : active ? "bg-white border-blue-400" : "bg-white border-gray-200"}`}>
+                              ${done ? "bg-lime-500 border-lime-500" : active ? "bg-dark border-blue-400" : "bg-dark border-white/[0.08]"}`}>
                               {done && <CheckCircle2 className="w-3 h-3 text-white" />}
                               {active && <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />}
                             </div>
                             <div>
-                              <div className={`font-headline text-[12px] font-bold uppercase tracking-widest ${done ? "text-lime-600" : active ? "text-gray-900" : "text-gray-400"}`}>{text}</div>
-                              <div className="font-headline text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">{sub}</div>
+                              <div className={`font-headline text-[12px] font-bold uppercase tracking-widest ${done ? "text-lime-600" : active ? "text-light" : "text-white/40"}`}>{text}</div>
+                              <div className="font-headline text-[10px] uppercase tracking-widest text-white/40 mt-0.5">{sub}</div>
                             </div>
                           </div>
                         ))}
@@ -468,23 +466,23 @@ export default function HowItWorksPage() {
                   </Card>
 
                   {/* Email notification */}
-                  <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
+                  <div className="rounded-xl border border-white/[0.08] bg-dark overflow-hidden shadow-sm">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-dark-darker border-b border-white/[0.05]">
                       <div className="w-8 h-8 rounded-full bg-lime-500 flex items-center justify-center shrink-0">
                         <Mail className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <div className="font-headline text-[12px] font-bold text-gray-900">
-                          Startline &nbsp;<span className="text-gray-400 font-normal text-[11px]">hello@startlineau.com.au</span>
+                        <div className="font-headline text-[12px] font-bold text-light">
+                          Startline &nbsp;<span className="text-white/40 font-normal text-[11px]">hello@startlineau.com.au</span>
                         </div>
-                        <div className="font-headline text-[10px] uppercase tracking-widest text-gray-400">
+                        <div className="font-headline text-[10px] uppercase tracking-widest text-white/40">
                           Your event is approved and live!
                         </div>
                       </div>
                     </div>
                     <div className="px-4 py-3.5">
-                      <p className="text-[13px] text-gray-600 leading-relaxed">
-                        <span className="font-semibold text-gray-900">Ultra Trail Hobart 2026</span> is now live on Startline and visible to athletes across Australia. 🎉
+                      <p className="text-[13px] text-white/60 leading-relaxed">
+                        <span className="font-semibold text-light">Ultra Trail Hobart 2026</span> is now live on Startline and visible to athletes across Australia. 🎉
                       </p>
                     </div>
                   </div>
@@ -502,10 +500,10 @@ export default function HowItWorksPage() {
             <div className="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-end mb-10">
               <Reveal>
                 <StepPill n="04" label="Go Live" />
-                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-5">
+                <h2 className="font-headline text-[40px] lg:text-[50px] font-black italic tracking-tighter leading-[0.92] text-light mb-5">
                   Watch it go live<br />on Startline.
                 </h2>
-                <p className="text-gray-500 text-[16px] leading-relaxed max-w-[420px]">
+                <p className="text-white/50 text-[16px] leading-relaxed max-w-[420px]">
                   Once approved, your event is instantly visible to thousands of athletes searching for their next race. Here&apos;s exactly how it looks across the platform.
                 </p>
               </Reveal>
@@ -518,7 +516,7 @@ export default function HowItWorksPage() {
                       className={`font-headline text-[12px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-lg border transition-all duration-200
                         ${activeTab === tab
                           ? "bg-lime-500 text-white border-lime-500 shadow-sm"
-                          : "bg-white border-gray-200 text-gray-500 hover:border-lime-400 hover:text-lime-600"}`}>
+                          : "bg-dark border-white/[0.08] text-white/50 hover:border-lime-400 hover:text-lime-600"}`}>
                       {tab === "home" ? "Homepage" : "Events Page"}
                     </button>
                   ))}
@@ -567,7 +565,7 @@ export default function HowItWorksPage() {
                           </p>
                           {/* Search */}
                           <div className="flex gap-2 max-w-md mb-5">
-                            <div className="flex-1 bg-white/8 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-2">
+                            <div className="flex-1 bg-dark/8 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-2">
                               <Search className="w-3.5 h-3.5 text-white/20 shrink-0" />
                               <span className="font-headline text-[11px] text-white/20 uppercase tracking-widest">Search events…</span>
                             </div>
@@ -614,7 +612,7 @@ export default function HowItWorksPage() {
                       {/* Left panel — search + event list */}
                       <div className="w-60 border-r border-white/[0.06] flex flex-col shrink-0">
                         <div className="p-3 border-b border-white/[0.06] space-y-2">
-                          <div className="bg-white/5 border border-white/8 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                          <div className="bg-dark/5 border border-white/8 rounded-lg px-3 py-2.5 flex items-center gap-2">
                             <Search className="w-3.5 h-3.5 text-white/20 shrink-0" />
                             <span className="font-headline text-[10px] uppercase tracking-widest text-white/20">Search events…</span>
                           </div>
@@ -632,7 +630,7 @@ export default function HowItWorksPage() {
                             { title: "Qld Open Water Classic",  type: "Swimming", date: "1 Apr",  city: "Brisbane, QLD",  sel: false },
                           ].map(e => (
                             <div key={e.title}
-                              className={`p-3 cursor-pointer transition-colors relative ${e.sel ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"}`}>
+                              className={`p-3 cursor-pointer transition-colors relative ${e.sel ? "bg-dark/[0.04]" : "hover:bg-dark/[0.02]"}`}>
                               {e.sel && <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-lime-500 rounded-r" />}
                               <div className={`font-headline text-[11px] font-black italic tracking-tight mb-1.5 leading-tight ${e.sel ? "text-white" : "text-white/50"}`}>{e.title}</div>
                               <div className="flex items-center gap-1.5">
@@ -667,7 +665,7 @@ export default function HowItWorksPage() {
                               { l: "Location", v: "Hobart, TAS" },
                               { l: "From",     v: "A$149"       },
                             ].map(({ l, v }) => (
-                              <div key={l} className="bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
+                              <div key={l} className="bg-dark/[0.04] rounded-lg p-3 border border-white/[0.06]">
                                 <div className="font-headline text-[9px] uppercase tracking-widest text-white/30 mb-1">{l}</div>
                                 <div className="font-headline text-[12px] font-black italic text-white leading-tight">{v}</div>
                               </div>
@@ -695,12 +693,12 @@ export default function HowItWorksPage() {
                 <Reveal key={title} delay={i * 70}>
                   <Card className="hover:shadow-sm transition-shadow duration-200 h-full">
                     <CardContent className="p-5 flex items-start gap-3 h-full">
-                      <div className="w-9 h-9 rounded-lg bg-lime-50 border border-lime-100 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-lg bg-lime-500/15 border border-lime-500/20 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className="w-4 h-4 text-lime-600" />
                       </div>
                       <div>
-                        <div className="font-headline text-[13px] font-black italic tracking-tight text-gray-900 mb-1">{title}</div>
-                        <div className="text-gray-500 text-[12px] leading-relaxed">{body}</div>
+                        <div className="font-headline text-[13px] font-black italic tracking-tight text-light mb-1">{title}</div>
+                        <div className="text-white/50 text-[12px] leading-relaxed">{body}</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -712,11 +710,11 @@ export default function HowItWorksPage() {
         </div>
 
         {/* ── MANAGE — full-width grey band ───────────────────────────────── */}
-        <div className="bg-white border-y border-gray-200">
+        <div className="bg-dark border-y border-white/[0.08]">
           <div className="max-w-[1200px] mx-auto px-6 py-20">
             <Reveal>
               <Label>After You&apos;re Live</Label>
-              <h2 className="font-headline text-[40px] lg:text-[48px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-12">
+              <h2 className="font-headline text-[40px] lg:text-[48px] font-black italic tracking-tighter leading-[0.92] text-light mb-12">
                 Manage everything<br />in one place.
               </h2>
             </Reveal>
@@ -728,17 +726,17 @@ export default function HowItWorksPage() {
                 { icon: Layers,    n: "04", title: "Pin your best events",   body: "Pin flagship events to the top of your listing page for maximum visibility."              },
               ].map(({ icon: Icon, n, title, body }, i) => (
                 <Reveal key={title} delay={i * 70}>
-                  <Card className="h-full hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group border-gray-200">
+                  <Card className="h-full hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group border-white/[0.08]">
                     <CardContent className="p-6 flex flex-col gap-4 h-full">
                       <div className="flex items-center justify-between">
-                        <div className="w-10 h-10 rounded-xl bg-lime-50 border border-lime-100 group-hover:bg-lime-100 transition-colors flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-lime-500/15 border border-lime-500/20 group-hover:bg-lime-500/20 transition-colors flex items-center justify-center">
                           <Icon className="w-5 h-5 text-lime-600" />
                         </div>
-                        <span className="font-headline text-[13px] font-black italic text-gray-200">{n}</span>
+                        <span className="font-headline text-[13px] font-black italic text-white/20">{n}</span>
                       </div>
                       <div>
-                        <div className="font-headline text-[15px] font-black italic tracking-tight text-gray-900 mb-2">{title}</div>
-                        <div className="text-gray-500 text-[13px] leading-relaxed">{body}</div>
+                        <div className="font-headline text-[15px] font-black italic tracking-tight text-light mb-2">{title}</div>
+                        <div className="text-white/50 text-[13px] leading-relaxed">{body}</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -752,16 +750,16 @@ export default function HowItWorksPage() {
         <div className="max-w-[1200px] mx-auto px-6">
           <section className="py-20">
             <Reveal>
-              <div className="bg-white border border-gray-200 rounded-2xl p-12 lg:p-16 text-center shadow-sm overflow-hidden relative">
+              <div className="bg-dark border border-white/[0.08] rounded-2xl p-12 lg:p-16 text-center shadow-sm overflow-hidden relative">
                 {/* Subtle background accent */}
                 <div className="absolute inset-0 opacity-[0.03]"
                   style={{ backgroundImage: "radial-gradient(ellipse at 50% 0%, #84cc16 0%, transparent 60%)" }} />
                 <div className="relative">
                   <Label>Ready to go?</Label>
-                  <h2 className="font-headline text-[48px] lg:text-[60px] font-black italic tracking-tighter leading-[0.92] text-gray-900 mb-4">
+                  <h2 className="font-headline text-[48px] lg:text-[60px] font-black italic tracking-tighter leading-[0.92] text-light mb-4">
                     Race day starts<br /><span className="text-lime-500">here.</span>
                   </h2>
-                  <p className="text-gray-500 text-[17px] leading-relaxed mb-10 max-w-[440px] mx-auto">
+                  <p className="text-white/50 text-[17px] leading-relaxed mb-10 max-w-[440px] mx-auto">
                     Create your first listing in under 10 minutes. Set up your profile and our team will have you live in no time.
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
