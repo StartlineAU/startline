@@ -52,15 +52,7 @@ jobs:
               ?? plan.match(/No changes\./)?.[0]
               ?? "See full plan below.";
             const emoji = plan.includes("No changes") ? "✅" : "📋";
-            const body = `${emoji} **Terraform plan — ${summary}**
-
-<details><summary>Full plan output</summary>
-
-\`\`\`
-${plan}
-\`\`\`
-
-</details>`;
+            const body = `${emoji} **Terraform plan \u2014 ${summary}**\n\n<details><summary>Full plan output</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
