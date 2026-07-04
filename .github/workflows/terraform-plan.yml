@@ -29,6 +29,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.10.0'
+          terraform_wrapper: false
 
       - run: terraform init
       - run: terraform fmt -check
@@ -42,18 +43,18 @@ jobs:
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - uses: actions/github-script@v7
-        env:
-          PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
+      - run: terraform show -no-color tfplan > /tmp/terraform.text
+        continue-on-error: true
+
+      - run: terraform show -json tfplan > /tmp/terraform.json
+        continue-on-error: true
+
+      - uses: ahmadnassri/action-terraform-report@v4
         with:
-          script: |
-            const body = `### Terraform plan\n\n\`\`\`\n${process.env.PLAN_STDOUT}\n\`\`\``;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body,
-            });
+          terraform-text: /tmp/terraform.text
+          terraform-json: /tmp/terraform.json
+          github-token: ${{ github.token }}
+          show-diff: true
 
       - if: steps.plan.outcome == 'failure'
         run: exit 1
