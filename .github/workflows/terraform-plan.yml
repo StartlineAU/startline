@@ -49,24 +49,51 @@ jobs:
       - run: terraform show -no-color tfplan > /tmp/tfplan.txt
         continue-on-error: true
 
-      - uses: liatrio/terraform-change-pr-commenter@v1.14.2
-        with:
-          json-file: /tmp/tfplan.json
-          github-token: ${{ github.token }}
-          expand-comment: 'true'
-
       - uses: actions/github-script@v7
         with:
           script: |
+            const fs = require("fs");
+
+            let table = "";
             try {
-              const plan = require("fs").readFileSync("/tmp/tfplan.txt", "utf8");
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `<details><summary>Full terraform plan</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`,
-              });
+              const j = JSON.parse(fs.readFileSync("/tmp/tfplan.json", "utf8"));
+              const rc = j.resource_changes ?? [];
+              if (rc.length) {
+                const g = {};
+                for (const r of rc) {
+                  const m = r.address.match(/^((?:[a-z][a-z0-9-]*\[?[^\]]*\]?\.)*)?([a-z][a-z0-9]*_[a-z0-9_]+\.[a-zA-Z0-9_-]+)$/);
+                  const mod = m?.[1] ? m[1].replace(/\.$/, "") : "root";
+                  const res = m?.[2] ?? r.address;
+                  if (!g[mod]) g[mod] = { create: [], update: [], delete: [], read: [] };
+                  const a = r.change.actions;
+                       if (a.includes("create") && !a.includes("delete")) g[mod].create.push(res);
+                  else if (a.includes("delete") && !a.includes("create")) g[mod].delete.push(res);
+                  else if (a.includes("update"))                       g[mod].update.push(res);
+                  else if (a.includes("read"))                         g[mod].read.push(res);
+                }
+                const labels = { create: "🟢 + create", update: "🟡 ~ update", delete: "🔴 - delete", read: "🔵 read" };
+                for (const [mod, rows] of Object.entries(g)) {
+                  let t = "";
+                  for (const [action, label] of Object.entries(labels)) {
+                    if (rows[action].length) t += `| ${label} | ${rows[action].join("<br>")} |\n`;
+                  }
+                  if (t) table += `### ${mod}\n| Action | Resource |\n|--------|----------|\n${t}\n`;
+                }
+              }
             } catch {}
+
+            let raw = "";
+            try { raw = fs.readFileSync("/tmp/tfplan.txt", "utf8"); } catch {}
+
+            const header = !raw.includes("No changes") ? "📋 **Terraform plan**" : "✅ **Terraform plan — no changes**";
+            const body = `${header}\n\n${table}\n<details><summary>Full plan output</summary>\n\n\`\`\`\n${raw}\n\`\`\`\n\n</details>`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
 
       - if: steps.plan.outcome == 'failure'
         run: exit 1
