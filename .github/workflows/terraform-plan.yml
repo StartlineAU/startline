@@ -63,7 +63,7 @@ jobs:
               if (changes.length) {
                 const groups = {};
                 for (const r of changes) {
-                  const m = r.address.match(/^((?:[a-z][a-z0-9-]*\[?[^\]]*\]?\.)*)?([a-z]+_[a-z]+\.[a-zA-Z0-9_-]+)$/);
+                  const m = r.address.match(/^((?:[a-z][a-z0-9-]*\[?[^\]]*\]?\.)*)?([a-z][a-z0-9]*_[a-z0-9_]+\.[a-zA-Z0-9_-]+)$/);
                   const mod = m?.[1] ? m[1].replace(/\.$/, "") : "(root)";
                   const resource = m?.[2] ?? r.address;
                   if (!groups[mod]) groups[mod] = { create: [], update: [], delete: [], read: [] };
