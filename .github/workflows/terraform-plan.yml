@@ -43,18 +43,14 @@ jobs:
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - run: terraform show -no-color tfplan > /tmp/terraform.text
+      - run: terraform show -json tfplan > /tmp/tfplan.json
         continue-on-error: true
 
-      - run: terraform show -json tfplan > /tmp/terraform.json
-        continue-on-error: true
-
-      - uses: ahmadnassri/action-terraform-report@v4
+      - uses: liatrio/terraform-change-pr-commenter@v1
         with:
-          terraform-text: /tmp/terraform.text
-          terraform-json: /tmp/terraform.json
+          json-file: /tmp/tfplan.json
           github-token: ${{ github.token }}
-          show-diff: true
+          expand-comment: 'true'
 
       - if: steps.plan.outcome == 'failure'
         run: exit 1
