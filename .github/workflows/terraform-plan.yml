@@ -29,7 +29,6 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.10.0'
-          terraform_wrapper: false
 
       - run: terraform init
       - run: terraform fmt -check
@@ -43,30 +42,18 @@ jobs:
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - run: terraform show -json tfplan > /tmp/tfplan.json
-        continue-on-error: true
-
-      - run: terraform show -no-color tfplan > /tmp/tfplan.txt
-        continue-on-error: true
-
-      - uses: liatrio/terraform-change-pr-commenter@v1.14.2
-        with:
-          json-file: /tmp/tfplan.json
-          github-token: ${{ github.token }}
-          expand-comment: 'true'
-
       - uses: actions/github-script@v7
+        env:
+          PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
-            try {
-              const plan = require("fs").readFileSync("/tmp/tfplan.txt", "utf8");
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `<details><summary>Full terraform plan</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`,
-              });
-            } catch {}
+            const body = `### Terraform plan\n\n\`\`\`\n${process.env.PLAN_STDOUT}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
 
       - if: steps.plan.outcome == 'failure'
         run: exit 1
