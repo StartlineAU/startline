@@ -56,33 +56,41 @@ jobs:
               ?? plan.match(/No changes\./)?.[0]
               ?? "See full plan below.";
 
-            let table = "";
+            let body = "";
             try {
               const j = JSON.parse(fs.readFileSync("/tmp/tfplan.json", "utf8"));
               const changes = j.resource_changes ?? [];
               if (changes.length) {
-                const rows = { create: [], update: [], delete: [], read: [] };
+                const groups = {};
                 for (const r of changes) {
+                  const m = r.address.match(/^((?:[a-z][a-z0-9-]*\[?[^\]]*\]?\.)*)?([a-z]+_[a-z]+\.[a-zA-Z0-9_-]+)$/);
+                  const mod = m?.[1] ? m[1].replace(/\.$/, "") : "(root)";
+                  const resource = m?.[2] ?? r.address;
+                  if (!groups[mod]) groups[mod] = { create: [], update: [], delete: [], read: [] };
                   const a = r.change.actions;
-                       if (a.includes("create") && !a.includes("delete")) rows.create.push(r.address);
-                  else if (a.includes("delete") && !a.includes("create")) rows.delete.push(r.address);
-                  else if (a.includes("update"))                       rows.update.push(r.address);
-                  else if (a.includes("read"))                         rows.read.push(r.address);
+                       if (a.includes("create") && !a.includes("delete")) groups[mod].create.push(resource);
+                  else if (a.includes("delete") && !a.includes("create")) groups[mod].delete.push(resource);
+                  else if (a.includes("update"))                       groups[mod].update.push(resource);
+                  else if (a.includes("read"))                         groups[mod].read.push(resource);
                 }
-                for (const [action, label] of [["create", "🟢 **+ create**"], ["update", "🟡 **~ update**"], ["delete", "🔴 **- delete**"], ["read", "🔵 **read**"]]) {
-                  if (rows[action].length) {
-                    table += `| ${label} | ${rows[action].join("<br>")} |\n`;
+                for (const [mod, rows] of Object.entries(groups)) {
+                  let table = "";
+                  for (const [action, label] of [["create", "🟢 **+ create**"], ["update", "🟡 **~ update**"], ["delete", "🔴 **- delete**"], ["read", "🔵 **read**"]]) {
+                    if (rows[action].length) {
+                      table += `| ${label} | ${rows[action].join("<br>")} |\n`;
+                    }
+                  }
+                  if (table) {
+                    body += `### ${mod}\n| Action | Resource |\n|--------|----------|\n${table}\n\n`;
                   }
                 }
-                if (table) table = `| Action | Resource |\n|--------|----------|\n${table}`;
               }
-            } catch {}
+            } catch (e) { body += `_Plan parse failed: ${e.message}_\n\n`; }
 
             const hasChanges = plan.includes("to add") || plan.includes("to change") || plan.includes("to destroy");
             const emoji = !hasChanges ? "✅" : "📋";
 
-            let body = `${emoji} **Terraform plan \u2014 ${summary}**\n\n`;
-            if (table) body += `${table}\n\n`;
+            body = `${emoji} **Terraform plan \u2014 ${summary}**\n\n${body}`;
             body += `<details><summary>Full plan output</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`;
 
             github.rest.issues.createComment({
