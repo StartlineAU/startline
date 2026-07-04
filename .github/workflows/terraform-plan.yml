@@ -42,57 +42,12 @@ jobs:
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - run: terraform show -json tfplan > /tmp/tfplan.json
-        continue-on-error: true
-
       - uses: actions/github-script@v7
         env:
           PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
-            const fs = require("fs");
-            const plan = process.env.PLAN_STDOUT;
-            const summary = plan.match(/Plan:.*?(?:\d.*?)?(?:to add|to change|to destroy|No changes).*/)?.[0].trim()
-              ?? plan.match(/No changes\./)?.[0]
-              ?? "See full plan below.";
-
-            let body = "";
-            try {
-              const j = JSON.parse(fs.readFileSync("/tmp/tfplan.json", "utf8"));
-              const changes = j.resource_changes ?? [];
-              if (changes.length) {
-                const groups = {};
-                for (const r of changes) {
-                  const m = r.address.match(/^((?:[a-z][a-z0-9-]*\[?[^\]]*\]?\.)*)?([a-z][a-z0-9]*_[a-z0-9_]+\.[a-zA-Z0-9_-]+)$/);
-                  const mod = m?.[1] ? m[1].replace(/\.$/, "") : "(root)";
-                  const resource = m?.[2] ?? r.address;
-                  if (!groups[mod]) groups[mod] = { create: [], update: [], delete: [], read: [] };
-                  const a = r.change.actions;
-                       if (a.includes("create") && !a.includes("delete")) groups[mod].create.push(resource);
-                  else if (a.includes("delete") && !a.includes("create")) groups[mod].delete.push(resource);
-                  else if (a.includes("update"))                       groups[mod].update.push(resource);
-                  else if (a.includes("read"))                         groups[mod].read.push(resource);
-                }
-                for (const [mod, rows] of Object.entries(groups)) {
-                  let table = "";
-                  for (const [action, label] of [["create", "🟢 **+ create**"], ["update", "🟡 **~ update**"], ["delete", "🔴 **- delete**"], ["read", "🔵 **read**"]]) {
-                    if (rows[action].length) {
-                      table += `| ${label} | ${rows[action].join("<br>")} |\n`;
-                    }
-                  }
-                  if (table) {
-                    body += `### ${mod}\n| Action | Resource |\n|--------|----------|\n${table}\n\n`;
-                  }
-                }
-              }
-            } catch (e) { body += `_Plan parse failed: ${e.message}_\n\n`; }
-
-            const hasChanges = plan.includes("to add") || plan.includes("to change") || plan.includes("to destroy");
-            const emoji = !hasChanges ? "✅" : "📋";
-
-            body = `${emoji} **Terraform plan \u2014 ${summary}**\n\n${body}`;
-            body += `<details><summary>Full plan output</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`;
-
+            const body = `### Terraform plan\n\n\`\`\`\n${process.env.PLAN_STDOUT}\n\`\`\``;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
