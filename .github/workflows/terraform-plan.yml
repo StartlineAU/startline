@@ -46,7 +46,7 @@ jobs:
       - run: terraform show -json tfplan > /tmp/tfplan.json
         continue-on-error: true
 
-      - uses: liatrio/terraform-change-pr-commenter@v1
+      - uses: liatrio/terraform-change-pr-commenter@v1.14.2
         with:
           json-file: /tmp/tfplan.json
           github-token: ${{ github.token }}
