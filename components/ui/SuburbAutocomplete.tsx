@@ -2,13 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type AddressResult = {
-  address: string;
-  city:    string;
-  state:   string;
-  venue:   string;
-};
-
 interface PlaceResult {
   placeId: string;
   label: string;
@@ -17,29 +10,27 @@ interface PlaceResult {
 }
 
 interface Props {
-  value:        string;
-  onChange:     (raw: string) => void;
-  onSelect:     (result: AddressResult) => void;
+  value: string;
+  onChange: (city: string) => void;
+  onStateChange?: (state: string) => void;
   placeholder?: string;
-  className?:   string;
-  disabled?:    boolean;
+  className?: string;
 }
 
-export default function AddressAutocomplete({
+export default function SuburbAutocomplete({
   value,
   onChange,
-  onSelect,
-  placeholder = "Start typing an address…",
+  onStateChange,
+  placeholder = "e.g. Melbourne",
   className = "",
-  disabled = false,
 }: Props) {
-  const [open, setOpen]        = useState(false);
+  const [open, setOpen]       = useState(false);
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);
-  const [loading, setLoading]  = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef  = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const inputRef  = useRef<HTMLInputElement>(null);
+  const listRef   = useRef<HTMLDivElement>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -57,8 +48,11 @@ export default function AddressAutocomplete({
     try {
       const res = await fetch(`/api/places/autocomplete?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      setSuggestions(data.results ?? []);
-      setOpen((data.results ?? []).length > 0);
+      const filtered = (data.results ?? []).filter(
+        (r: PlaceResult) => r.placeType === "Locality"
+      );
+      setSuggestions(filtered);
+      setOpen(filtered.length > 0);
       setActiveIdx(-1);
     } catch {
       setSuggestions([]);
@@ -67,28 +61,21 @@ export default function AddressAutocomplete({
     }
   };
 
-  const select = async (item: PlaceResult) => {
-    const label = item.label;
-    onChange(label);
+  const handleInput = (text: string) => {
+    onChange(text);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => fetchSuggestions(text), 250);
+  };
 
-    try {
-      const res = await fetch(`/api/places/geocode?q=${encodeURIComponent(item.title || label)}`);
-      const data = await res.json();
-      const g = data.result;
-      if (g) {
-        onSelect({
-          address: g.label,
-          city: g.city,
-          state: g.stateCode,
-          venue: "",
-        });
-      }
-    } catch {
-      // fallback: use raw selection
-      const parts = label.split(",").map(s => s.trim());
-      onSelect({ address: parts[0] ?? label, city: "", state: "", venue: "" });
-    }
+  const select = (item: PlaceResult) => {
+    onChange(item.label.split(",")[0].trim());
     setOpen(false);
+    fetch(`/api/places/geocode?q=${encodeURIComponent(item.title)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.result?.stateCode) onStateChange?.(data.result.stateCode);
+      })
+      .catch(() => {});
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -112,11 +99,10 @@ export default function AddressAutocomplete({
       <input
         ref={inputRef}
         value={value}
-        onChange={e => { onChange(e.target.value); clearTimeout(timerRef.current); timerRef.current = setTimeout(() => fetchSuggestions(e.target.value), 250); }}
+        onChange={e => handleInput(e.target.value)}
         onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        disabled={disabled}
         className={className}
         autoComplete="off"
         role="combobox"
@@ -130,12 +116,12 @@ export default function AddressAutocomplete({
       )}
       {open && suggestions.length > 0 && (
         <div ref={listRef}
-          className="absolute top-full left-0 mt-1 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-y-auto max-h-64 modal-in">
+          className="absolute top-full left-0 mt-1 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden modal-in">
           {suggestions.map((item, i) => (
             <button key={item.placeId} type="button"
               onClick={() => select(item)}
               onMouseEnter={() => setActiveIdx(i)}
-              className={`w-full px-4 py-3 text-left transition-colors
+              className={`w-full px-4 py-3 text-left flex items-center gap-2.5 transition-colors
                 ${i === activeIdx ? "bg-lime-50" : "hover:bg-gray-50"}`}>
               <span className={`font-headline text-[14px] ${i === activeIdx ? "text-lime-700" : "text-gray-900"}`}>
                 {item.label}
