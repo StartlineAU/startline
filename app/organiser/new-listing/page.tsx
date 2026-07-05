@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
-  Upload, X, MapPin, Calendar, Users,
+  X, MapPin, Calendar, Users,
   ChevronDown, ChevronLeft, ChevronRight, Clock, Eye,
   Ticket, ExternalLink, DollarSign, Bold, Italic, Underline,
   AlignLeft, Image as ImageIcon,
@@ -35,6 +35,7 @@ type Intensity  = "low" | "moderate" | "high" | "extreme" | "";
 type AusState   = "nsw" | "vic" | "qld" | "wa" | "sa" | "tas" | "act" | "nt" | "";
 
 interface Wave { label: string; price: string; closes: string; startTime: string; }
+/* ponytail: closes is an ISO date string (YYYY-MM-DD), startTime is HH:MM 24h */
 
 interface FormState {
   title: string;
@@ -379,6 +380,9 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (html: s
     }
   }, [value]);
 
+  /* ponytail: document.execCommand is deprecated but still works in all
+     browsers with no standard replacement — would swap to a lib if browsers
+     actually drop it */
   const exec = (cmd: string, val?: string) => {
     document.execCommand(cmd, false, val ?? undefined);
     if (editorRef.current) onChange(editorRef.current.innerHTML);
@@ -748,7 +752,6 @@ function WhenStep({ form, update }: { form: FormState; update: (p: Partial<FormS
               ...(venue   && { venue }),
             });
           }}
-          apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
           placeholder="Start typing an address…"
           className={inputCls}
         />
@@ -765,7 +768,6 @@ function WhenStep({ form, update }: { form: FormState; update: (p: Partial<FormS
             value={form.city}
             onChange={city  => update({ city })}
             onStateChange={state => { if (!form.state) update({ state: state as AusState }); }}
-            apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
             placeholder="e.g. Melbourne"
             className={inputCls}
           />
@@ -1016,18 +1018,27 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 4 — MEDIA & DESCRIPTION
-   ══════════════════════════════════════════════════════════════ */
+/* ponytail: URL.createObjectURL creates new blob URLs on every call; useMemo
+   ensures they're only recreated when files change, and effect cleanup revokes
+   stale URLs so we don't leak blob:memory per render cycle. */
+
 function MediaStep({
   form, update,
 }: { form: FormState; update: (p: Partial<FormState>) => void }) {
-  const addImageRef = useRef<HTMLInputElement>(null);
+  const allImageSrcs = useMemo(() => {
+    const urls: string[] = [];
+    if (form.coverImage)       urls.push(URL.createObjectURL(form.coverImage));
+    else if (form.coverImageUrl) urls.push(form.coverImageUrl);
+    form.additionalImages.forEach(f => urls.push(URL.createObjectURL(f)));
+    return urls;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.coverImage, form.additionalImages, form.coverImageUrl]);
 
-  const allImageSrcs: string[] = [
-    ...(form.coverImage ? [URL.createObjectURL(form.coverImage)] : form.coverImageUrl ? [form.coverImageUrl] : []),
-    ...form.additionalImages.map(f => URL.createObjectURL(f)),
-  ];
+  const prevBlobRef = useRef<string[]>([]);
+  useEffect(() => {
+    prevBlobRef.current.filter(s => s.startsWith("blob:")).forEach(u => URL.revokeObjectURL(u));
+    prevBlobRef.current = allImageSrcs;
+  }, [allImageSrcs]);
 
   const handleFilePick = (files: FileList | null, isFirst: boolean) => {
     if (!files || files.length === 0) return;
