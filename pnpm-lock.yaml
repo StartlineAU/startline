@@ -59,6 +59,9 @@ importers:
       aws-amplify:
         specifier: ^6.16.4
         version: 6.17.0
+      bad-words:
+        specifier: ^4.0.0
+        version: 4.0.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -108,6 +111,9 @@ importers:
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
+      '@types/bad-words':
+        specifier: ^3.0.3
+        version: 3.0.3
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
@@ -1554,6 +1560,9 @@ packages:
   '@types/aws-lambda@8.10.161':
     resolution: {integrity: sha512-rUYdp+MQwSFocxIOcSsYSF3YYYC/uUpMbCY/mbO21vGqfrEYvNSoPyKYDj6RhXXpPfS0KstW9RwG3qXh9sL7FQ==}
 
+  '@types/bad-words@3.0.3':
+    resolution: {integrity: sha512-jYdpTxDOJ+EENnsCwt8cOZhV/+4+qcwhks1igrOSg4zwwA17rsPqLsZpTo1l+OwViNu+5SPus0v5g7iGx+ofzA==}
+
   '@types/bcryptjs@2.4.6':
     resolution: {integrity: sha512-9xlo6R2qDs5uixm0bcIqCeMCE6HiQsIyel9KQySStiyqNl2tnj2mP3DX1Nf56MD6KMenNNlBBsy3LJ7gUEQPXQ==}
 
@@ -1671,6 +1680,13 @@ packages:
   aws-jwt-verify@4.0.1:
     resolution: {integrity: sha512-kzvi71eD3w/mCpYRUY7cz6DX4bfYihGdI2yV3FYQ2JuZZenqAqDPz0gWj0ew6vlAtdEVBNb7p+Dm2TAIxpVYMA==}
     engines: {node: '>=14.0.0'}
+
+  bad-words@4.0.0:
+    resolution: {integrity: sha512-fLjG/I0N3I7xhurqGnGitSRD10UeEE63a7hyXtutQDpxo4+Eal+i7veWeZxZJPNtsl6X1mUIoWPwt8gQ7NMQUw==}
+    engines: {node: '>=8.0.0'}
+
+  badwords-list@2.0.1-4:
+    resolution: {integrity: sha512-FxfZUp7B9yCnesNtFQS9v6PvZdxTYa14Q60JR6vhjdQdWI4naTjJIyx22JzoER8ooeT8SAAKoHLjKfCV7XgYUQ==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -4256,6 +4272,8 @@ snapshots:
 
   '@types/aws-lambda@8.10.161': {}
 
+  '@types/bad-words@3.0.3': {}
+
   '@types/bcryptjs@2.4.6': {}
 
   '@types/chai@5.2.3':
@@ -4389,6 +4407,12 @@ snapshots:
       - '@aws-amplify/react-native'
 
   aws-jwt-verify@4.0.1: {}
+
+  bad-words@4.0.0:
+    dependencies:
+      badwords-list: 2.0.1-4
+
+  badwords-list@2.0.1-4: {}
 
   balanced-match@4.0.4: {}
 
