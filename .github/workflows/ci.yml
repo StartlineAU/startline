@@ -110,6 +110,7 @@ jobs:
       - run: npx playwright install chromium
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+      - run: npx prisma db seed
       - name: Start Next.js dev server
         run: |
           pnpm dev -p 3002 &
