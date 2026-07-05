@@ -13,31 +13,31 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const organiser = await prisma.organiser.findUnique({
+    const event = await prisma.event.findUnique({
       where: { id },
-      select: { id: true, verified: true },
+      select: { id: true, isPinned: true },
     });
 
-    if (!organiser) {
-      return NextResponse.json({ error: "Organiser not found." }, { status: 404 });
+    if (!event) {
+      return NextResponse.json({ error: "Event not found." }, { status: 404 });
     }
 
-    const updated = await prisma.organiser.update({
+    const updated = await prisma.event.update({
       where: { id },
-      data:  { verified: !organiser.verified },
-      select: { id: true, verified: true },
+      data: { isPinned: !event.isPinned },
+      select: { id: true, isPinned: true },
     });
 
     writeAuditLog({
       adminId: session.sub,
-      action: updated.verified ? "VERIFY_ORGANISER" : "UNVERIFY_ORGANISER",
-      targetType: "organiser",
+      action: updated.isPinned ? "PIN_EVENT" : "UNPIN_EVENT",
+      targetType: "event",
       targetId: id,
     });
 
     return NextResponse.json(updated);
   } catch (err) {
-    console.error("Admin verify toggle error:", err);
+    console.error("Admin pin toggle error:", err);
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 }

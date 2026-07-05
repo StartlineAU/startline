@@ -13,31 +13,31 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const organiser = await prisma.organiser.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, verified: true },
+      select: { id: true, isBanned: true },
     });
 
-    if (!organiser) {
-      return NextResponse.json({ error: "Organiser not found." }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    const updated = await prisma.organiser.update({
+    const updated = await prisma.user.update({
       where: { id },
-      data:  { verified: !organiser.verified },
-      select: { id: true, verified: true },
+      data: { isBanned: !user.isBanned },
+      select: { id: true, isBanned: true },
     });
 
     writeAuditLog({
       adminId: session.sub,
-      action: updated.verified ? "VERIFY_ORGANISER" : "UNVERIFY_ORGANISER",
-      targetType: "organiser",
+      action: updated.isBanned ? "BAN_USER" : "UNBAN_USER",
+      targetType: "user",
       targetId: id,
     });
 
     return NextResponse.json(updated);
   } catch (err) {
-    console.error("Admin verify toggle error:", err);
+    console.error("Admin ban toggle error:", err);
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 }

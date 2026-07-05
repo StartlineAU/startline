@@ -15,29 +15,32 @@ export async function PATCH(
   try {
     const organiser = await prisma.organiser.findUnique({
       where: { id },
-      select: { id: true, verified: true },
+      select: { id: true, status: true },
     });
 
     if (!organiser) {
       return NextResponse.json({ error: "Organiser not found." }, { status: 404 });
     }
 
+    const newStatus = organiser.status === "SUSPENDED" ? "APPROVED" : "SUSPENDED";
+
     const updated = await prisma.organiser.update({
       where: { id },
-      data:  { verified: !organiser.verified },
-      select: { id: true, verified: true },
+      data: { status: newStatus },
+      select: { id: true, status: true },
     });
 
     writeAuditLog({
       adminId: session.sub,
-      action: updated.verified ? "VERIFY_ORGANISER" : "UNVERIFY_ORGANISER",
+      action: newStatus === "SUSPENDED" ? "SUSPEND_ORGANISER" : "ACTIVATE_ORGANISER",
       targetType: "organiser",
       targetId: id,
+      meta: { prevStatus: organiser.status, newStatus },
     });
 
     return NextResponse.json(updated);
   } catch (err) {
-    console.error("Admin verify toggle error:", err);
+    console.error("Admin suspend toggle error:", err);
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 }

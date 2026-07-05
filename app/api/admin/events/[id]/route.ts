@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/amplify-server";
 import { writeAuditLog } from "@/lib/audit";
 
-export async function PATCH(
+export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -13,31 +13,28 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const organiser = await prisma.organiser.findUnique({
+    const event = await prisma.event.findUnique({
       where: { id },
-      select: { id: true, verified: true },
+      select: { id: true, title: true, status: true },
     });
 
-    if (!organiser) {
-      return NextResponse.json({ error: "Organiser not found." }, { status: 404 });
+    if (!event) {
+      return NextResponse.json({ error: "Event not found." }, { status: 404 });
     }
 
-    const updated = await prisma.organiser.update({
-      where: { id },
-      data:  { verified: !organiser.verified },
-      select: { id: true, verified: true },
-    });
+    await prisma.event.delete({ where: { id } });
 
     writeAuditLog({
       adminId: session.sub,
-      action: updated.verified ? "VERIFY_ORGANISER" : "UNVERIFY_ORGANISER",
-      targetType: "organiser",
+      action: "DELETE_EVENT",
+      targetType: "event",
       targetId: id,
+      meta: { title: event.title, status: event.status },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("Admin verify toggle error:", err);
+    console.error("Admin delete event error:", err);
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 }
