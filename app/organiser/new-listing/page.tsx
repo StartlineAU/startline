@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
-  Upload, Info, X, MapPin, Calendar, Users,
+  Upload, X, MapPin, Calendar, Users,
   ChevronDown, ChevronLeft, ChevronRight, Clock, Eye,
   Ticket, Package, ShoppingBag, Tag, ExternalLink,
 } from "lucide-react";

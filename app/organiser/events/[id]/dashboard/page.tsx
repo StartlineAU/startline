@@ -183,8 +183,8 @@ export default function EventDashboardPage({
           {/* Event header */}
           <div className="flex flex-col lg:flex-row lg:items-start gap-6 mb-8">
             {event.coverImageUrl && (
-              <div className="w-full lg:w-48 h-32 lg:h-32 rounded-xl overflow-hidden shrink-0">
-                <Image src={event.coverImageUrl} alt={event.title} fill className="object-cover brightness-[.62] saturate-110" sizes="(max-width: 1024px) 100vw, 192px" />
+              <div className="relative w-full lg:w-48 h-32 lg:h-32 rounded-xl overflow-hidden shrink-0">
+                <Image src={event.coverImageUrl} alt={event.title} fill className="pointer-events-none object-cover brightness-[.62] saturate-110" sizes="(max-width: 1024px) 100vw, 192px" />
               </div>
             )}
             <div className="flex-1 min-w-0">

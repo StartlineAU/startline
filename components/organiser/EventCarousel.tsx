@@ -114,7 +114,7 @@ export default function EventCarousel({ events, pinnedIds, isOrganiser, onPin }:
               {/* Cover */}
               <div className="relative h-36 overflow-hidden">
                 {e.coverImageUrl ? (
-                  <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover" sizes="272px" />
+                  <Image src={e.coverImageUrl} alt={e.title} fill className="pointer-events-none object-cover" sizes="272px" />
                 ) : (
                   <div className="absolute inset-0 hero-topo scan-grid" />
                 )}

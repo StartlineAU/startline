@@ -310,9 +310,9 @@ export default function ListingsPage() {
                     className="sm:hidden flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-white/5 transition-colors"
                     onClick={() => handleRowClick(e)}
                   >
-                    <div className="w-12 h-12 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
-                      {e.coverImageUrl
-                        ? <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover brightness-[.62] saturate-110" sizes="48px" />
+                    <div className="relative w-12 h-12 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
+                        {e.coverImageUrl
+                          ? <Image src={e.coverImageUrl} alt={e.title} fill className="pointer-events-none object-cover brightness-[.62] saturate-110" sizes="48px" />
                         : <div className="font-mono text-[9px] text-muted-dark uppercase">{e.discipline.slice(0, 4)}</div>}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -346,9 +346,9 @@ export default function ListingsPage() {
                     onClick={() => handleRowClick(e)}
                   >
                     <div className="col-span-5 flex items-center gap-4 min-w-0">
-                      <div className="w-14 h-14 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="relative w-14 h-14 rounded-lg bg-dark-light flex items-center justify-center shrink-0 overflow-hidden">
                         {e.coverImageUrl
-                          ? <Image src={e.coverImageUrl} alt={e.title} fill className="object-cover brightness-[.62] saturate-110" sizes="56px" />
+                          ? <Image src={e.coverImageUrl} alt={e.title} fill className="pointer-events-none object-cover brightness-[.62] saturate-110" sizes="56px" />
                           : <div className="font-mono text-[9px] text-muted-dark uppercase">{e.discipline.slice(0, 4)}</div>}
                       </div>
                       <div className="min-w-0">

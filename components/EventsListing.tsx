@@ -36,7 +36,7 @@ function EventCard({ event, selected, onSelect }: { event: UserEvent; selected: 
           src={img}
           alt={event.title}
           fill
-          className="object-cover brightness-75 transition-all duration-500"
+          className="pointer-events-none object-cover brightness-75 transition-all duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         <div className="absolute top-2.5 left-2.5">

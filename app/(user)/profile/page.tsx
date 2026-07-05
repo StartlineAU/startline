@@ -316,18 +316,18 @@ export default function ProfilePage() {
               ) : (
                 <>
                   {/* Avatar */}
-                  <div
-                    className="w-20 h-20 rounded-full bg-primary border-2 border-primary flex items-center justify-center overflow-hidden flex-shrink-0"
-                    style={{ boxShadow: "3px 3px 0 rgba(179, 225, 83, 0.25)" }}
-                  >
-                    {userData?.profilePicUrl ? (
-                      <Image
-                        src={userData.profilePicUrl}
-                        alt={userData?.name ?? "Profile"}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
+                    <div
+                      className="relative w-20 h-20 rounded-full bg-primary border-2 border-primary flex items-center justify-center overflow-hidden flex-shrink-0"
+                      style={{ boxShadow: "3px 3px 0 rgba(179, 225, 83, 0.25)" }}
+                    >
+                      {userData?.profilePicUrl ? (
+                        <Image
+                          src={userData.profilePicUrl}
+                          alt={userData?.name ?? "Profile"}
+                          fill
+                          className="pointer-events-none object-cover"
+                          sizes="80px"
+                        />
                     ) : (
                       <span className="font-headline text-3xl font-black text-dark">{initial}</span>
                     )}

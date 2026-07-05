@@ -84,7 +84,7 @@ export default function EventCard({ event, variant = "default", cardClassName }:
             src={bannerUrl}
             alt={event.title}
             fill
-            className="object-cover transition-all duration-500 brightness-50 group-hover:brightness-60"
+            className="pointer-events-none object-cover transition-all duration-500 brightness-50 group-hover:brightness-60"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/40 to-transparent" />
