@@ -7,8 +7,21 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
+  security-events: write
 
 jobs:
+  gitleaks:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     continue-on-error: true
     runs-on: ubuntu-latest
