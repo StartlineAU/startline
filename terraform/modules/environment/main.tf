@@ -180,6 +180,7 @@ resource "aws_secretsmanager_secret_version" "ci" {
   secret_string = jsonencode({
     NEXT_PUBLIC_COGNITO_USER_POOL_ID = aws_cognito_user_pool.this.id
     NEXT_PUBLIC_COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.web.id
+    GITLEAKS_LICENSE                 = var.gitleaks_license
   })
 }
 
