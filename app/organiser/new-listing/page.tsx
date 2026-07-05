@@ -1251,6 +1251,7 @@ function ExtrasStep({ form, update }: { form: FormState; update: (p: Partial<For
         <label className="block cursor-pointer">
           {(form.coverImage || form.coverImageUrl) ? (
             <div className="relative rounded-md border border-primary/40 overflow-hidden aspect-video">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl}
                 alt="Cover preview"
@@ -1420,6 +1421,7 @@ function LivePreview({ form }: { form: FormState }) {
         {/* Cover image */}
         <div className="relative h-52 placeholder-stripes scan-grid flex items-center justify-center overflow-hidden">
           {(form.coverImage || form.coverImageUrl) && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl}
               alt=""

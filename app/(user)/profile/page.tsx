@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Calendar, Check, X, AlertCircle } from "lucide-react";
 import { STATE_OPTIONS, STATE_LABELS } from "@/types";
 import type { AustralianState } from "@/types";
@@ -320,10 +321,12 @@ export default function ProfilePage() {
                     style={{ boxShadow: "3px 3px 0 rgba(179, 225, 83, 0.25)" }}
                   >
                     {userData?.profilePicUrl ? (
-                      <img
+                      <Image
                         src={userData.profilePicUrl}
                         alt={userData?.name ?? "Profile"}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="80px"
                       />
                     ) : (
                       <span className="font-headline text-3xl font-black text-dark">{initial}</span>

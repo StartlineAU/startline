@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
@@ -35,7 +36,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
       {/* ── Banner ── */}
       <div className="relative overflow-hidden" style={{ aspectRatio: "4/3", maxHeight: "520px" }}>
-        <img src={bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={bannerUrl} alt={event.title} fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-darker via-dark-darker/50 to-transparent" />
 
         {/* Badges */}
