@@ -135,14 +135,15 @@ describe("filterEvents", () => {
 
 describe("getUpcomingEvents", () => {
   it("returns events sorted and limited", () => {
+    const year = new Date().getFullYear() + 1;
     const events: UserEvent[] = [
-      { date: "2026-10-10" } as UserEvent,
-      { date: "2026-07-01" } as UserEvent,
-      { date: "2026-12-25" } as UserEvent,
+      { date: `${year}-10-10` } as UserEvent,
+      { date: `${year}-08-01` } as UserEvent,
+      { date: `${year}-12-25` } as UserEvent,
     ];
     const result = getUpcomingEvents(events, 2);
     expect(result).toHaveLength(2);
-    expect(result[0].date).toBe("2026-07-01");
+    expect(result[0].date).toBe(`${year}-08-01`);
   });
 });
 
