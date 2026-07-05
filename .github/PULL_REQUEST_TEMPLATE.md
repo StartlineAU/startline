@@ -8,12 +8,5 @@
 
 ## Test evidence
 
-<!-- REQUIRED: Include output from passing test runs. -->
-
-- [ ] `pnpm lint` passes
-- [ ] `pnpm test` passes
-- [ ] `pnpm test:e2e` passes (or N/A if no e2e changes)
-
-```
-Paste output from the three commands above showing they pass.
-```
+<!-- CI runs lint, unit tests, and e2e automatically on every PR (see results below).
+     Include any additional manual test output here if needed. -->
