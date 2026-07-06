@@ -7,8 +7,9 @@ import {
   Upload, X, MapPin, Calendar, Users,
   ChevronDown, ChevronLeft, ChevronRight, Clock, Eye,
   Ticket, ExternalLink, DollarSign, Bold, Italic, Underline,
-  AlignLeft, Image as ImageIcon,
+  AlignLeft, Image as ImageIcon, Trophy,
 } from "lucide-react";
+import { encodePrizePool, parsePrizePool, normalisePrizeAmount } from "@/lib/prize-pool";
 import OrganiserTopBar      from "@/components/organiser/TopBar";
 import AddressAutocomplete  from "@/components/ui/AddressAutocomplete";
 import SuburbAutocomplete   from "@/components/ui/SuburbAutocomplete";
@@ -56,6 +57,7 @@ interface FormState {
   waves: Wave[];
   prizeMoney: boolean;
   prizeMoneyAmount: string;
+  prizeMoneyDetails: string;
   refundPolicy: string;
   registrationType: "startline" | "external";
   feeStructure: "athlete" | "organiser";
@@ -71,7 +73,7 @@ const INITIAL: FormState = {
   date: "", endDate: "", startTime: "", endTime: "",
   venue: "", address: "", city: "", state: "",
   waves: [{ label: "", price: "", closes: "", startTime: "" }],
-  prizeMoney: false, prizeMoneyAmount: "",
+  prizeMoney: false, prizeMoneyAmount: "", prizeMoneyDetails: "",
   refundPolicy: "",
   registrationType: "startline", feeStructure: "athlete", registrationUrl: "",
   coverImage: null, coverImageUrl: "", additionalImages: [],
@@ -982,13 +984,35 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
           </div>
         </button>
         {form.prizeMoney && (
-          <div className="px-5 pb-5 pt-3 bg-white/[0.02] border-t border-dark-lighter">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-headline text-[13px] text-muted">A$</span>
-              <input value={form.prizeMoneyAmount} onChange={e => update({ prizeMoneyAmount: e.target.value })}
-                placeholder="e.g. 5,000 total prize pool"
-                className={`${inputCls} pl-9`} />
+          <div className="px-5 pb-5 pt-3 bg-white/[0.02] border-t border-dark-lighter space-y-3">
+            <div>
+              <div className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5">Total prize pool</div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-headline text-[13px] text-muted">A$</span>
+                <input value={form.prizeMoneyAmount} onChange={e => update({ prizeMoneyAmount: e.target.value })}
+                  placeholder="e.g. 2,000"
+                  className={`${inputCls} pl-9`} />
+              </div>
             </div>
+            <div>
+              <div className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5">How it's awarded</div>
+              <input value={form.prizeMoneyDetails} onChange={e => update({ prizeMoneyDetails: e.target.value })}
+                placeholder="e.g. Awarded to podium finishers per division"
+                className={inputCls} />
+            </div>
+            {normalisePrizeAmount(form.prizeMoneyAmount) && (
+              <div className="bg-dark border border-dark-lighter rounded-xl px-5 py-4 flex items-center gap-4">
+                <Trophy className="w-6 h-6 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-headline text-[17px] font-bold text-primary leading-tight">
+                    ${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool
+                  </p>
+                  <p className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted mt-0.5 truncate">
+                    {form.prizeMoneyDetails.trim() || "Cash prizes up for grabs"}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1119,7 +1143,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
     { k: "Tickets",        v: `${form.waves.length} categor${form.waves.length !== 1 ? "ies" : "y"}, from ${form.waves[0]?.price === "0" ? "Free" : form.waves[0]?.price ? `A$${form.waves[0].price}` : "—"}`, step: 2 },
     { k: "Registration",   v: form.registrationType === "startline" ? "Startline" : form.registrationUrl || "—",  step: 2 },
     { k: "Refund policy",  v: form.refundPolicy || "—",                                                            step: 2 },
-    { k: "Prize money",    v: form.prizeMoney ? (form.prizeMoneyAmount ? `A$${form.prizeMoneyAmount}` : "Yes") : "No", step: 2 },
+    { k: "Prize money",    v: form.prizeMoney ? (normalisePrizeAmount(form.prizeMoneyAmount) ? `$${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool` : "Yes") : "No", step: 2 },
     { k: "Cover image",    v: form.coverImage || form.coverImageUrl ? "Uploaded" : "No image",                    step: 3 },
     { k: "Description",    v: form.description ? `${form.description.replace(/<[^>]+>/g, "").trim().slice(0, 60)}…` : "—", step: 3 },
   ];
@@ -1430,6 +1454,22 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
                 </div>
               </PreviewSection>
             )}
+
+            {form.prizeMoney && normalisePrizeAmount(form.prizeMoneyAmount) && (
+              <div className="bg-dark rounded-xl px-5 sm:px-6 py-5 flex items-center gap-4">
+                <Trophy className="w-7 h-7 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-headline text-xl font-black text-primary leading-tight">
+                    ${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool
+                  </p>
+                  {form.prizeMoneyDetails.trim() && (
+                    <p className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted mt-1">
+                      {form.prizeMoneyDetails.trim()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1501,8 +1541,9 @@ export default function NewListingPage() {
           waves:             Array.isArray(e.waves) && e.waves.length
             ? e.waves.map((w: Wave) => ({ label: w.label ?? "", price: w.price ?? "", closes: w.closes ?? "", startTime: w.startTime ?? "" }))
             : [{ label: "", price: "", closes: "", startTime: "" }],
-          prizeMoney:        !!e.extras,
-          prizeMoneyAmount:  e.extras?.replace(/^Prize pool:\s*/, "") ?? "",
+          prizeMoney:        !!parsePrizePool(e.extras),
+          prizeMoneyAmount:  parsePrizePool(e.extras)?.amount ?? "",
+          prizeMoneyDetails: parsePrizePool(e.extras)?.details ?? "",
           refundPolicy:      e.refundPolicy   ?? "",
           registrationType:  e.registrationType === "external" ? "external" : "startline",
           feeStructure:      e.feeStructure   === "organiser"  ? "organiser" : "athlete",
@@ -1580,7 +1621,7 @@ export default function NewListingPage() {
         waves:             form.waves,
         inclusions:        null,
         activations:       null,
-        extras:            form.prizeMoney && form.prizeMoneyAmount ? `Prize pool: ${form.prizeMoneyAmount}` : null,
+        extras:            form.prizeMoney ? encodePrizePool(form.prizeMoneyAmount, form.prizeMoneyDetails) : null,
         refundPolicy:      form.refundPolicy,
         registrationType:  form.registrationType,
         feeStructure:      form.feeStructure,
