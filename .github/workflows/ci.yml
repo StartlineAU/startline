@@ -39,6 +39,8 @@ jobs:
   lint:
     continue-on-error: true
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -52,6 +54,8 @@ jobs:
   test:
     continue-on-error: true
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
