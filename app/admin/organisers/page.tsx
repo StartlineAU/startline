@@ -151,7 +151,7 @@ export default function AdminOrganisersPage() {
               </h1>
             </div>
             <button
-              onClick={fetchOrganisers}
+              onClick={() => fetch("/api/admin/organisers").then(r => r.json()).then(data => setOrganisers(Array.isArray(data) ? data : [])).finally(() => setLoading(false))}
               className="self-start sm:self-end flex items-center gap-2 font-headline text-[12px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
