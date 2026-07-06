@@ -1164,18 +1164,11 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
       </div>
 
       <div className="bg-primary/5 border border-primary/30 rounded-md p-5 mb-6">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-md bg-primary text-dark flex items-center justify-center flex-shrink-0">
-            <Check className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="font-headline text-[14px] font-black italic tracking-tighter text-light mb-1">Your listing is ready to publish.</div>
-            <p className="font-headline text-[13px] text-muted leading-relaxed">
-              Once published, athletes will be able to find your event in search and carousels.
-              You&apos;ll receive a notification each time someone registers.
-            </p>
-          </div>
-        </div>
+        <div className="font-headline text-[14px] font-black italic tracking-tighter text-light mb-1">Your listing is ready to publish.</div>
+        <p className="font-headline text-[13px] text-muted leading-relaxed">
+          Once published, athletes will be able to find your event in search and carousels.
+          You&apos;ll receive a notification each time someone registers.
+        </p>
       </div>
 
       <label className="flex items-start gap-3 cursor-pointer">
