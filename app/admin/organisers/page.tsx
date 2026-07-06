@@ -113,15 +113,11 @@ export default function AdminOrganisersPage() {
   const [organisers, setOrganisers] = useState<OrganiserRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrganisers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res  = await fetch("/api/admin/organisers");
-      const data = await res.json();
-      setOrganisers(res.ok && Array.isArray(data) ? data : []);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    fetch("/api/admin/organisers")
+      .then(r => r.json())
+      .then(data => { setOrganisers(Array.isArray(data) ? data : []); })
+      .finally(() => setLoading(false));
   }, []);
 
   const toggleVerify = useCallback(async (id: string) => {
@@ -137,8 +133,6 @@ export default function AdminOrganisersPage() {
       // silent
     }
   }, []);
-
-  useEffect(() => { fetchOrganisers(); }, [fetchOrganisers]);
 
   return (
     <div className="min-h-screen bg-gray-50">
