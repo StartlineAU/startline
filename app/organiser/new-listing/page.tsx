@@ -1177,77 +1177,103 @@ const DISC_LABEL: Record<string, string> = {
   cycling: "Cycling", swimming: "Swimming", other: "Other",
 };
 const MONTHS_SHORT = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 function LivePreview({ form }: { form: FormState }) {
-  const sp   = (form.date || "").split("-");
-  const ep   = (form.endDate || "").split("-");
-  const sDay = sp[2] || "—";
-  const sMon = sp[1] ? MONTHS_SHORT[parseInt(sp[1]) - 1] : "—";
-  const eDay = ep[2];
-  const eMon = ep[1] ? MONTHS_SHORT[parseInt(ep[1]) - 1] : null;
+  const sp    = (form.date || "").split("-");
+  const sDay  = sp[2] || null;
+  const sMon  = sp[1] ? MONTHS_SHORT[parseInt(sp[1]) - 1] : null;
   const price = form.waves.find(w => w.price === "0" || !!w.price)?.price;
-
-  const dateLabel = form.date
-    ? form.endDate && form.endDate !== form.date ? `${sDay} ${sMon} — ${eDay} ${eMon}` : `${sDay} ${sMon}${sp[0] ? ` ${sp[0]}` : ""}`
-    : "Date TBC";
-
-  const coverSrc = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
+  const coverSrc = form.coverImage
+    ? URL.createObjectURL(form.coverImage)
+    : form.coverImageUrl || null;
+  const descriptionText = stripHtml(form.description || "");
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-lime-600">Live preview</span>
-      </div>
-      <div className="bg-dark-darker rounded-xl border border-dark-lighter overflow-hidden">
-        <div className="relative h-52 placeholder-stripes scan-grid flex items-center justify-center overflow-hidden">
-          {coverSrc && <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-          <div className="absolute inset-0 bg-gradient-to-t from-dark-darker via-dark-darker/50 to-transparent" />
+      <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-primary/70 block mb-4">
+        Live preview
+      </span>
+
+      {/* Card — matches HomeEventCard */}
+      <div className="bg-dark border border-dark-lighter rounded-2xl overflow-hidden">
+
+        {/* Image */}
+        <div className="relative w-full aspect-video overflow-hidden rounded-t-2xl">
+          {coverSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverSrc}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover brightness-[0.55]"
+            />
+          ) : (
+            <div className="absolute inset-0 placeholder-stripes scan-grid" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-transparent" />
+
+          {/* DRAFT badge */}
           <div className="absolute top-3 left-3">
-            <span className="font-headline text-[10px] font-bold uppercase tracking-widest bg-primary text-dark px-2.5 py-1 rounded-full">DRAFT</span>
+            <span className="font-headline text-[10px] font-medium uppercase tracking-widest bg-primary text-dark px-2.5 py-1 rounded-full">
+              Draft
+            </span>
           </div>
-          {form.date && (
-            <div className="absolute top-3 right-3 bg-dark/80 backdrop-blur-sm px-3 py-1.5 rounded-md text-right">
-              <div className="font-headline text-[9px] uppercase tracking-widest text-muted leading-none mb-0.5">{sMon}</div>
-              <div className="font-headline text-xl font-black text-light leading-none">{sDay}</div>
+
+          {/* Date badge */}
+          {sDay && sMon && (
+            <div className="absolute top-3 right-3 bg-dark-light/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center leading-tight">
+              <span className="block font-headline text-[9px] font-bold uppercase tracking-widest text-muted">{sMon}</span>
+              <span className="block font-headline text-xl font-black text-light leading-none mt-0.5">{sDay}</span>
             </div>
           )}
-          <div className="absolute bottom-4 left-4 right-4">
-            {form.discipline && (
-              <div className="font-headline text-[10px] uppercase tracking-widest text-primary mb-1">{DISC_LABEL[form.discipline]}</div>
-            )}
-            <div className="font-headline text-lg font-black italic tracking-tighter text-light leading-tight line-clamp-2">
-              {form.title || <span className="text-muted-dark/60">Event title…</span>}
-            </div>
-          </div>
         </div>
-        <div className="p-5">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-3.5 h-3.5 text-primary shrink-0 mt-px" />
-              <span className="font-headline text-[11px] uppercase tracking-widest text-muted leading-snug">
-                {form.venue ? `${form.venue}${form.city ? `, ${form.city}` : ""}${form.state ? ` ${form.state.toUpperCase()}` : ""}` : "Venue TBC"}
+
+        {/* Content */}
+        <div className="p-4">
+          {form.discipline && (
+            <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
+              {DISC_LABEL[form.discipline]}
+            </span>
+          )}
+          <h3 className="font-headline text-lg sm:text-xl font-black italic tracking-tighter text-light leading-tight mb-3 line-clamp-2">
+            {form.title || <span className="text-muted/40">Event title...</span>}
+          </h3>
+
+          <div className="space-y-1.5 mb-3">
+            <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+              <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+              <span className="truncate">
+                {form.city || form.state
+                  ? [form.city, form.state ? form.state.toUpperCase() : ""].filter(Boolean).join(", ")
+                  : "Venue TBC"}
               </span>
             </div>
-            <div className="flex items-start gap-3">
-              <Calendar className="w-3.5 h-3.5 text-primary shrink-0 mt-px" />
-              <span className="font-headline text-[11px] uppercase tracking-widest text-muted leading-snug">
-                {dateLabel}{form.startTime ? ` · ${fmt24to12(form.startTime)}` : ""}
-              </span>
+            <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+              <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+              <span>{form.startTime ? fmt24to12(form.startTime) : "Time TBC"}</span>
             </div>
             {form.format && (
-              <div className="flex items-start gap-3">
-                <Users className="w-3.5 h-3.5 text-primary shrink-0 mt-px" />
-                <span className="font-headline text-[11px] uppercase tracking-widest text-muted">
-                  {form.format === "both" ? "Individual & Team" : form.format === "individual" ? "Individual" : "Team / Pairs"}
+              <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+                <Users className="w-3 h-3 text-primary flex-shrink-0" />
+                <span>
+                  {form.format === "both"        ? "Individual & Team"
+                  : form.format === "individual"  ? "Individual"
+                  :                                "Team / Pairs"}
                 </span>
               </div>
             )}
           </div>
+
+          {descriptionText && (
+            <p className="font-headline text-xs text-muted leading-relaxed line-clamp-2 mb-3">
+              {descriptionText}
+            </p>
+          )}
+
           {(price === "0" || !!price) && (
-            <div className="mt-5 pt-4 border-t border-dark-lighter flex items-center justify-between">
-              <span className="font-headline text-[10px] uppercase tracking-widest text-muted">Entry from</span>
-              <span className="font-headline text-xl font-black italic tracking-tighter text-primary">{price === "0" ? "Free" : `A$${price}`}</span>
-            </div>
+            <span className="font-headline text-sm font-bold text-primary">
+              {price === "0" ? "Free" : `From A$${price}`}
+            </span>
           )}
         </div>
       </div>
