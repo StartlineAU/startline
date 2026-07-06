@@ -70,6 +70,19 @@ Infrastructure is managed via Terraform in `terraform/`:
 - App code deploys via AWS Amplify on branch push: `non-production` → staging, `production` → live
 - No app code CI (no lint/test/build checks) — only Terraform CI exists
 
+## Worktrees
+
+All feature work MUST go through the `create_worktree` tool, which adapts to the environment:
+
+- **herdr present** (managed sessions) — creates a git worktree in `~/Developer/startline-worktrees/`. Do ALL file operations relative to the returned worktree path.
+- **herdr absent** (direct opencode) — tells you to work directly in the main checkout. No worktree needed.
+
+When you start work on a new branch, call `create_worktree(branch, base)`:
+- `branch` — kebab-case name, e.g. `fix-login-validation`
+- `base` — branch to fork from (defaults to `main`)
+
+The tool detects whether herdr is available and behaves accordingly. Never use raw `git worktree add` or worktree operations outside this tool.
+
 ## Design system
 
 The authoritative design reference lives at **`design/design.md`**. Read it before touching any UI — it covers every decision that keeps the product coherent.

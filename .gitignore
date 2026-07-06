@@ -59,6 +59,5 @@ next-env.d.ts
 terraform/.terraform/
 terraform/terraform.tfvars
 
-# opencode internal state
-.opencode/
+# opencode internal state — individual excludes in .opencode/.gitignore
 skills-lock.json
