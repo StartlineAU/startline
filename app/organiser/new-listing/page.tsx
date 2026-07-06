@@ -1257,7 +1257,7 @@ function LivePreview({ form }: { form: FormState }) {
                 <span>
                   {form.format === "both"        ? "Individual & Team"
                   : form.format === "individual"  ? "Individual"
-                  :                                "Team / Pairs"}
+                  :                                "Team"}
                 </span>
               </div>
             )}
@@ -1271,7 +1271,7 @@ function LivePreview({ form }: { form: FormState }) {
 
           {(price === "0" || !!price) && (
             <span className="font-headline text-sm font-bold text-primary">
-              {price === "0" ? "Free" : `From A$${price}`}
+              {price === "0" ? "Free" : `From $${price}`}
             </span>
           )}
         </div>
