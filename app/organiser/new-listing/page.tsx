@@ -96,8 +96,8 @@ function Field({ label, hint, required, children }: {
   );
 }
 
-const inputCls    = "w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 text-[15px] text-light placeholder:text-muted focus:border-primary focus:outline-none transition-colors";
-const textareaCls = "w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 text-[14px] text-light placeholder:text-muted focus:border-primary focus:outline-none resize-none transition-colors";
+const inputCls    = "w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 font-headline text-[15px] text-light placeholder:text-muted focus:border-primary focus:outline-none transition-colors";
+const textareaCls = "w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 font-headline text-[14px] text-light placeholder:text-muted focus:border-primary focus:outline-none resize-none transition-colors";
 
 /* ═══════════════════════════════════════════════════════════════
    DATE PICKER POPOVER
@@ -184,7 +184,7 @@ function DatePickerPopover({
     <div ref={ref} className="relative">
       <button type="button"
         onClick={() => { setOpen(v => !v); if (!open) setPicking(value && !rangeEnd ? "end" : "start"); }}
-        className={`w-full bg-dark-light border rounded-md px-4 py-3 text-[15px] text-left flex items-center justify-between transition-colors
+        className={`w-full bg-dark-light border rounded-md px-4 py-3 font-headline text-[15px] text-left flex items-center justify-between transition-colors
           ${open ? "border-primary" : "border-dark-lighter hover:border-primary/40"}
           ${displayValue ? "text-light" : "text-muted-dark"}`}>
         <span className="flex items-center gap-2.5 min-w-0">
@@ -317,7 +317,7 @@ function TimePicker({ value, onChange, placeholder = "Select time" }: {
     <div ref={ref} className="relative">
       <div className="relative flex items-center">
         <button type="button" onClick={() => setOpen(v => !v)}
-          className={`w-full bg-dark-light border rounded-md px-4 py-3 text-[15px] text-left flex items-center justify-between transition-colors
+          className={`w-full bg-dark-light border rounded-md px-4 py-3 font-headline text-[15px] text-left flex items-center justify-between transition-colors
             ${open ? "border-primary" : "border-dark-lighter hover:border-primary/40"}
             ${value ? "text-light" : "text-muted-dark"}`}>
           <span className="flex items-center gap-2.5">
@@ -342,7 +342,7 @@ function TimePicker({ value, onChange, placeholder = "Select time" }: {
                 onChange={e => { setCustomRaw(e.target.value); setCustomError(false); }}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitCustom(); } }}
                 placeholder="e.g. 7:15 AM or 19:15"
-                className={`flex-1 min-w-0 bg-dark-light border rounded px-3 py-2 text-[13px] text-light placeholder:text-muted focus:outline-none transition-colors ${customError ? "border-red-400 focus:border-red-500" : "border-dark-lighter focus:border-primary"}`}
+                className={`flex-1 min-w-0 bg-dark-light border rounded px-3 py-2 font-headline text-[13px] text-light placeholder:text-muted focus:outline-none transition-colors ${customError ? "border-red-400 focus:border-red-500" : "border-dark-lighter focus:border-primary"}`}
               />
               <button type="button" onClick={commitCustom}
                 className="px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[11px] font-bold rounded transition-colors shrink-0">Set</button>
@@ -426,7 +426,7 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (html: s
           }
         }}
         data-placeholder="Tell athletes what makes this event unmissable — course details, atmosphere, divisions, what to bring…"
-        className="min-h-[220px] px-4 py-3 text-[14px] text-light focus:outline-none prose prose-sm max-w-none
+        className="min-h-[220px] px-4 py-3 font-headline text-[14px] text-light focus:outline-none prose prose-sm max-w-none
           [&_h3]:font-headline [&_h3]:font-black [&_h3]:text-[16px] [&_h3]:text-light [&_h3]:mt-3 [&_h3]:mb-1
           [&_h4]:font-headline [&_h4]:font-bold [&_h4]:text-[14px] [&_h4]:text-light [&_h4]:mt-2 [&_h4]:mb-1
           [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_li]:mb-0.5
@@ -632,7 +632,7 @@ function BasicsStep({ form, update }: { form: FormState; update: (p: Partial<For
               <button type="button" onClick={() => update({ minAge: String(Math.max(0, (parseInt(form.minAge) || 0) - 1)) })}
                 className="w-9 h-11 flex items-center justify-center text-muted-dark hover:text-light hover:bg-white/5 transition-colors font-headline text-lg select-none">−</button>
               <input type="number" value={form.minAge} onChange={e => update({ minAge: e.target.value })} placeholder="0"
-                className="w-16 bg-dark-light px-2 py-3 text-[15px] text-light text-center placeholder:text-muted focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+                className="w-16 bg-dark-light px-2 py-3 font-headline text-[15px] text-light text-center placeholder:text-muted focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
               <button type="button" onClick={() => update({ minAge: String((parseInt(form.minAge) || 0) + 1) })}
                 className="w-9 h-11 flex items-center justify-center text-muted-dark hover:text-light hover:bg-white/5 transition-colors font-headline text-lg select-none">+</button>
             </div>
@@ -680,7 +680,7 @@ function StateSelect({ value, onChange }: { value: AusState; onChange: (v: AusSt
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className={`w-full bg-dark-light border rounded-md px-4 py-3 text-[15px] text-left flex items-center justify-between transition-colors
+        className={`w-full bg-dark-light border rounded-md px-4 py-3 font-headline text-[15px] text-left flex items-center justify-between transition-colors
           ${open ? "border-primary" : "border-dark-lighter hover:border-primary/40"}
           ${value ? "text-light" : "text-muted-dark"}`}
       >
@@ -1154,7 +1154,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
         {rows.map((r, i) => (
           <div key={r.k} className={`flex items-center gap-4 px-5 py-4 ${i === rows.length - 1 ? "" : "border-b border-white/5"}`}>
             <div className="font-headline text-[11px] uppercase tracking-widest text-muted w-32 flex-shrink-0">{r.k}</div>
-            <div className="flex-1 text-[14px] text-light truncate">{r.v}</div>
+            <div className="flex-1 font-headline text-[14px] text-light truncate">{r.v}</div>
             <button onClick={() => setStep(r.step)}
               className="font-headline text-[11px] uppercase tracking-widest text-muted-dark hover:text-primary flex items-center gap-1 transition-colors">
               Edit <ArrowRight className="w-3 h-3" />
@@ -1170,7 +1170,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
           </div>
           <div>
             <div className="font-headline text-[14px] font-black italic tracking-tighter text-light mb-1">Your listing is ready to publish.</div>
-            <p className="text-[13px] text-muted leading-relaxed">
+            <p className="font-headline text-[13px] text-muted leading-relaxed">
               Once published, athletes will be able to find your event in search and carousels.
               You&apos;ll receive a notification each time someone registers.
             </p>
@@ -1181,7 +1181,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
       <label className="flex items-start gap-3 cursor-pointer">
         <input type="checkbox" checked={confirmed} onChange={e => onConfirm(e.target.checked)}
           className="accent-primary w-4 h-4 mt-1 cursor-pointer" />
-        <span className="text-[13px] text-muted leading-relaxed">
+        <span className="font-headline text-[13px] text-muted leading-relaxed">
           I confirm I have the rights to host this event and the information provided is accurate.
           I agree to the{" "}
           <span className="text-primary hover:underline cursor-pointer">Organiser Terms</span> and{" "}
@@ -1399,7 +1399,7 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
                     <div className="font-headline text-[13px] font-medium text-muted leading-relaxed [&_h3]:text-light [&_h3]:font-black [&_h3]:text-[15px] [&_h3]:mb-1 [&_h4]:text-light [&_h4]:font-bold [&_h4]:text-[13px] [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-0.5"
                       dangerouslySetInnerHTML={{ __html: form.description }} />
                   ) : (
-                    <p className="text-muted-dark text-[12px] italic">Full description will appear here.</p>
+                    <p className="font-headline text-muted-dark text-[12px] italic">Full description will appear here.</p>
                   )}
                 </div>
                 <div className="bg-dark rounded-xl p-5 border-l-4 border-primary flex flex-col gap-4">
@@ -1407,7 +1407,7 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
                     <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-2 block">Discipline</span>
                     {form.discipline
                       ? <span className="bg-primary text-dark font-headline text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">{discipline}</span>
-                      : <span className="text-muted-dark text-[12px]">—</span>}
+                      : <span className="font-headline text-muted-dark text-[12px]">—</span>}
                   </div>
                   <div>
                     <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-1 block">Intensity</span>
@@ -1683,7 +1683,7 @@ export default function NewListingPage() {
                   className="flex items-center gap-1.5 text-muted hover:text-primary font-headline text-[11px] uppercase tracking-widest transition-colors">
                   <ArrowLeft className="w-4 h-4" /> Event Listings
                 </button>
-                <span className="text-muted-dark">/</span>
+                <span className="font-headline text-muted-dark">/</span>
                 <span className="font-headline text-[11px] uppercase tracking-widest text-light">Create new listing</span>
                 <div className="ml-auto flex items-center gap-3">
                   <button onClick={() => setShowFullPreview(true)}
@@ -1735,7 +1735,7 @@ export default function NewListingPage() {
                   <h1 className="font-headline text-[28px] sm:text-[38px] font-black italic tracking-tighter leading-none text-light">
                     {STEP_HEADINGS[step].h}
                   </h1>
-                  <p className="text-muted mt-2 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
+                  <p className="font-headline text-muted mt-2 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
                 </div>
 
                 {step === 0 && <BasicsStep  form={form} update={update} />}
@@ -1761,7 +1761,7 @@ export default function NewListingPage() {
                         <li key={i} className="flex items-start justify-between gap-4 py-2.5 px-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
                           <div>
                             <p className="font-headline text-[12px] font-bold uppercase tracking-widest text-orange-600">{STEPS[i].n} — {STEPS[i].label}</p>
-                            <p className="text-orange-500 text-[12px] mt-0.5">{STEP_ERRORS[i]}</p>
+                            <p className="font-headline text-orange-500 text-[12px] mt-0.5">{STEP_ERRORS[i]}</p>
                           </div>
                           <button onClick={() => { setSubmitErrors([]); goTo(i); }}
                             className="shrink-0 font-headline text-[11px] font-bold uppercase tracking-widest text-orange-500 hover:text-orange-700 flex items-center gap-1 transition-colors mt-0.5">
@@ -1823,7 +1823,7 @@ export default function NewListingPage() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowCancelModal(false)} />
           <div className="relative bg-dark border border-dark-lighter rounded-2xl shadow-2xl w-full max-w-sm p-7 modal-in">
             <h2 className="font-headline text-[22px] font-black italic tracking-tight text-light mb-2">Leave without saving?</h2>
-            <p className="text-muted text-[14px] leading-relaxed mb-7">
+            <p className="font-headline text-muted text-[14px] leading-relaxed mb-7">
               Your event details haven&apos;t been saved yet. Save as a draft so you can come back and finish it later.
             </p>
             <div className="flex flex-col gap-3">
