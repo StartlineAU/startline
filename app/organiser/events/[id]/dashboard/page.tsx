@@ -9,6 +9,7 @@ import {
   MapPin, Calendar, ChevronRight, AlertCircle, Send, Trash2, Users
 } from "lucide-react";
 import OrganiserTopBar from "@/components/organiser/TopBar";
+import EventPageTabs from "@/components/organiser/EventPageTabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +180,9 @@ export default function EventDashboardPage({
             <ChevronRight className="w-3 h-3" />
             <span className="text-primary">Dashboard</span>
           </div>
+
+          {/* Tab strip */}
+          <EventPageTabs eventId={id} active="overview" />
 
           {/* Event header */}
           <div className="flex flex-col lg:flex-row lg:items-start gap-6 mb-8">
