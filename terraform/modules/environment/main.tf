@@ -166,7 +166,23 @@ resource "aws_secretsmanager_secret_version" "database" {
   })
 }
 
-# ===== Cognito =====
+resource "aws_secretsmanager_secret" "ci" {
+  name_prefix             = "${var.project_name}/${var.name}/ci/"
+  recovery_window_in_days = 0
+
+  tags = {
+    Environment = var.name
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "ci" {
+  secret_id = aws_secretsmanager_secret.ci.id
+  secret_string = jsonencode({
+    NEXT_PUBLIC_COGNITO_USER_POOL_ID = aws_cognito_user_pool.this.id
+    NEXT_PUBLIC_COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.web.id
+    GITLEAKS_LICENSE                 = var.gitleaks_license
+  })
+}
 
 resource "aws_cognito_user_pool" "this" {
   name = "${var.project_name}-${var.name}-users"
@@ -263,8 +279,82 @@ resource "aws_amplify_branch" "this" {
 
   environment_variables = merge(
     {
-      DATABASE_URL = local.database_url
+      DATABASE_URL                   = local.database_url
+      UPLOADS_BUCKET                 = aws_s3_bucket.uploads.id
+      UPLOADS_BUCKET_REGIONAL_DOMAIN = aws_s3_bucket.uploads.bucket_regional_domain_name
     },
     var.extra_branch_environment_variables,
   )
+}
+
+# ===== S3 upload bucket =====
+
+data "aws_iam_policy_document" "uploads_public_read" {
+  statement {
+    sid    = "PublicReadForImages"
+    effect = "Allow"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.uploads.arn}/images/*"]
+  }
+}
+
+resource "aws_s3_bucket" "uploads" {
+  bucket = "${var.project_name}-${var.name}-uploads"
+
+  force_destroy = var.name != "prod"
+
+  tags = {
+    Environment = var.name
+  }
+}
+
+resource "aws_s3_bucket_versioning" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+  versioning_configuration {
+    status = "Suspended"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  block_public_acls       = true
+  block_public_policy     = false
+  ignore_public_acls      = true
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_policy" "uploads_public_read" {
+  bucket = aws_s3_bucket.uploads.id
+  policy = data.aws_iam_policy_document.uploads_public_read.json
+}
+
+resource "aws_s3_bucket_cors_configuration" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  dynamic "cors_rule" {
+    for_each = [for i, v in var.bucket_cors_allowed_origins : {
+      origin = v
+    }]
+    content {
+      allowed_headers = ["*"]
+      allowed_methods = ["GET", "PUT", "POST", "DELETE"]
+      allowed_origins = [cors_rule.value.origin]
+      expose_headers  = ["ETag"]
+      max_age_seconds = 3600
+    }
+  }
 }

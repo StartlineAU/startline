@@ -1,4 +1,4 @@
-# AGENTS.md — Startline
+﻿# AGENTS.md — Startline
 
 ## Architecture
 
@@ -13,7 +13,6 @@ Startline is a Next.js 15 (App Router) fitness event discovery platform with thr
 `middleware.ts` routes requests by hostname in production:
 - `organiser.startlineau.com` → organiser portal (protects `/organiser/dashboard`, `/organiser/listings`, etc.)
 - `startlineau.com` → customer site (redirects `/organiser/*` and `/admin/*` to organiser subdomain)
-- Dev mode (`NODE_ENV=development`) skips all domain checks — everything runs at `localhost:3000`
 - Dev mode (`NODE_ENV=development`) skips all domain checks — everything runs at `localhost:3000`
 
 ### Auth (Cognito)
@@ -71,6 +70,30 @@ Infrastructure is managed via Terraform in `terraform/`:
 - App code deploys via AWS Amplify on branch push: `non-production` → staging, `production` → live
 - No app code CI (no lint/test/build checks) — only Terraform CI exists
 
+## Design system
+
+The authoritative design reference lives at **`design/design.md`**. Read it before touching any UI — it covers every decision that keeps the product coherent.
+
+### When to consult `design/design.md`
+
+- **Any UI work** — new pages, components, layouts, or reskins of existing ones.
+- **Copy / microcopy** — voice, casing rules, number formatting, Australian locale.
+- **Color choices** — which token to use and when; the one-accent rule.
+- **Typography** — which family, weight, size, tracking, and casing for the context.
+- **Component design** — button variants, badges, cards, inputs, modals, nav.
+- **Theming a shadcn default** — use the light→dark conversion table in §13 rather than inventing values.
+- **Picking a design register** — Product (clean, default) vs Instrument/HUD (dashboards, launch moments). See §12.
+
+### Non-negotiables from the design doc
+
+- **Dark only.** `color-scheme: dark` everywhere. No light surfaces, ever.
+- **One accent.** Signal green `#B3E153` (`--color-primary`) is the only brand hue. Blue/amber/red are status semantics only.
+- **Chakra Petch for structure, Inter for prose.** Structural chrome is uppercase + wide tracking; body copy is sentence case Inter.
+- **No emoji. Line icons (Lucide) only.**
+- **Text on `#B3E153` is always `#141414` (dark ink)** — never white.
+- **The "machined" shadow** (`box-shadow: 2px 2px 0 #B3E153`) belongs on the single primary CTA per view only.
+- **Status labels:** `APPROVED` renders as **"Published"** to organisers. Use the shared status object — never inline ad-hoc status styles.
+
 ## shadcn/ui conventions
 
 - Dark theme only. CSS variables in `app/globals.css` with primary green `#B3E153`.
@@ -81,7 +104,7 @@ Infrastructure is managed via Terraform in `terraform/`:
 
 - Next.js 15 with Turbopack. Use `pnpm dev` to start.
 - `@/*` path alias maps to project root.
-- CSP headers in `next.config.ts` allow Google Maps embeds.
+- CSP headers in `next.config.ts` — currently only `worker-src blob: 'self'` (Google Maps embeds removed with Google Maps API dependency).
 
 ## Testing
 
@@ -163,19 +186,57 @@ gh pr list --repo StartlineAU/startline
 
 ### PR conventions
 
-When creating a pull request, always scan open GitHub issues and link any that the PR resolves or relates to. Use `Closes #N`, `Fixes #N`, or `Related to #N` in the PR body.
+When creating a pull request, always:
+- Scan open GitHub issues and link any that the PR resolves or relates to. Use `Closes #N`, `Fixes #N`, or `Related to #N` in the PR body.
+- Follow the PR template at `.github/PULL_REQUEST_TEMPLATE.md`.
+- CI automatically runs lint, unit tests, and e2e on every PR (informational, does not block merge).
 
 ### Issue conventions
 
 When creating GitHub issues, always:
 - Add relevant **labels** (create new ones if they don't exist). Available labels: `bug`, `enhancement`, `documentation`, `auth`, `ci`, `infrastructure`, `ui`, `payments`, `maps`, `video`, `dashboard`, `registrations`, `question`, `help wanted`, `good first issue`
 - Set the native **issue type** — `Bug`, `Feature`, or `Task` (not a label, a proper field)
+- Set **Priority** and **Effort** issue fields using the GraphQL API — `gh issue create` has no native flags for these
 - Assign a **milestone** if one exists for the relevant sprint/release
 - Assign to a **project** if one exists
-- Write a descriptive **body** with clear context, requirements, and acceptance criteria
-- Use `gh issue create --repo StartlineAU/startline --label "<label1,label2>" --type "<Bug|Feature|Task>" --assignee "@me"` for new issues
+- Use the issue template at `.github/ISSUE_TEMPLATE/issue.yml` — it enforces Type, Priority, and Effort as required fields
 - Cross-reference **related issues** in the body (`**Related to:** #N`) and use `--add-blocking`/`--add-blocked-by` for dependency relationships
 - Use `--add-sub-issue` and `--parent` for parent-child issue hierarchies
+
+#### Setting issue type (simple)
+```bash
+gh issue edit <N> --repo StartlineAU/startline --type "Bug|Feature|Task"
+```
+
+#### Setting Priority & Effort (GraphQL)
+
+Field IDs (never change):
+- Priority field: `IFSS_kgDOAnp8Qg`
+- Effort field: `IFSS_kgDOAnp8RQ`
+
+| Field | Option | Option ID |
+|---|---|---|
+| Priority | Urgent | `IFSSO_kgDOBFZBjQ` |
+| Priority | High | `IFSSO_kgDOBFZBjg` |
+| Priority | Medium | `IFSSO_kgDOBFZBjw` |
+| Priority | Low | `IFSSO_kgDOBFZBkA` |
+| Effort | High | `IFSSO_kgDOBFZBkQ` |
+| Effort | Medium | `IFSSO_kgDOBFZBkg` |
+| Effort | Low | `IFSSO_kgDOBFZBkw` |
+
+Steps:
+1. Get the issue's GraphQL node ID: `gh issue view <N> --repo StartlineAU/startline --json id --jq '.id'`
+2. Set fields via batch mutation (copy-paste this, replace `<NODE_ID>`, `<PRI_OPT>`, `<EFF_OPT>`):
+   ```bash
+   gh api graphql -f query='
+     mutation {
+       p: updateIssueFieldValue(input: { issueId: "<NODE_ID>", issueField: { fieldId: "IFSS_kgDOAnp8Qg", singleSelectOptionId: "<PRI_OPT>" } }) { issue { number } }
+       e: updateIssueFieldValue(input: { issueId: "<NODE_ID>", issueField: { fieldId: "IFSS_kgDOAnp8RQ", singleSelectOptionId: "<EFF_OPT>" } }) { issue { number } }
+     }'
+   ```
+3. To verify: `gh issue view <N> --repo StartlineAU/startline --json id --jq '.id'` then query the GraphQL node manually if needed.
+
+> **Note:** Priority/Effort are separate from the issue body template fields. Setting them in the body template does NOT set the GraphQL-level custom fields. You must use the GraphQL mutation above.
 
 ## MCP servers
 

@@ -50,3 +50,23 @@ output "cognito_app_client_secret" {
   value     = aws_cognito_user_pool_client.web.client_secret
   sensitive = true
 }
+
+output "ci_secret_arn" {
+  description = "Secrets Manager secret containing CI env vars (Cognito pool ID, client ID)."
+  value       = aws_secretsmanager_secret.ci.arn
+}
+
+output "uploads_bucket_id" {
+  description = "S3 bucket name for user-uploaded images."
+  value       = aws_s3_bucket.uploads.id
+}
+
+output "uploads_bucket_arn" {
+  description = "S3 bucket ARN for user-uploaded images."
+  value       = aws_s3_bucket.uploads.arn
+}
+
+output "uploads_bucket_regional_domain_name" {
+  description = "Regional domain name for the uploads bucket."
+  value       = aws_s3_bucket.uploads.bucket_regional_domain_name
+}

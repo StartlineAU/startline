@@ -114,3 +114,18 @@ variable "cognito_deletion_protection" {
   description = "Enable deletion protection on the User Pool."
   type        = bool
 }
+
+# --- CI secrets ---
+
+variable "gitleaks_license" {
+  description = "Gitleaks license key (required for org accounts)."
+  type        = string
+  sensitive   = true
+}
+
+# --- S3 upload bucket ---
+
+variable "bucket_cors_allowed_origins" {
+  description = "CORS allowed origins for the uploads bucket."
+  type        = list(string)
+}

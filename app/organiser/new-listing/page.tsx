@@ -748,7 +748,6 @@ function WhenStep({ form, update }: { form: FormState; update: (p: Partial<FormS
               ...(venue   && { venue }),
             });
           }}
-          apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
           placeholder="Start typing an address…"
           className={inputCls}
         />
@@ -765,7 +764,6 @@ function WhenStep({ form, update }: { form: FormState; update: (p: Partial<FormS
             value={form.city}
             onChange={city  => update({ city })}
             onStateChange={state => { if (!form.state) update({ state: state as AusState }); }}
-            apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
             placeholder="e.g. Melbourne"
             className={inputCls}
           />
@@ -1060,6 +1058,7 @@ function MediaStep({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {allImageSrcs.map((src, idx) => (
             <div key={idx} className="relative aspect-video rounded-md overflow-hidden border border-gray-200 group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt={`Event image ${idx + 1}`} className="w-full h-full object-cover" />
               {idx === 0 && (
                 <div className="absolute top-1.5 left-1.5 bg-lime-500 text-dark font-headline text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded">
@@ -1326,6 +1325,7 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
 
         <div className="relative flex-1 overflow-y-auto bg-dark-darker">
           <section className="relative h-72 sm:h-96 w-full overflow-hidden flex items-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             {coverSrc && <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover brightness-50" />}
             <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark-lighter to-dark-darker" />
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#d4ff00 1px, transparent 1px), linear-gradient(90deg, #d4ff00 1px, transparent 1px)", backgroundSize: "60px 60px" }} />

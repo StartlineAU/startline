@@ -1,6 +1,7 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
+import { MapPin, Calendar, ExternalLink } from "lucide-react";
 import { getAllEvents } from "@/lib/events";
 import { toUserEvent } from "@/lib/user-events";
 import { EVENT_TYPE_LABELS, STATE_LABELS } from "@/types";
@@ -35,7 +36,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
       {/* ── Banner ── */}
       <div className="relative overflow-hidden" style={{ aspectRatio: "4/3", maxHeight: "520px" }}>
-        <img src={bannerUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={bannerUrl} alt={event.title} fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-t from-dark-darker via-dark-darker/50 to-transparent" />
 
         {/* Badges */}
@@ -96,7 +97,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                           <p className="font-headline text-xs text-muted uppercase tracking-widest mt-0.5">{drop.date}</p>
                         )}
                       </div>
-                      <span className="font-headline text-2xl font-black italic text-primary">{drop.price}</span>
+                      <span className="font-headline text-2xl font-black italic text-primary">${drop.price}</span>
                     </div>
                   ))}
                 </div>
@@ -185,7 +186,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 <>
                   <p className="font-headline text-[10px] uppercase tracking-widest text-muted">From</p>
                   <p className="font-headline text-xl font-black italic text-primary leading-none">
-                    {event.ticketDrops[0].price}
+                    ${event.ticketDrops[0].price}
                   </p>
                 </>
               )}
