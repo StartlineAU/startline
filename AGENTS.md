@@ -118,7 +118,7 @@ pnpm test:e2e     # Playwright e2e tests (requires Docker PostgreSQL running)
 - Unit tests in `src/__tests__/`, e2e in `e2e/`.
 - Vitest has `globals: true` — `describe`/`it`/`expect` available without imports.
 - Vitest config defaults `DATABASE_URL` to port **5433**, but local Docker uses port **5434** — tests connecting to DB may need `DATABASE_URL` set explicitly.
-- Playwright uses Chromium, auto-starts `pnpm dev -p 3002` if not already running.
+- Playwright uses Chromium, auto-starts `pnpm dev -p 3000` if not already running.
 - E2E tests authenticate via the non-production Cognito pool (password `Password123!`).
 
 ### E2E test conventions
