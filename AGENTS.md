@@ -184,6 +184,17 @@ gh issue list --repo StartlineAU/startline
 gh pr list --repo StartlineAU/startline
 ```
 
+### Pre-commit gate
+
+Before staging or committing any change, ALWAYS run:
+```bash
+pnpm lint        # 0 errors, 0 warnings
+pnpm test        # all tests pass
+pnpm test:e2e    # all e2e tests pass (requires Docker PostgreSQL running)
+```
+
+Do not commit or push if any of these fail. Fix failures locally before pushing.
+
 ### PR conventions
 
 When creating a pull request, always:
