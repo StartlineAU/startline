@@ -41,7 +41,7 @@ export interface PublicEvent {
   };
 }
 
-function lowestPrice(waves: unknown): number | null {
+export function lowestPrice(waves: unknown): number | null {
   if (!Array.isArray(waves)) return null;
   const prices = (waves as PublicWave[])
     .map((w) => parseFloat(w?.price ?? ""))
