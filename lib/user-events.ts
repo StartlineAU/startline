@@ -1,4 +1,4 @@
-import { type PublicEvent, lowestPrice } from "@/lib/events";
+import { type PublicEvent, lowestPrice } from "@/lib/event-types";
 import type { UserEvent, TicketDrop, EventType, AustralianState } from "@/types";
 
 function mapDiscipline(discipline: string): EventType {
