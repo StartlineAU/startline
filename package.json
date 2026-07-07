@@ -42,14 +42,6 @@
     "stripe": "^22.2.0",
     "tailwind-merge": "^3.5.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "prisma",
-      "sharp"
-    ]
-  },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
