@@ -71,6 +71,25 @@ export default function Footer() {
 
             <div>
               <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
+                Help
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { href: "/feedback", label: "Feedback" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
                 Follow
               </h4>
               <a

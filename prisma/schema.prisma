@@ -160,7 +160,7 @@ model Review {
 
   // Ratings 1–5
   overallRating       Int
-  communicationRating Int?
+  atmosphereRating Int?
   organisationRating  Int?
   experienceRating    Int?
 

@@ -13,7 +13,7 @@ type Filter = "all" | "published" | "hidden";
 interface ReviewRow {
   id: string;
   overallRating: number;
-  communicationRating: number | null;
+  atmosphereRating: number | null;
   organisationRating: number | null;
   experienceRating: number | null;
   title: string;

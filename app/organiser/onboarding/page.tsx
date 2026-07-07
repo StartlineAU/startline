@@ -96,6 +96,17 @@ export default function OnboardingPage() {
   };
 
   // ── Save / submit ────────────────────────────────────────────────────────
+  const setupOrg = async (silent = false): Promise<boolean> => {
+    const res = await fetch("/api/organiser/setup", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ orgName: form.orgName }),
+    });
+    const data = await res.json();
+    if (!res.ok) { if (!silent) setError(data.error); return false; }
+    return true;
+  };
+
   const save = async (submit = false, silent = false) => {
     if (!silent) setError("");
     if (!silent) setSaving(true);
@@ -118,10 +129,17 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(step)) return;
     if (step < STEPS.length - 1) {
-      save(false, true);
+      if (step === 0) {
+        setSaving(true);
+        const ok = await setupOrg(false);
+        setSaving(false);
+        if (!ok) return;
+      } else {
+        save(false, true);
+      }
       goTo(step + 1);
     }
   };
@@ -344,7 +362,7 @@ export default function OnboardingPage() {
                 <ArrowLeft className="w-4 h-4" /> {step === 0 ? "Back to sign in" : "Back"}
               </button>
               {step < STEPS.length - 1 && (
-                <button onClick={() => save(false)} disabled={saving}
+                <button onClick={() => step === 0 ? setupOrg() : save(false)} disabled={saving}
                   className="font-headline text-[13px] font-bold uppercase tracking-widest text-muted hover:text-light px-4 py-2 transition-colors disabled:opacity-40">
                   Save draft
                 </button>

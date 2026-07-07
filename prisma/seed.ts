@@ -321,7 +321,7 @@ async function main() {
       reviewerName: "Sarah K.",
       title: "Best competition I've done all year",
       body: "Incredibly well run from start to finish.",
-      overallRating: 5, communicationRating: 5, organisationRating: 5, experienceRating: 5,
+      overallRating: 5, atmosphereRating: 5, organisationRating: 5, experienceRating: 5,
       isVerified: true,
     },
   });
@@ -337,17 +337,17 @@ async function main() {
       reviewerName: "Tom R.",
       title: "Great event, minor timing hiccups",
       body: "Really enjoyed the event overall.",
-      overallRating: 4, communicationRating: 5, organisationRating: 4, experienceRating: 4,
+      overallRating: 4, atmosphereRating: 5, organisationRating: 4, experienceRating: 4,
       isVerified: true,
     },
   });
 
   const extraReviews = [
-    { id: "seed-review-003", reviewerName: "Mia Fontaine",   title: "Brilliant event, will be back", body: "Third year and this was the best one yet.", overallRating: 5, communicationRating: 5, organisationRating: 5, experienceRating: 5, event: event1 },
-    { id: "seed-review-004", reviewerName: "Jack Donovan",   title: "Great comp, tough workouts", body: "Workouts were brutal but fair.", overallRating: 4, communicationRating: 5, organisationRating: 4, experienceRating: 4, event: event1 },
-    { id: "seed-review-005", reviewerName: "Emma Whitfield", title: "Great organiser", body: "Consistently excellent events.", overallRating: 5, communicationRating: 5, organisationRating: 5, experienceRating: 5, event: null },
-    { id: "seed-review-006", reviewerName: "Liam O'Connor",  title: "Hybrid Hustle keeps getting better", body: "The trail section through the Dandenongs was epic.", overallRating: 5, communicationRating: 5, organisationRating: 4, experienceRating: 5, event: event2 },
-    { id: "seed-review-007", reviewerName: "Chloe Bennett",  title: "Challenging but rewarding", body: "Great community vibe.", overallRating: 4, communicationRating: 5, organisationRating: 3, experienceRating: 4, event: event2 },
+    { id: "seed-review-003", reviewerName: "Mia Fontaine",   title: "Brilliant event, will be back", body: "Third year and this was the best one yet.", overallRating: 5, atmosphereRating: 5, organisationRating: 5, experienceRating: 5, event: event1 },
+    { id: "seed-review-004", reviewerName: "Jack Donovan",   title: "Great comp, tough workouts", body: "Workouts were brutal but fair.", overallRating: 4, atmosphereRating: 5, organisationRating: 4, experienceRating: 4, event: event1 },
+    { id: "seed-review-005", reviewerName: "Emma Whitfield", title: "Great organiser", body: "Consistently excellent events.", overallRating: 5, atmosphereRating: 5, organisationRating: 5, experienceRating: 5, event: null },
+    { id: "seed-review-006", reviewerName: "Liam O'Connor",  title: "Hybrid Hustle keeps getting better", body: "The trail section through the Dandenongs was epic.", overallRating: 5, atmosphereRating: 5, organisationRating: 4, experienceRating: 5, event: event2 },
+    { id: "seed-review-007", reviewerName: "Chloe Bennett",  title: "Challenging but rewarding", body: "Great community vibe.", overallRating: 4, atmosphereRating: 5, organisationRating: 3, experienceRating: 4, event: event2 },
   ];
 
   for (const r of extraReviews) {
@@ -361,7 +361,7 @@ async function main() {
         reviewerName: r.reviewerName,
         title: r.title, body: r.body,
         overallRating: r.overallRating,
-        communicationRating: r.communicationRating,
+        atmosphereRating: r.atmosphereRating,
         organisationRating: r.organisationRating,
         experienceRating: r.experienceRating,
         isVerified: true,

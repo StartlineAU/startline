@@ -10,7 +10,7 @@ export interface Review {
   reviewerName: string;
   eventTitle?: string | null;
   overallRating: number;
-  communicationRating?: number | null;
+  atmosphereRating?: number | null;
   organisationRating?: number | null;
   experienceRating?: number | null;
   title: string;
@@ -128,12 +128,12 @@ function ReviewCard({ r }: { r: Review }) {
       </div>
 
       {/* Sub-ratings */}
-      {(r.communicationRating || r.organisationRating || r.experienceRating) && (
+      {(r.atmosphereRating || r.organisationRating || r.experienceRating) && (
         <div className="pt-3 border-t border-dark-lighter grid grid-cols-3 gap-3 text-center">
-          {r.communicationRating && (
+          {r.atmosphereRating && (
             <div>
-              <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mb-0.5">Comms</div>
-              <div className="font-headline text-[13px] font-black text-yellow-400">{r.communicationRating}.0</div>
+              <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mb-0.5">Atmosphere</div>
+              <div className="font-headline text-[13px] font-black text-yellow-400">{r.atmosphereRating}.0</div>
             </div>
           )}
           {r.organisationRating && (
@@ -188,7 +188,7 @@ function WriteReviewModal({ organiserId, onClose, onSuccess }: ModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           overallRating:       overall,
-          communicationRating: comms || null,
+          atmosphereRating: comms || null,
           organisationRating:  org   || null,
           experienceRating:    exp   || null,
           title, body, reviewerName: name, eventTitle: event || null,
@@ -201,7 +201,7 @@ function WriteReviewModal({ organiserId, onClose, onSuccess }: ModalProps) {
       const newReview: Review = {
         id: data.id ?? crypto.randomUUID(),
         reviewerName: name, eventTitle: event || null,
-        overallRating: overall, communicationRating: comms || null,
+        overallRating: overall, atmosphereRating: comms || null,
         organisationRating: org || null, experienceRating: exp || null,
         title, body, isVerified: false, createdAt: new Date().toISOString(),
       };
@@ -250,7 +250,7 @@ function WriteReviewModal({ organiserId, onClose, onSuccess }: ModalProps) {
               {/* Sub-ratings */}
               <div className="grid grid-cols-3 gap-4">
                 {([
-                  { label: "Communication", value: comms, onChange: setComms },
+                  { label: "Atmosphere", value: comms, onChange: setComms },
                   { label: "Organisation",  value: org,   onChange: setOrg   },
                   { label: "Experience",    value: exp,   onChange: setExp   },
                 ] as const).map(({ label, value, onChange }) => (
@@ -370,8 +370,8 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
     ? reviews.reduce((s, r) => s + r.overallRating, 0) / reviews.length
     : 0;
 
-  const avgComms = reviews.filter(r => r.communicationRating).length
-    ? reviews.filter(r => r.communicationRating).reduce((s, r) => s + (r.communicationRating ?? 0), 0) / reviews.filter(r => r.communicationRating).length
+  const avgComms = reviews.filter(r => r.atmosphereRating).length
+    ? reviews.filter(r => r.atmosphereRating).reduce((s, r) => s + (r.atmosphereRating ?? 0), 0) / reviews.filter(r => r.atmosphereRating).length
     : null;
 
   const avgOrg = reviews.filter(r => r.organisationRating).length
@@ -472,7 +472,7 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
               {/* Category ratings */}
               {(avgComms || avgOrg || avgExp) && (
                 <div className="pt-3 border-t border-dark-lighter space-y-2">
-                  <RatingBar label="Communication"  value={avgComms} />
+                  <RatingBar label="Atmosphere"     value={avgComms} />
                   <RatingBar label="Organisation"   value={avgOrg}   />
                   <RatingBar label="Experience"     value={avgExp}   />
                 </div>
