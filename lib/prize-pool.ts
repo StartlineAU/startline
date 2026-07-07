@@ -15,7 +15,7 @@ export function normalisePrizeAmount(raw: string): string {
 export function encodePrizePool(amount: string, details: string): string | null {
   const amt = normalisePrizeAmount(amount);
   if (!amt) return null;
-  const det = details.trim();
+  const det = details.trim().replace(/—/g, "-");
   return `${PREFIX}${amt}${det ? `${SEPARATOR}${det}` : ""}`;
 }
 

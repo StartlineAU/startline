@@ -7,7 +7,7 @@ import {
   Upload, X, MapPin, Calendar, Users,
   ChevronDown, ChevronLeft, ChevronRight, Clock, Eye,
   Ticket, ExternalLink, DollarSign, Bold, Italic, Underline,
-  AlignLeft, Image as ImageIcon, Trophy,
+  AlignLeft, Trophy,
 } from "lucide-react";
 import { encodePrizePool, parsePrizePool, normalisePrizeAmount } from "@/lib/prize-pool";
 import OrganiserTopBar      from "@/components/organiser/TopBar";
@@ -64,7 +64,6 @@ interface FormState {
   registrationUrl: string;
   coverImage: File | null;
   coverImageUrl: string;
-  additionalImages: File[];
 }
 
 const INITIAL: FormState = {
@@ -76,7 +75,7 @@ const INITIAL: FormState = {
   prizeMoney: false, prizeMoneyAmount: "", prizeMoneyDetails: "",
   refundPolicy: "",
   registrationType: "startline", feeStructure: "athlete", registrationUrl: "",
-  coverImage: null, coverImageUrl: "", additionalImages: [],
+  coverImage: null, coverImageUrl: "",
 };
 
 /* ── Shared field primitive ─────────────────────────────────── */
@@ -161,7 +160,7 @@ function DatePickerPopover({
   const isInRange  = (d: number) => { if (!isRange || !value || !rangeEnd) return false; const iso = toIso(d); return iso > value && iso < rangeEnd; };
   const isToday    = (d: number) => d === todayDate.getDate() && viewMonth === todayDate.getMonth() && viewYear === todayDate.getFullYear();
 
-  const firstDow    = (() => { let d = new Date(viewYear, viewMonth, 1).getDay() - 1; return d < 0 ? 6 : d; })();
+  const firstDow    = (() => { const d = new Date(viewYear, viewMonth, 1).getDay() - 1; return d < 0 ? 6 : d; })();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
 
@@ -247,15 +246,6 @@ function DatePickerPopover({
 /* ═══════════════════════════════════════════════════════════════
    TIME PICKER
    ══════════════════════════════════════════════════════════════ */
-const TIME_SLOTS: string[] = (() => {
-  const slots: string[] = [];
-  for (let h = 4; h < 24; h++) {
-    slots.push(`${String(h).padStart(2, "0")}:00`);
-    slots.push(`${String(h).padStart(2, "0")}:30`);
-  }
-  return slots;
-})();
-
 function fmt24to12(t: string): string {
   if (!t) return "—";
   const [h, m] = t.split(":").map(Number);
@@ -264,101 +254,16 @@ function fmt24to12(t: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function parseCustomTime(raw: string): string | null {
-  const s = raw.trim().toUpperCase().replace(/\s+/g, " ");
-  const ampm = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
-  if (ampm) {
-    let h = parseInt(ampm[1], 10); const m = parseInt(ampm[2], 10);
-    if (h < 1 || h > 12 || m < 0 || m > 59) return null;
-    if (ampm[3] === "AM") { if (h === 12) h = 0; } else { if (h !== 12) h += 12; }
-    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-  }
-  const h24 = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (h24) {
-    const h = parseInt(h24[1], 10), m = parseInt(h24[2], 10);
-    if (h < 0 || h > 23 || m < 0 || m > 59) return null;
-    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-  }
-  return null;
-}
-
-function TimePicker({ value, onChange, placeholder = "Select time" }: {
-  value: string; onChange: (v: string) => void; placeholder?: string;
-}) {
-  const [open, setOpen]               = useState(false);
-  const [customRaw, setCustomRaw]     = useState("");
-  const [customError, setCustomError] = useState(false);
-  const ref     = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-  useEffect(() => {
-    if (open) {
-      setCustomRaw(value ? fmt24to12(value) : ""); setCustomError(false);
-      if (listRef.current && value) {
-        const idx = TIME_SLOTS.indexOf(value);
-        if (idx >= 0) listRef.current.scrollTop = Math.max(0, idx * 44 - 88);
-      }
-    }
-  }, [open, value]);
-
-  const commitCustom = () => {
-    if (!customRaw.trim()) return;
-    const parsed = parseCustomTime(customRaw);
-    if (parsed) { onChange(parsed); setOpen(false); setCustomRaw(""); setCustomError(false); }
-    else setCustomError(true);
-  };
-
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div ref={ref} className="relative">
-      <div className="relative flex items-center">
-        <button type="button" onClick={() => setOpen(v => !v)}
-          className={`w-full bg-dark-light border rounded-md px-4 py-3 font-headline text-[15px] text-left flex items-center justify-between transition-colors
-            ${open ? "border-primary" : "border-dark-lighter hover:border-primary/40"}
-            ${value ? "text-light" : "text-muted-dark"}`}>
-          <span className="flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-muted-dark shrink-0" />
-            {value ? fmt24to12(value) : placeholder}
-          </span>
-          <ChevronDown className={`w-4 h-4 text-muted-dark transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+    <div className="relative flex items-center">
+      <input type="time" value={value} onChange={e => onChange(e.target.value)}
+        className={`w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 font-headline text-[15px] text-light placeholder:text-muted focus:border-primary focus:outline-none transition-colors ${value ? "text-light" : "text-muted-dark"}`} />
+      {value && (
+        <button type="button" onClick={() => onChange("")}
+          className="absolute right-3 p-1.5 text-muted-dark hover:text-light transition-colors" title="Clear time">
+          <X className="w-3.5 h-3.5" />
         </button>
-        {value && (
-          <button type="button" onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
-            className="absolute right-9 p-1.5 text-muted-dark hover:text-light transition-colors" title="Clear time">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-      {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-dark border border-dark-lighter rounded-xl shadow-xl overflow-hidden w-56 modal-in">
-          <div className="p-3 border-b border-dark-lighter">
-            <div className="font-headline text-[9px] uppercase tracking-widest text-muted-dark mb-1.5">Custom time</div>
-            <div className="flex gap-2">
-              <input type="text" value={customRaw}
-                onChange={e => { setCustomRaw(e.target.value); setCustomError(false); }}
-                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitCustom(); } }}
-                placeholder="e.g. 7:15 AM or 19:15"
-                className={`flex-1 min-w-0 bg-dark-light border rounded px-3 py-2 font-headline text-[13px] text-light placeholder:text-muted focus:outline-none transition-colors ${customError ? "border-red-400 focus:border-red-500" : "border-dark-lighter focus:border-primary"}`}
-              />
-              <button type="button" onClick={commitCustom}
-                className="px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-headline text-[11px] font-bold rounded transition-colors shrink-0">Set</button>
-            </div>
-            {customError && <p className="font-headline text-[10px] text-red-500 mt-1">Use format: 7:15 AM, 7:15 PM, or 19:15</p>}
-          </div>
-          <div className="px-4 py-2 font-headline text-[9px] uppercase tracking-widest text-muted-dark text-center">— or pick a slot —</div>
-          <div ref={listRef} className="overflow-y-auto max-h-52" style={{ scrollbarWidth: "none" }}>
-            {TIME_SLOTS.map(s => (
-              <button key={s} type="button" onClick={() => { onChange(s); setOpen(false); }}
-                className={`w-full px-4 py-3 text-left font-headline text-[14px] font-bold transition-colors ${s === value ? "bg-primary/10 text-primary" : "text-muted hover:bg-white/5 hover:text-light"}`}>
-                {fmt24to12(s)}
-              </button>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   );
@@ -369,27 +274,21 @@ function TimePicker({ value, onChange, placeholder = "Select time" }: {
    ══════════════════════════════════════════════════════════════ */
 function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
   const editorRef     = useRef<HTMLDivElement>(null);
-  const initialised   = useRef(false);
   const userHasTyped  = useRef(false);
 
   useEffect(() => {
-    if (editorRef.current) {
-      if (!userHasTyped.current) {
-        editorRef.current.innerHTML = value;
-        initialised.current = true;
-      }
+    if (editorRef.current && !userHasTyped.current) {
+      editorRef.current.innerHTML = value;
     }
   }, [value]);
 
   const exec = (cmd: string, val?: string) => {
     document.execCommand(cmd, false, val ?? undefined);
-    if (editorRef.current) onChange(editorRef.current.innerHTML);
     editorRef.current?.focus();
   };
 
   const setBlock = (tag: string) => {
     document.execCommand("formatBlock", false, tag);
-    if (editorRef.current) onChange(editorRef.current.innerHTML);
     editorRef.current?.focus();
   };
 
@@ -650,7 +549,7 @@ function BasicsStep({ form, update }: { form: FormState; update: (p: Partial<For
 /* ═══════════════════════════════════════════════════════════════
    STEP 2 — DATE & LOCATION
    ══════════════════════════════════════════════════════════════ */
-const AUS_STATES: [AusState, string][] = [
+const AUS_STATES: [AusState, string, string][] = [
   ["nsw", "NSW", "New South Wales"],
   ["vic", "VIC", "Victoria"],
   ["qld", "QLD", "Queensland"],
@@ -659,52 +558,17 @@ const AUS_STATES: [AusState, string][] = [
   ["tas", "TAS", "Tasmania"],
   ["act", "ACT", "Australian Capital Territory"],
   ["nt",  "NT",  "Northern Territory"],
-] as unknown as [AusState, string][];
+];
 
-/* ── State select — custom dropdown matching city autocomplete style ── */
 function StateSelect({ value, onChange }: { value: AusState; onChange: (v: AusState) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-
-  const rows = AUS_STATES as unknown as [AusState, string, string][];
-  const selected = rows.find(([v]) => v === value);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className={`w-full bg-dark-light border rounded-md px-4 py-3 font-headline text-[15px] text-left flex items-center justify-between transition-colors
-          ${open ? "border-primary" : "border-dark-lighter hover:border-primary/40"}
-          ${value ? "text-light" : "text-muted-dark"}`}
-      >
-        <span>{selected ? `${selected[1]}` : "Select state…"}</span>
-        <ChevronDown className={`w-4 h-4 text-muted-dark shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 w-full bg-dark border border-dark-lighter rounded-xl shadow-xl overflow-y-auto max-h-72 modal-in">
-          {rows.map(([v, abbr, full]) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => { onChange(v); setOpen(false); }}
-              className={`w-full px-4 py-3 text-left flex items-baseline gap-2.5 transition-colors
-                ${v === value ? "bg-primary/10" : "hover:bg-white/5"}`}
-            >
-              <span className={`font-headline text-[14px] font-bold ${v === value ? "text-primary" : "text-light"}`}>{abbr}</span>
-              <span className="font-headline text-[12px] text-muted-dark">{full}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <select value={value} onChange={e => onChange(e.target.value as AusState)}
+      className={`w-full bg-dark-light border border-dark-lighter rounded-md px-4 py-3 font-headline text-[15px] focus:border-primary focus:outline-none transition-colors ${value ? "text-light" : "text-muted-dark"}`}>
+      <option value="" disabled className="bg-dark text-muted-dark">Select state…</option>
+      {AUS_STATES.map(([v, abbr]) => (
+        <option key={v} value={v} className="bg-dark text-light">{abbr}</option>
+      ))}
+    </select>
   );
 }
 
@@ -995,7 +859,7 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
               </div>
             </div>
             <div>
-              <div className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5">How it's awarded</div>
+              <div className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5">How it&apos;s awarded</div>
               <input value={form.prizeMoneyDetails} onChange={e => update({ prizeMoneyDetails: e.target.value })}
                 placeholder="e.g. Awarded to podium finishers per division"
                 className={inputCls} />
@@ -1041,76 +905,36 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
 /* ═══════════════════════════════════════════════════════════════
    STEP 4 — MEDIA & DESCRIPTION
    ══════════════════════════════════════════════════════════════ */
-function MediaStep({
-  form, update,
-}: { form: FormState; update: (p: Partial<FormState>) => void }) {
-  const addImageRef = useRef<HTMLInputElement>(null);
-
-  const allImageSrcs: string[] = [
-    ...(form.coverImage ? [URL.createObjectURL(form.coverImage)] : form.coverImageUrl ? [form.coverImageUrl] : []),
-    ...form.additionalImages.map(f => URL.createObjectURL(f)),
-  ];
-
-  const handleFilePick = (files: FileList | null, isFirst: boolean) => {
-    if (!files || files.length === 0) return;
-    if (isFirst) {
-      update({ coverImage: files[0] });
-    } else {
-      update({ additionalImages: [...form.additionalImages, ...Array.from(files)] });
-    }
-  };
-
-  const removeImage = (idx: number) => {
-    if (idx === 0) {
-      if (form.additionalImages.length > 0) {
-        const [promoted, ...rest] = form.additionalImages;
-        update({ coverImage: promoted, coverImageUrl: "", additionalImages: rest });
-      } else {
-        update({ coverImage: null, coverImageUrl: "" });
-      }
-    } else {
-      const extra = [...form.additionalImages];
-      extra.splice(idx - 1, 1);
-      update({ additionalImages: extra });
-    }
-  };
+function MediaStep({ form, update }: { form: FormState; update: (p: Partial<FormState>) => void }) {
+  const coverSrc = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
+  useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
 
   return (
     <div>
-      {/* Multi-image upload */}
-      <Field label="Event images" required hint="First image is used as cover">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {allImageSrcs.map((src, idx) => (
-            <div key={idx} className="relative aspect-video rounded-md overflow-hidden border border-dark-lighter group">
+      <Field label="Cover image" required>
+        <label className="block cursor-pointer">
+          {coverSrc ? (
+            <div className="relative rounded-md overflow-hidden border border-primary/40 aspect-video">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`Event image ${idx + 1}`} className="w-full h-full object-cover" />
-              {idx === 0 && (
-                <div className="absolute top-1.5 left-1.5 bg-primary/100 text-dark font-headline text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded">
-                  Cover
-                </div>
-              )}
-              <button type="button" onClick={() => removeImage(idx)}
-                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-dark/80 text-muted-dark hover:text-light flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <X className="w-3 h-3" />
+              <img src={coverSrc} alt="Cover preview" className="w-full h-full object-cover" />
+              <button type="button" onClick={e => { e.preventDefault(); update({ coverImage: null, coverImageUrl: "" }); }}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-dark/70 text-muted hover:text-white flex items-center justify-center transition-colors">
+                <X className="w-4 h-4" />
               </button>
             </div>
-          ))}
-
-          {/* Add image slot */}
-          <label className="aspect-video rounded-md border-2 border-dashed border-dark-lighter hover:border-primary/40 bg-dark-light flex flex-col items-center justify-center cursor-pointer transition-colors group">
-            <ImageIcon className="w-6 h-6 text-muted-dark group-hover:text-primary transition-colors mb-1" />
-            <span className="font-headline text-[10px] uppercase tracking-widest text-muted-dark group-hover:text-primary transition-colors">
-              {allImageSrcs.length === 0 ? "Add cover" : "Add image"}
-            </span>
-            <input type="file" accept="image/*" multiple className="sr-only"
-              onChange={e => handleFilePick(e.target.files, allImageSrcs.length === 0)} />
-          </label>
-        </div>
-        <p className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-2">JPG · PNG · WEBP · Recommended 1920×1080</p>
+          ) : (
+            <div className="relative rounded-md border-2 border-dashed border-dark-lighter hover:border-primary/40 bg-dark-light aspect-video flex flex-col items-center justify-center transition-colors">
+              <Upload className="w-6 h-6 text-primary mb-2" />
+              <span className="font-headline text-[11px] font-bold uppercase tracking-widest text-light">Upload cover image</span>
+              <span className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-1">JPG · PNG · WEBP · 1920×1080</span>
+            </div>
+          )}
+          <input type="file" accept="image/*" className="sr-only"
+            onChange={e => update({ coverImage: e.target.files?.[0] ?? null })} />
+        </label>
       </Field>
 
-      {/* Rich text description */}
-      <Field label="Full description" required hint={`${form.description.replace(/<[^>]+>/g, "").length} chars`}>
+      <Field label="Full description" required hint={`${stripHtml(form.description).length} chars`}>
         <RichTextEditor value={form.description} onChange={html => update({ description: html })} />
       </Field>
     </div>
@@ -1145,7 +969,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
     { k: "Refund policy",  v: form.refundPolicy || "—",                                                            step: 2 },
     { k: "Prize money",    v: form.prizeMoney ? (normalisePrizeAmount(form.prizeMoneyAmount) ? `$${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool` : "Yes") : "No", step: 2 },
     { k: "Cover image",    v: form.coverImage || form.coverImageUrl ? "Uploaded" : "No image",                    step: 3 },
-    { k: "Description",    v: form.description ? `${form.description.replace(/<[^>]+>/g, "").trim().slice(0, 60)}…` : "—", step: 3 },
+    { k: "Description",    v: form.description ? `${stripHtml(form.description).slice(0, 60)}…` : "—", step: 3 },
   ];
 
   return (
@@ -1193,16 +1017,19 @@ const DISC_LABEL: Record<string, string> = {
   cycling: "Cycling", swimming: "Swimming", other: "Other",
 };
 const MONTHS_SHORT = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/&[^;\s]+;/g, " ").replace(/\s+/g, " ").trim();
 
 function LivePreview({ form }: { form: FormState }) {
   const sp    = (form.date || "").split("-");
   const sDay  = sp[2] || null;
   const sMon  = sp[1] ? MONTHS_SHORT[parseInt(sp[1]) - 1] : null;
   const price = form.waves.find(w => w.price === "0" || !!w.price)?.price;
-  const coverSrc = form.coverImage
-    ? URL.createObjectURL(form.coverImage)
-    : form.coverImageUrl || null;
+  const [coverSrc, setCoverSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null;
+    setCoverSrc(url);
+    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
+  }, [form.coverImage, form.coverImageUrl]);
   const descriptionText = stripHtml(form.description || "");
 
   return (
@@ -1322,7 +1149,12 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
   })();
 
   const titleWords = (form.title || "Your Event Title").split(" ");
-  const coverSrc = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
+  const [coverSrc, setCoverSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
+    setCoverSrc(url);
+    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
+  }, [form.coverImage, form.coverImageUrl]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overlay-in">
@@ -1502,6 +1334,7 @@ export default function NewListingPage() {
   const [direction,       setDirection]       = useState<"forward" | "back">("forward");
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [eventId,         setEventId]         = useState<string | null>(null);
+  const originalFields = useRef<Record<string, unknown>>({});
 
   const update = (patch: Partial<FormState>) => setForm(f => ({ ...f, ...patch }));
 
@@ -1514,6 +1347,7 @@ export default function NewListingPage() {
       .then(e => {
         if (e.error) return;
         setEventId(id);
+        originalFields.current = { inclusions: e.inclusions, activations: e.activations, accessibilityInfo: e.accessibilityInfo };
         setForm({
           title:             e.title          ?? "",
           discipline:        e.discipline     ?? "",
@@ -1543,7 +1377,6 @@ export default function NewListingPage() {
           registrationUrl:   e.registrationUrl   ?? "",
           coverImage:        null,
           coverImageUrl:     e.coverImageUrl  ?? "",
-          additionalImages:  [],
         });
       })
       .catch(() => {})
@@ -1570,7 +1403,7 @@ export default function NewListingPage() {
       (form.registrationType === "startline" || !!form.registrationUrl.trim()) &&
       !!form.refundPolicy.trim()
     );
-    if (s === 3) return !((form.coverImage || form.coverImageUrl) && form.description.replace(/<[^>]+>/g, "").trim().length > 0);
+    if (s === 3) return !((form.coverImage || form.coverImageUrl) && stripHtml(form.description).length > 0);
     if (s === 4) return !confirmed;
     return false;
   };
@@ -1612,14 +1445,14 @@ export default function NewListingPage() {
         cap:               form.cap ? parseInt(form.cap) : null,
         minAge:            form.minAge ? parseInt(form.minAge) : null,
         waves:             form.waves,
-        inclusions:        null,
-        activations:       null,
-        extras:            form.prizeMoney ? encodePrizePool(form.prizeMoneyAmount, form.prizeMoneyDetails) : null,
+        inclusions:        originalFields.current.inclusions ?? null,
+        activations:       originalFields.current.activations ?? null,
+        extras:            form.prizeMoney ? encodePrizePool(form.prizeMoneyAmount, form.prizeMoneyDetails) : (originalFields.current.extras ?? null),
         refundPolicy:      form.refundPolicy,
         registrationType:  form.registrationType,
         feeStructure:      form.feeStructure,
         registrationUrl:   form.registrationType === "external" ? form.registrationUrl : null,
-        accessibilityInfo: null,
+        accessibilityInfo: originalFields.current.accessibilityInfo ?? null,
         submit:            !asDraft,
         coverImageUrl:     coverImageUrl ?? form.coverImageUrl ?? null,
       };
