@@ -50,7 +50,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --version && cat pnpm-workspace.yaml && pnpm config list --json
+      - run: pnpm install --no-frozen-lockfile 2>&1 || true
+      - run: pnpm install
       - run: pnpm lint
 
   test:
@@ -67,7 +69,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --version && cat pnpm-workspace.yaml && pnpm config list --json
+      - run: pnpm install --no-frozen-lockfile 2>&1 || true
+      - run: pnpm install
       - run: npx prisma generate
       - run: pnpm test
 
@@ -117,7 +121,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --ignore-scripts
       - run: npx playwright install chromium
       - run: npx prisma generate
       - run: npx prisma migrate deploy
