@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
 import { archivePastEvents } from "@/lib/archive-events";
-export type { PublicEvent, PublicWave } from "./event-types";
-export { lowestPrice } from "./event-types";
+import { lowestPrice, type PublicEvent, type PublicWave } from "./event-types";
 
 export async function getAllEvents() {
   try {

@@ -45,6 +45,8 @@ export async function organiserLogin(page: Page, email = "test.organiser@startli
 
   await page.getByRole("button", { name: /sign in/i }).click();
   await page.getByPlaceholder("you@example.com").fill(email);
+  await page.getByRole("button", { name: /continue/i }).click();
+  await page.waitForTimeout(1500);
   await page.locator('input[type="password"]').first().fill("Password123!");
   await page.getByRole("button", { name: /^Sign in$/ }).click();
 

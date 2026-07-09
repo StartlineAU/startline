@@ -44,7 +44,7 @@ test.describe("admin dashboard", () => {
 
     await expect(page.getByText("Review pending events")).toBeVisible();
     await expect(page.getByText("All events")).toBeVisible();
-    await expect(page.getByText("View accounts")).toBeVisible();
+    await expect(page.getByRole("link", { name: /organisers verify/i })).toBeVisible();
     await expect(page.getByText("Moderate reviews")).toBeVisible();
   });
 
@@ -143,13 +143,11 @@ test.describe("admin event approval flow", () => {
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
+    await page.waitForSelector('text=Pending', { timeout: 5000 });
 
-    const rejectBtn = page.locator("button").filter({ hasText: /^Reject$/ }).first();
-    await expect(rejectBtn).toBeVisible({ timeout: 5000 });
-    await rejectBtn.click();
-
+    await page.getByRole("button", { name: /^Reject$/ }).first().click();
     await expect(page.getByText("Rejection reason")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("button", { name: /cancel/i })).toBeVisible();
+    await expect(page.getByPlaceholder("Explain why the event")).toBeVisible();
   });
 
   test("can approve a pending event and it disappears from list", async ({ page }) => {

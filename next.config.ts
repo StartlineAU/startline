@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["pg"],
   transpilePackages: ["maplibre-gl"],
   // A package-lock.json under C:\Users\<you>\ makes Next pick the wrong workspace
   // root, which can make dev extremely slow or appear to hang on first load.
@@ -26,7 +27,10 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "worker-src blob: 'self';",
+            value: [
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+            ].join("; "),
           },
         ],
       },

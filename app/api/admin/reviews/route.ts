@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         overallRating:       true,
-        communicationRating: true,
+        atmosphereRating: true,
         organisationRating:  true,
         experienceRating:    true,
         title:        true,
