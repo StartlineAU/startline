@@ -30,7 +30,7 @@ interface Profile {
 
 interface ReviewData {
   id: string; reviewerName: string; eventTitle?: string | null;
-  overallRating: number; communicationRating?: number | null;
+  overallRating: number; atmosphereRating?: number | null;
   organisationRating?: number | null; experienceRating?: number | null;
   title: string; body: string; isVerified: boolean; createdAt: string;
 }
@@ -124,13 +124,13 @@ export default function ProfilePage() {
     if (reviews.length === 0) return null;
     const total      = reviews.length;
     const avgOverall = reviews.reduce((s, r) => s + r.overallRating, 0) / total;
-    const commRevs   = reviews.filter(r => r.communicationRating);
+    const commRevs   = reviews.filter(r => r.atmosphereRating);
     const orgRevs    = reviews.filter(r => r.organisationRating);
     const expRevs    = reviews.filter(r => r.experienceRating);
     return {
       total,
       avgOverall,
-      avgComm: commRevs.length ? commRevs.reduce((s, r) => s + (r.communicationRating ?? 0), 0) / commRevs.length : null,
+      avgComm: commRevs.length ? commRevs.reduce((s, r) => s + (r.atmosphereRating ?? 0), 0) / commRevs.length : null,
       avgOrg:  orgRevs.length  ? orgRevs.reduce((s, r)  => s + (r.organisationRating  ?? 0), 0) / orgRevs.length  : null,
       avgExp:  expRevs.length  ? expRevs.reduce((s, r)  => s + (r.experienceRating    ?? 0), 0) / expRevs.length  : null,
       dist: [5,4,3,2,1].map(star => ({
@@ -387,7 +387,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col justify-between gap-5">
                       <div className="grid grid-cols-3 gap-3">
                         {([
-                          { label: "Communication", value: reviewStats.avgComm },
+                          { label: "Atmosphere", value: reviewStats.avgComm },
                           { label: "Organisation",  value: reviewStats.avgOrg  },
                           { label: "Experience",    value: reviewStats.avgExp  },
                         ] as { label: string; value: number | null }[]).map(({ label, value }) => (

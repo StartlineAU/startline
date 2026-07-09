@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -147,12 +147,15 @@ export default function ListingsPage() {
   const [sortField,  setSortField]  = useState<SortField>("status");
   const [sortDir,    setSortDir]    = useState<SortDir>("asc");
 
-  useEffect(() => {
+  const fetchEvents = useCallback(() => {
+    setLoading(true);
     fetch("/api/organiser/events")
       .then(r => r.ok ? r.json() : [])
       .then(data => { setEvents(Array.isArray(data) ? data : []); })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");

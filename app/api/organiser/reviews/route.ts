@@ -10,7 +10,7 @@ export async function GET() {
       where:   { organiserId: session.sub, isPublished: true },
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, overallRating: true, communicationRating: true,
+        id: true, overallRating: true, atmosphereRating: true,
         organisationRating: true, experienceRating: true,
         title: true, body: true, reviewerName: true,
         eventTitle: true, isVerified: true, createdAt: true,
