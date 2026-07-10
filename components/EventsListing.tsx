@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "rea
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, MapPin, Calendar, X, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, Calendar, X, SlidersHorizontal, LayoutGrid } from "lucide-react";
 import type { UserEvent, FilterState, EventType, AustralianState, CompetitionFormat } from "@/types";
 import {
   EVENT_TYPE_LABELS, STATE_LABELS, STATE_OPTIONS, EVENT_TYPE_OPTIONS,
@@ -225,6 +225,10 @@ function EventsListingInner() {
   const [dateFilter,   setDateFilter]   = useState<FilterState["dateRange"]>("all");
   const [filtersOpen,  setFiltersOpen]  = useState(false);
   const [mobileSearch, setMobileSearch] = useState(false);
+  const [view, setView] = useState<"list" | "map">(searchParams.get("view") === "map" ? "map" : "list");
+  // Latches true the first time the Map tab is viewed, so EventMap mounts
+  // once and then just toggles visibility (avoids re-init/re-fetch on every tab switch).
+  const [mapEverViewed, setMapEverViewed] = useState(view === "map");
 
   const filterState: FilterState = useMemo(() => ({
     types:       typeFilter   ? [typeFilter as EventType]          : [],
@@ -263,46 +267,133 @@ function EventsListingInner() {
     });
   }, []);
 
-  const desktopList = (
-    <div className="hidden lg:flex flex-col w-[480px] xl:w-[564px] flex-shrink-0 border-r border-dark-lighter bg-dark-darker">
-      {/* Desktop search */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-stretch gap-2">
-          <div className="flex flex-1 items-stretch bg-dark rounded-xl overflow-hidden border border-dark-lighter">
-            <div className="flex-1 px-3.5 py-2.5 border-r border-dark-lighter min-w-0">
-              <label className="font-headline text-[10px] font-black uppercase tracking-widest text-primary block mb-0.5">Event</label>
-              <div className="flex items-center gap-1.5">
-                <input type="text" placeholder="Event name, type or keyword" value={whatQuery}
-                  onChange={(e) => setWhatQuery(e.target.value)}
-                  className="w-full bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none" />
-                {whatQuery && <button onClick={() => setWhatQuery("")} className="text-muted hover:text-light flex-shrink-0"><X className="w-3.5 h-3.5" /></button>}
-              </div>
-            </div>
-            <div className="flex-1 px-3.5 py-2.5 min-w-0">
-              <label className="font-headline text-[10px] font-black uppercase tracking-widest text-primary block mb-0.5">Where</label>
-              <div className="flex items-center gap-1.5">
-                <input type="text" placeholder="State, city, or suburb" value={whereQuery}
-                  onChange={(e) => setWhereQuery(e.target.value)}
-                  className="w-full bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none" />
-                {whereQuery && <button onClick={() => setWhereQuery("")} className="text-muted hover:text-light flex-shrink-0"><X className="w-3.5 h-3.5" /></button>}
-              </div>
+  const viewToggle = (
+    <div className="flex items-center gap-0.5 bg-dark rounded-xl border border-dark-lighter p-0.5 flex-shrink-0">
+      <button onClick={() => setView("list")}
+        className={`flex items-center gap-1.5 px-3 h-8 lg:h-9 rounded-lg font-headline text-xs font-bold uppercase tracking-widest transition-colors duration-150 ${view === "list" ? "bg-white/10 text-light" : "text-muted hover:text-light"}`}
+      >
+        <LayoutGrid className="w-3.5 h-3.5" /> List
+      </button>
+      <button onClick={() => { setView("map"); setMapEverViewed(true); }}
+        className={`flex items-center gap-1.5 px-3 h-8 lg:h-9 rounded-lg font-headline text-xs font-bold uppercase tracking-widest transition-colors duration-150 ${view === "map" ? "bg-white/10 text-light" : "text-muted hover:text-light"}`}
+      >
+        <MapPin className="w-3.5 h-3.5" /> Map
+      </button>
+    </div>
+  );
+
+  const desktopHeader = (
+    <div className="hidden lg:block px-4 pt-4 pb-2 border-b border-dark-lighter bg-dark-darker flex-shrink-0">
+      <div className="flex items-stretch gap-2">
+        <div className="flex flex-1 items-stretch bg-dark rounded-xl overflow-hidden border border-dark-lighter">
+          <div className="flex-1 px-3.5 py-2.5 border-r border-dark-lighter min-w-0">
+            <label className="font-headline text-[10px] font-black uppercase tracking-widest text-primary block mb-0.5">Event</label>
+            <div className="flex items-center gap-1.5">
+              <input type="text" placeholder="Event name, type or keyword" value={whatQuery}
+                onChange={(e) => setWhatQuery(e.target.value)}
+                className="w-full bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none" />
+              {whatQuery && <button onClick={() => setWhatQuery("")} className="text-muted hover:text-light flex-shrink-0"><X className="w-3.5 h-3.5" /></button>}
             </div>
           </div>
+          <div className="flex-1 px-3.5 py-2.5 min-w-0">
+            <label className="font-headline text-[10px] font-black uppercase tracking-widest text-primary block mb-0.5">Where</label>
+            <div className="flex items-center gap-1.5">
+              <input type="text" placeholder="State, city, or suburb" value={whereQuery}
+                onChange={(e) => setWhereQuery(e.target.value)}
+                className="w-full bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:ring-0 focus:outline-none" />
+              {whereQuery && <button onClick={() => setWhereQuery("")} className="text-muted hover:text-light flex-shrink-0"><X className="w-3.5 h-3.5" /></button>}
+            </div>
+          </div>
+        </div>
+        <button onClick={() => setFiltersOpen(true)}
+          className={`flex items-center gap-1.5 px-3 rounded-xl font-headline text-xs font-bold uppercase tracking-widest border transition-colors duration-100 flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50 hover:text-light"}`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          {activeFilterCount > 0 && <span className="w-4 h-4 rounded-full bg-primary text-dark font-headline text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
+        </button>
+        {viewToggle}
+      </div>
+      <div className="flex items-center justify-between mt-2 px-0.5">
+        <span className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
+        {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-[10px] font-medium uppercase tracking-widest text-primary hover:text-primary/70 transition-colors">Clear all</button>}
+      </div>
+    </div>
+  );
+
+  const mobileHeader = (
+    <div className="lg:hidden px-4 pt-3 pb-2 border-b border-dark-lighter flex-shrink-0">
+      {mobileSearch ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 bg-dark rounded-xl px-4 py-2.5">
+            <Search className="w-4 h-4 text-muted flex-shrink-0" />
+            <input autoFocus type="text" placeholder="Event name, type or keyword" value={whatQuery}
+              onChange={(e) => setWhatQuery(e.target.value)}
+              className="flex-1 bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:outline-none" />
+            {whatQuery && <button onClick={() => setWhatQuery("")} className="text-muted"><X className="w-4 h-4" /></button>}
+          </div>
+          <div className="flex items-center gap-2 bg-dark rounded-xl px-4 py-2.5">
+            <MapPin className="w-4 h-4 text-muted flex-shrink-0" />
+            <input type="text" placeholder="City or state" value={whereQuery}
+              onChange={(e) => setWhereQuery(e.target.value)}
+              className="flex-1 bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:outline-none" />
+            {whereQuery && <button onClick={() => setWhereQuery("")} className="text-muted"><X className="w-4 h-4" /></button>}
+          </div>
+          <button onClick={() => setMobileSearch(false)} className="text-center font-headline text-xs uppercase tracking-widest text-muted py-1">Done</button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button onClick={() => setMobileSearch(true)} className="flex-1 flex items-center gap-3 bg-dark rounded-xl px-4 h-11 text-left min-w-0">
+            <Search className="w-4 h-4 text-muted flex-shrink-0" />
+            <span className="flex-1 font-headline text-sm text-muted/60 truncate">
+              {whatQuery || whereQuery ? [whatQuery, whereQuery].filter(Boolean).join(" · ") : "Search events…"}
+            </span>
+          </button>
           <button onClick={() => setFiltersOpen(true)}
-            className={`flex items-center gap-1.5 px-3 rounded-xl font-headline text-xs font-bold uppercase tracking-widest border transition-colors duration-100 flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50 hover:text-light"}`}
+            className={`flex items-center gap-1.5 px-3 h-11 rounded-xl font-headline text-xs font-medium uppercase tracking-widest border transition-colors flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50"}`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             {activeFilterCount > 0 && <span className="w-4 h-4 rounded-full bg-primary text-dark font-headline text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2 px-0.5">
-          <span className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
-          {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-[10px] font-medium uppercase tracking-widest text-primary hover:text-primary/70 transition-colors">Clear all</button>}
+      )}
+      <div className="flex items-center justify-between mt-2.5">
+        <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-3">
+          {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-xs font-medium uppercase tracking-widest text-primary">Clear all</button>}
+          {viewToggle}
         </div>
       </div>
+    </div>
+  );
 
-      {/* Event list */}
-      <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-4">
+  const emptyState = (
+    <div className="p-10 text-center">
+      <p className="font-headline text-2xl font-black italic tracking-tighter text-light mb-4">No events found.</p>
+      <button onClick={clearFilters}
+        className="font-headline text-sm font-medium uppercase tracking-widest border border-primary text-primary px-5 py-2.5 hover:bg-primary hover:text-dark transition-colors rounded-full"
+      >Clear Filters</button>
+    </div>
+  );
+
+  // Full-width results grid — shown for the "List" tab, all breakpoints
+  const gridContent = (
+    <div className={view === "list" ? "flex-1 overflow-y-auto px-3 lg:px-6 py-4 lg:py-5" : "hidden"}>
+      {displayEvents.length === 0 ? emptyState : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+          {displayEvents.map((event) => (
+            <EventCard key={event.id} event={event} selected={false} onSelect={() => {}} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // List + map split — shown for the "Map" tab. Map mounts lazily on first
+  // visit to this tab, then stays mounted (hidden via CSS) to avoid
+  // re-initialising MapLibre / re-fetching tiles on every toggle.
+  const mapContent = (
+    <div className={view === "map" ? "flex flex-col lg:flex-row flex-1 min-h-0" : "hidden"}>
+      <div ref={listRef} className="flex flex-col w-full lg:w-[480px] xl:w-[564px] lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-dark-lighter bg-dark-darker overflow-y-auto max-h-[38vh] lg:max-h-none px-4 py-3 lg:py-4">
         {displayEvents.length === 0 ? (
           <div className="p-8 text-center">
             <p className="font-headline text-lg font-black italic tracking-tighter text-light mb-3">No events found.</p>
@@ -318,85 +409,28 @@ function EventsListingInner() {
           </div>
         )}
       </div>
-    </div>
-  );
-
-  const mobileList = (
-    <div className="lg:hidden">
-      {/* Mobile search */}
-      <div className="px-4 pt-3 pb-2">
-        {mobileSearch ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 bg-dark rounded-xl px-4 py-2.5">
-              <Search className="w-4 h-4 text-muted flex-shrink-0" />
-              <input autoFocus type="text" placeholder="Event name, type or keyword" value={whatQuery}
-                onChange={(e) => setWhatQuery(e.target.value)}
-                className="flex-1 bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:outline-none" />
-              {whatQuery && <button onClick={() => setWhatQuery("")} className="text-muted"><X className="w-4 h-4" /></button>}
-            </div>
-            <div className="flex items-center gap-2 bg-dark rounded-xl px-4 py-2.5">
-              <MapPin className="w-4 h-4 text-muted flex-shrink-0" />
-              <input type="text" placeholder="City or state" value={whereQuery}
-                onChange={(e) => setWhereQuery(e.target.value)}
-                className="flex-1 bg-transparent text-light font-headline text-sm placeholder:text-muted/40 border-0 focus:outline-none" />
-              {whereQuery && <button onClick={() => setWhereQuery("")} className="text-muted"><X className="w-4 h-4" /></button>}
-            </div>
-            <button onClick={() => setMobileSearch(false)} className="text-center font-headline text-xs uppercase tracking-widest text-muted py-1">Done</button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMobileSearch(true)} className="flex-1 flex items-center gap-3 bg-dark rounded-xl px-4 h-11 text-left min-w-0">
-              <Search className="w-4 h-4 text-muted flex-shrink-0" />
-              <span className="flex-1 font-headline text-sm text-muted/60 truncate">
-                {whatQuery || whereQuery ? [whatQuery, whereQuery].filter(Boolean).join(" · ") : "Search events…"}
-              </span>
-            </button>
-            <button onClick={() => setFiltersOpen(true)}
-              className={`flex items-center gap-1.5 px-3 h-11 rounded-xl font-headline text-xs font-medium uppercase tracking-widest border transition-colors flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50"}`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              {activeFilterCount > 0 && <span className="w-4 h-4 rounded-full bg-primary text-dark font-headline text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
-            </button>
-          </div>
+      <div className="flex-1 relative min-h-[320px]">
+        {mapEverViewed && (
+          <EventMap
+            events={displayEvents}
+            selectedId={selectedId}
+            onMarkerClick={handleSelect}
+            initialCenter={initialCenter}
+            ref={mapRef}
+          />
         )}
-        <div className="flex items-center justify-between mt-2.5">
-          <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
-          {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-xs font-medium uppercase tracking-widest text-primary">Clear all</button>}
-        </div>
       </div>
-
-      {/* Mobile event grid (full width) */}
-      {displayEvents.length === 0 ? (
-        <div className="p-10 text-center">
-          <p className="font-headline text-2xl font-black italic tracking-tighter text-light mb-4">No events found.</p>
-          <button onClick={clearFilters}
-            className="font-headline text-sm font-medium uppercase tracking-widest border border-primary text-primary px-5 py-2.5 hover:bg-primary hover:text-dark transition-colors rounded-full"
-          >Clear Filters</button>
-        </div>
-      ) : (
-        <div className="px-3 pb-4 grid grid-cols-2 gap-3">
-          {displayEvents.map((event) => (
-            <EventCard key={event.id} event={event} selected={false} onSelect={() => {}} />
-          ))}
-        </div>
-      )}
     </div>
   );
 
   return (
-    <div className="flex flex-col lg:flex-row" style={{ height: "calc(100dvh - 56px)" }}>
-      {desktopList}
-      {mobileList}
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 56px)" }}>
+      {desktopHeader}
+      {mobileHeader}
 
-      {/* Map panel (desktop only) */}
-      <div className="hidden lg:flex flex-1 relative" style={{ minHeight: 400 }}>
-        <EventMap
-          events={displayEvents}
-          selectedId={selectedId}
-          onMarkerClick={handleSelect}
-          initialCenter={initialCenter}
-          ref={mapRef}
-        />
+      <div className="flex-1 min-h-0 flex flex-col">
+        {gridContent}
+        {mapContent}
       </div>
 
       {filtersOpen && (
