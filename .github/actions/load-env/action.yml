@@ -1,9 +1,6 @@
 name: "Load environment"
-description: "Auth to AWS, fetch secrets, export as env vars"
+description: "Fetch secrets from AWS Secrets Manager and export as env vars"
 inputs:
-  aws-role-arn:
-    description: "ARN of the IAM role to assume"
-    required: true
   environment:
     description: "nonprod or prod"
     default: "nonprod"
@@ -13,25 +10,6 @@ runs:
   steps:
     - shell: bash
       run: |
-        # Assume the CI role and export credentials
-        CREDS=$(aws sts assume-role-with-web-identity \
-          --role-arn "${{ inputs.aws-role-arn }}" \
-          --role-session-name "gha-load-env" \
-          --web-identity-token "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          --duration-seconds 3600 \
-          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-          --output text)
-
-        AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
-        AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
-        AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
-
-        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> "$GITHUB_ENV"
-        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> "$GITHUB_ENV"
-        echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN" >> "$GITHUB_ENV"
-
-        export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-
         BOOTSTRAP=$(aws secretsmanager get-secret-value \
           --secret-id startline/tf-bootstrap \
           --query SecretString --output text)
