@@ -127,14 +127,6 @@ variable "site_url" {
   type        = string
 }
 
-# --- CI secrets ---
-
-variable "gitleaks_license" {
-  description = "Gitleaks license key (required for org accounts)."
-  type        = string
-  sensitive   = true
-}
-
 # --- S3 upload bucket ---
 
 variable "bucket_cors_allowed_origins" {

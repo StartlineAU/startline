@@ -20,114 +20,146 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 
 JWT verification in `middleware.ts` via `jose`. Tokens in Cognito-managed cookies. Only Cognito group: `admins`. Authorisation at DB level (Prisma).
 
-`lib/amplify-server.ts` session helpers:
-- `getUserSession()` — upserts User by cognitoSub
-- `getOrganiserSession()` — User → Organiser via userId
-- `getAdminSession()` — only if `admins` group
+Uses AWS Cognito with JWT verification in middleware via `jose`. Tokens in Cognito-managed cookies. Only `admins` group used — non-admin users have no special group assignment. Authorisation at the DB level (Prisma).
 
-### Seed users
+Non-production pool `ap-southeast-2_KBqIYXOWT`. Users created by `prisma/seed.ts` via `AdminCreateUser` + `AdminSetUserPassword` per seed user, plus `AdminAddUserToGroup` for admin only.
 
-All share password `Password123!`. `pnpm prisma:seed` is idempotent.
+### Account model
+
+Every user has a **User** record (created on first login). Users can optionally create an **Organiser** profile (1:1). Organiser records can be verified (auto-publish events) or unverified (admin approval needed). See `lib/amplify-server.ts` for session helpers.
+
+All seed users share password `Password123!`.
 
 | Email | Notes |
 |---|---|
-| `admin@startline.test` | Admin group |
-| `organiser@startline.test` | User + verified Organiser (Apex Endurance Events) |
+| `admin@startline.test` | Admin (`admins` group) |
+| `organiser@startline.test` | User + Organiser (Apex Endurance Events, verified) |
 | `user@startline.test` | User only |
 
-Old Cognito users from previous seeds not auto-removed.
-
-## Domain routing
+Old Cognito users from previous seeds not auto-removed — delete manually or via Terraform reset.
 
 `middleware.ts` routes by hostname in production. Dev mode (`NODE_ENV=development`) skips all domain checks — everything at `localhost:3000`. Protects path lists: `ORGANISER_PROTECTED`, `ADMIN_PROTECTED`.
 
-## Database
+PostgreSQL 15 via Docker on port **5432**. Prisma ORM, singleton client in `lib/prisma.ts`. Schema targets `rhel-openssl-3.0.x` for Lambda/RHEL.
 
-PostgreSQL 15, Prisma ORM. Singleton client `lib/prisma.ts` (uses `PrismaPg` adapter). Binary target `rhel-openssl-3.0.x` for Lambda.
-
-## Stripe Connect
-
-Express for organiser payouts. Amounts in integer cents. Platform fee (`lib/platform-fee.ts`): 3.95% + $1.45. `feeStructure`: "athlete" adds fee to total, "organiser" absorbs it.
-
-## Infrastructure
-
-Terraform in `terraform/` — plan on PR, apply on push to main. App deploys via AWS Amplify: `non-production` → staging, `production` → live.
+Mailpit on SMTP **1025**, web UI **8026** for local email testing.
 
 ## Design
 
-Read `design/design.md` before any UI work. Key rules:
-- Dark-only. One accent: `#B3E153`. Blue/amber/red = status semantics only.
-- Chakra Petch (headings, uppercase + wide tracking), Inter (body).
-- Lucide icons only. No emoji.
-- Text on green = `#141414`, never white.
-- Machined shadow (`2px 2px 0 #B3E153`) on primary CTA only.
-- Status `APPROVED` → "Published" to organisers.
-- shadcn/ui via `components/ui/`. `cn()` from `lib/utils.ts` (clsx + tailwind-merge).
+
+Connect Express for organiser payouts. Payments via `api/organiser/stripe/`. Money in integer cents. Platform fee (`lib/platform-fee.ts`): 3.95% + $1.45; `feeStructure` determines who absorbs it.
+
+## Environment variables
+
+All secrets in AWS Secrets Manager, loaded by `.envrc` + direnv. **No `.env` file.**
+
+| Secret | Contents |
+|---|---|
+| `startline/tf-bootstrap` | Terraform inputs (amplify PAT, cloudflare token, resend key) |
+| `startline/nonprod/app` | All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.) |
+| `startline/prod/app` | Prod env vars (live values) |
+
+`.envrc` at repo root fetches from SM and exports to shell. Hardcoded local constants (Docker Postgres URL, Mailpit SMTP).
+
+**Dev setup:** `brew install direnv`, hook into shell, `direnv allow` in worktree. Or whitelist at `~/.config/direnv/direnv.toml`:
+```toml
+[whitelist]
+prefix = ["/Users/Lachlan/"]
+```
+
+**Key rotation:** Update the SM secret, trigger an Amplify rebuild. No code changes, no TF runs.
+
+**CI:** Composite action at `.github/actions/load-env/` — assumes OIDC role, fetches bootstrap + app secrets, exports as env vars. Used by all 3 workflows.
+
+## Git worktrees
+
+All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, Mailpit) runs on the main checkout — worktrees connect to it. **Never run `docker compose up` in a worktree.** Just `pnpm dev`.
+
+## Terraform + Amplify CI/CD
+
+Infra in `terraform/`:
+- `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
+- App deploys via Amplify on branch push: `non-production` → staging, `production` → live
+- No app code CI (no lint/test/build checks)
+
+Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
+
+Amplify build spec fetches from SM at build time — individual key rotations don't need a TF run.
+
+## Design system
+
+Authoritative reference at **`design/design.md`**. Consult for any UI work.
+
+Non-negotiables:
+- **Dark only.** `color-scheme: dark`. No light surfaces.
+- **One accent.** Signal green `#B3E153` (`--color-primary`) only brand hue. Blue/amber/red = status semantics.
+- **Chakra Petch for structure, Inter for prose.** Structural chrome = uppercase + wide tracking; body = sentence case Inter.
+- **No emoji. Lucide line icons only.**
+- **Text on `#B3E153` is always `#141414` (dark ink)** — never white.
+- **"Machined" shadow** (`box-shadow: 2px 2px 0 #B3E153`) on single primary CTA per view only.
+- **Status labels:** `APPROVED` renders as "Published" to organisers. Use shared status object.
+
+## shadcn/ui
+
+Dark theme only. CSS vars in `app/globals.css`. Primary green `#B3E153`. Use `npx shadcn@latest add <component>` to add. Use `cn()` from `lib/utils.ts` for class merging.
+
+## Next.js
+
+Next.js 15 with Turbopack. `@/*` maps to project root. CSP in `next.config.ts`.
 
 ## Testing
 
-| Command | What |
-|---|---|
-| `pnpm lint` | ESLint (next lint) |
-| `pnpm test` | Vitest unit tests (`src/__tests__/`) |
-| `pnpm test:watch` | Vitest watch |
-| `pnpm test:e2e` | Playwright e2e (`e2e/`, needs PostgreSQL running) |
+```bash
+pnpm lint         # ESLint (next lint)
+pnpm test         # Vitest unit tests
+pnpm test:watch   # Vitest watch mode
+pnpm test:e2e     # Playwright (requires Docker PostgreSQL running)
+```
 
+- Unit tests in `src/__tests__/`, e2e in `e2e/`.
 - Vitest: `globals: true`, `DATABASE_URL` defaults to port 5432.
-- Playwright: Chromium, auto-starts `pnpm dev -p 3000`. Auth via non-production Cognito pool.
-- **Every new feature MUST include E2E tests.** Use `e2e/helpers.ts`. API tests via `page.evaluate()` + `fetch()`.
-- Conditional assertions (`if (await locator.isVisible())`) for seed-data-dependent tests.
-- **Pre-commit:** `pnpm lint && pnpm test && pnpm test:e2e` — 0 errors/warnings required.
+- Playwright: Chromium, auto-starts `pnpm dev -p 3000`.
+- **Every new feature MUST include E2E tests.**
+
+## Playwright CLI (for AI browser automation)
+
+Prefer `playwright-cli` over MCP for browser automation.
+
+```bash
+npm install -g @playwright/cli@latest
+playwright-cli install --skills
+playwright-cli open [url]
+playwright-cli snapshot
+playwright-cli click <ref>
+```
+
+Use `-s=<name>` for isolated sessions (e.g., `-s=customer`, `-s=organiser`). Pass `--headed` for visible browser.
 
 ## GitHub
 
-Use `gh` CLI (MCP fails on private `StartlineAU/startline`).
+Use `gh` CLI — the MCP `server-github` fails for this private org repo.
 
-**PRs:** Link issues (`Closes #N`), follow `.github/PULL_REQUEST_TEMPLATE.md`. CI runs lint/test/e2e (informational, does not block merge).
+### Pre-commit gate
 
-**Issues:** Use `.github/ISSUE_TEMPLATE/issue.yml`. Set type: `gh issue edit <N> --repo StartlineAU/startline --type "Bug|Feature|Task"`. Set Priority/Effort via GraphQL:
-
-```
-# Get node ID
-gh issue view <N> --repo StartlineAU/startline --json id --jq '.id'
-
-# Batch mutation (replace NODE_ID and OPTION_IDs)
-gh api graphql -f query='
-  mutation {
-    p: updateIssueFieldValue(input: { issueId: "<NODE_ID>", issueField: { fieldId: "IFSS_kgDOAnp8Qg", singleSelectOptionId: "<PRI>" } }) { issue { number } }
-    e: updateIssueFieldValue(input: { issueId: "<NODE_ID>", issueField: { fieldId: "IFSS_kgDOAnp8RQ", singleSelectOptionId: "<EFF>" } }) { issue { number } }
-  }'
+Before staging/committing:
+```bash
+pnpm lint        # 0 errors, 0 warnings
+pnpm test        # all tests pass
+pnpm test:e2e    # all pass (needs Docker PostgreSQL running)
 ```
 
-| Field | Options | IDs |
-|---|---|---|
-| Priority | Urgent / High / Medium / Low | `IFSSO_kgDOBFZBjQ` / `IFSSO_kgDOBFZBjg` / `IFSSO_kgDOBFZBjw` / `IFSSO_kgDOBFZBkA` |
-| Effort | High / Medium / Low | `IFSSO_kgDOBFZBkQ` / `IFSSO_kgDOBFZBkg` / `IFSSO_kgDOBFZBkw` |
+### PR conventions
 
-Priority/Effort in issue body does NOT set GraphQL fields — use mutation above.
+Scan open GitHub issues, link related. Use `Closes #N`, `Fixes #N`, `Related to #N`. Follow `.github/PULL_REQUEST_TEMPLATE.md`. CI runs lint/test/e2e (informational, does not block).
 
-## Playwright CLI (browser automation)
+### Issue conventions
 
-Prefer over MCP for browser automation (~76% token savings). `-s=<name>` for isolated sessions.
+Use labels, native issue type (Bug/Feature/Task), Priority/Effort via GraphQL (field IDs in code section below). Use milestone, project, cross-reference related issues.
 
-```
-playwright-cli open|goto|snapshot|click|type|fill|select|check/uncheck|screenshot|close
-```
-
-Read snapshot `.yml` for element refs. `--headed` for visible browser.
-
-## MCP servers (opencode.json)
-
-| Server | Access |
-|---|---|
-| stripe | Stripe API via `@stripe/mcp` |
-| resend | `resend-mcp` (reads RESEND_API_KEY from `.env`) |
-| aws | API via `awslabs.aws-api-mcp-server` (profile `mcp-server`, account `829182232071`, `ap-southeast-2`) |
-| cloudflare | `@cloudflare/mcp-server-cloudflare` (account `cae4a54688a0a4c53bda4bd62eb37c35`) |
-| terraform | `hashicorp/terraform-mcp-server` via Docker |
+Configured in `opencode.json`: stripe, resend, aws, cloudflare. Skills listed below.
 
 ## Idempotency
 
-- Prisma client: singleton (`lib/prisma.ts`)
-- Stripe: `stripePaymentIntentId` unique constraint on `Registration`
-- Resend: use idempotency keys
+- Prisma client singleton in `lib/prisma.ts`.
+- Stripe payment intents: `stripePaymentIntentId` unique on `Registration`.
+- Resend email sends: use idempotency keys.

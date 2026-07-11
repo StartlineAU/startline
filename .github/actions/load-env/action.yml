@@ -1,0 +1,33 @@
+name: "Load environment"
+description: "Auth to AWS, fetch environment secrets, export as env vars"
+inputs:
+  aws-role-arn:
+    description: "ARN of the IAM role to assume via OIDC"
+    required: true
+  environment:
+    description: "nonprod or prod"
+    default: "nonprod"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ap-southeast-2
+
+    - shell: bash
+      run: |
+        BOOTSTRAP=$(aws secretsmanager get-secret-value \
+          --secret-id startline/tf-bootstrap \
+          --query SecretString --output text)
+        echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+        APP=$(aws secretsmanager get-secret-value \
+          --secret-id startline/${{ inputs.environment }}/app \
+          --query SecretString --output text)
+        echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/startline?schema=public" >> "$GITHUB_ENV"
+        echo "NEXT_PUBLIC_AWS_REGION=ap-southeast-2" >> "$GITHUB_ENV"
+        echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000" >> "$GITHUB_ENV"

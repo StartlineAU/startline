@@ -166,8 +166,13 @@ resource "aws_secretsmanager_secret_version" "database" {
   })
 }
 
-resource "aws_secretsmanager_secret" "ci" {
-  name_prefix             = "${var.project_name}/${var.name}/ci/"
+resource "random_password" "guest_email_verification" {
+  length  = 32
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "app" {
+  name                    = "${var.project_name}/${var.name}/app"
   recovery_window_in_days = 0
 
   tags = {
@@ -175,12 +180,18 @@ resource "aws_secretsmanager_secret" "ci" {
   }
 }
 
-resource "aws_secretsmanager_secret_version" "ci" {
-  secret_id = aws_secretsmanager_secret.ci.id
+resource "aws_secretsmanager_secret_version" "app" {
+  secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
-    NEXT_PUBLIC_COGNITO_USER_POOL_ID = aws_cognito_user_pool.this.id
-    NEXT_PUBLIC_COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.web.id
-    GITLEAKS_LICENSE                 = var.gitleaks_license
+    NEXT_PUBLIC_COGNITO_USER_POOL_ID  = aws_cognito_user_pool.this.id
+    NEXT_PUBLIC_COGNITO_CLIENT_ID     = aws_cognito_user_pool_client.web.id
+    GUEST_EMAIL_VERIFICATION_SECRET   = random_password.guest_email_verification.result
+    AWS_S3_BUCKET                     = aws_s3_bucket.uploads.id
+    AWS_S3_REGION                     = "ap-southeast-2"
+    DATABASE_URL                      = local.database_url
+    NEXT_PUBLIC_SITE_URL              = var.site_url
+    NEXT_PUBLIC_BASE_URL              = var.site_url
+    NEXT_PUBLIC_AWS_REGION            = "ap-southeast-2"
   })
 }
 

@@ -16,12 +16,6 @@ variable "project_name" {
   default     = "startline"
 }
 
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token with DNS and cache permissions for startlineau.com."
-  type        = string
-  sensitive   = true
-}
-
 variable "cloudflare_account_id" {
   description = "Cloudflare account ID."
   type        = string
@@ -36,13 +30,6 @@ variable "amplify_repository_url" {
   default     = "https://github.com/StartlineAU/startline"
 }
 
-variable "amplify_repository_access_token" {
-  description = "Git provider token for private repos (GitHub PAT, etc.). Required when amplify_repository_url is set."
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
 variable "amplify_environment_variables" {
   description = "Env vars at the app level (apply to BOTH branches). Use the env module's branch env vars for per-environment values."
   type        = map(string)
@@ -53,13 +40,6 @@ variable "amplify_custom_domain" {
   description = "Apex domain attached to the prod branch only. Set to null to skip."
   type        = string
   default     = "startlineau.com"
-}
-
-variable "resend_api_key" {
-  description = "Resend API key (re_...). Shared across both environments via the app-level env vars."
-  type        = string
-  sensitive   = true
-  default     = null
 }
 
 # --- RDS shared defaults ---
@@ -126,11 +106,4 @@ variable "database_secret_recovery_window_days" {
   default     = 0
 }
 
-# --- CI ---
 
-variable "gitleaks_license" {
-  description = "Gitleaks license key (required for org accounts)."
-  type        = string
-  sensitive   = true
-  default     = null
-}
