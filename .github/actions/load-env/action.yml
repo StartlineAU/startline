@@ -18,6 +18,12 @@ runs:
 
     - shell: bash
       run: |
+        # Persist AWS credentials for subsequent steps
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> "$GITHUB_ENV"
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> "$GITHUB_ENV"
+        echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN" >> "$GITHUB_ENV"
+        echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" >> "$GITHUB_ENV"
+
         BOOTSTRAP=$(aws secretsmanager get-secret-value \
           --secret-id startline/tf-bootstrap \
           --query SecretString --output text)
