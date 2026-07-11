@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Meet the team behind StartLine — Australia's fitness event calendar. Founded by Lachlan, Nathan, Hugo, and Noah.",
+    "Meet the team behind StartLine — Australia's fitness event calendar. Founded by Lachlan Martin, Nathan Sweet, Hugo Shrowder, and Noah Helu.",
   openGraph: {
     title: "About Us | StartLine",
     description:
@@ -33,23 +33,23 @@ export const metadata: Metadata = {
 
 const founders = [
   {
-    name: "Lachlan",
-    initials: "L",
+    name: "Lachlan Martin",
+    initials: "LM",
     bio: "Lachlan brings a lifelong passion for fitness and competition to StartLine. With experience building products that connect communities, he drives the vision and strategy behind the platform.",
   },
   {
-    name: "Nathan",
-    initials: "Na",
+    name: "Nathan Sweet",
+    initials: "NS",
     bio: "Nathan combines deep technical expertise with a love of endurance sport. He architects the systems that make discovering and registering for events seamless.",
   },
   {
-    name: "Hugo",
-    initials: "H",
+    name: "Hugo Shrowder",
+    initials: "HS",
     bio: "Hugo shapes the athlete experience with a sharp eye for design and detail. He ensures every interaction on StartLine feels fast, precise, and purposeful.",
   },
   {
-    name: "Noah",
-    initials: "N",
+    name: "Noah Helu",
+    initials: "NH",
     bio: "Noah brings a competitive drive and deep understanding of the athlete journey to StartLine. He focuses on building the tools that make event registration and management effortless.",
   },
 ];
