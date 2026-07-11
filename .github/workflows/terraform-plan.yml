@@ -21,6 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Clear pre-existing AWS credentials
+        run: |
+          rm -rf ~/.aws
+          echo "AWS_ACCESS_KEY_ID=" >> "$GITHUB_ENV"
+          echo "AWS_SECRET_ACCESS_KEY=" >> "$GITHUB_ENV"
+          echo "AWS_SESSION_TOKEN=" >> "$GITHUB_ENV"
+          echo "AWS_SESSION_KEY=" >> "$GITHUB_ENV"
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
