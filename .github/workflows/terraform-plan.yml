@@ -21,13 +21,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Auth and load env
+      - name: Terraform plan
+        shell: bash
         run: |
-          # Fetch OIDC token from GitHub
+          # Install terraform
+          curl -sLo terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
+          unzip -q terraform.zip -d /tmp/terraform-bin
+          export PATH="/tmp/terraform-bin:$PATH"
+
+          # Auth via OIDC
           JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
 
-          # Assume role using web identity
           CREDS=$(aws sts assume-role-with-web-identity \
             --region ap-southeast-2 \
             --role-arn "${{ vars.AWS_ROLE_ARN }}" \
@@ -41,29 +46,12 @@ jobs:
           SK=$(echo "$CREDS" | awk '{print $2}')
           ST=$(echo "$CREDS" | awk '{print $3}')
 
-          # Export to GITHUB_ENV for subsequent steps
-          echo "AWS_ACCESS_KEY_ID=$AK" >> "$GITHUB_ENV"
-          echo "AWS_SECRET_ACCESS_KEY=$SK" >> "$GITHUB_ENV"
-          echo "AWS_SESSION_TOKEN=$ST" >> "$GITHUB_ENV"
-          echo "AWS_DEFAULT_REGION=ap-southeast-2" >> "$GITHUB_ENV"
+          export AWS_ACCESS_KEY_ID=$AK
+          export AWS_SECRET_ACCESS_KEY=$SK
+          export AWS_SESSION_TOKEN=$ST
+          export AWS_DEFAULT_REGION=ap-southeast-2
 
-          # Also write credentials file for Terraform
-          mkdir -p ~/.aws
-          cat > ~/.aws/credentials << EOF
-          [default]
-          aws_access_key_id = $AK
-          aws_secret_access_key = $SK
-          aws_session_token = $ST
-          EOF
-          cat > ~/.aws/config << EOF
-          [default]
-          region = ap-southeast-2
-          EOF
-
-          # Verify
-          aws sts get-caller-identity --output text
-
-          # Fetch bootstrap secrets (uses the credentials we just set)
+          # Fetch bootstrap secrets
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/tf-bootstrap \
             --query SecretString --output text)
@@ -74,9 +62,7 @@ jobs:
             --query SecretString --output text)
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
-      - uses: hashicorp/setup-terraform@v4
-
-      - run: |
+          # Terraform
           terraform init -input=false
           terraform validate -no-tests
           terraform plan -no-color -lock=false -input=false
