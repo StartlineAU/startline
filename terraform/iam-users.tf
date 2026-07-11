@@ -40,3 +40,19 @@ resource "aws_iam_user_group_membership" "readonly" {
   user   = aws_iam_user.readonly.name
   groups = [aws_iam_group.readonly.name]
 }
+
+resource "aws_iam_user" "startline_dev" {
+  name = "startline-dev"
+  tags = {
+    Purpose = "Local development"
+  }
+}
+
+resource "aws_iam_user_policy_attachment" "startline_dev" {
+  user       = aws_iam_user.startline_dev.name
+  policy_arn = aws_iam_policy.startline_dev.arn
+}
+
+resource "aws_iam_access_key" "startline_dev" {
+  user = aws_iam_user.startline_dev.name
+}

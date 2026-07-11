@@ -119,6 +119,26 @@ resource "aws_iam_policy" "mcp_server" {
   })
 }
 
+# Minimal policy for human developers — read nonprod secrets only.
+resource "aws_iam_policy" "startline_dev" {
+  name        = "StartlineDevAccess"
+  description = "Minimal permissions for local dev — read nonprod secrets only"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:ListSecrets",
+      ]
+      Resource = [
+        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/tf-bootstrap*",
+        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
+      ]
+    }]
+  })
+}
+
 resource "aws_iam_user_policy_attachment" "mcp_server" {
   user       = aws_iam_user.mcp_server.name
   policy_arn = aws_iam_policy.mcp_server.arn

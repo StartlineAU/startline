@@ -114,3 +114,14 @@ output "uploads_bucket_regional_domain_names" {
   description = "S3 upload bucket regional domain names per environment."
   value       = { for k, m in module.env : k => m.uploads_bucket_regional_domain_name }
 }
+
+output "startline_dev_access_key_id" {
+  description = "Access key ID for the startline-dev IAM user (human developers)."
+  value       = aws_iam_access_key.startline_dev.id
+}
+
+output "startline_dev_secret_access_key" {
+  description = "Secret access key for the startline-dev IAM user. Share with developers via 1Password."
+  value       = aws_iam_access_key.startline_dev.secret
+  sensitive   = true
+}
