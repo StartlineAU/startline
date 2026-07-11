@@ -20,27 +20,26 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Assume AWS role via OIDC
-        run: |
-          CREDS=$(aws sts assume-role-with-web-identity \
-            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
-            --role-session-name "gha-apply" \
-            --web-identity-token "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            --duration-seconds 3600 \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-
-          echo "AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')" >> "$GITHUB_ENV"
-          echo "AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')" >> "$GITHUB_ENV"
-
-      - uses: ./.github/actions/load-env
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          environment: nonprod
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - run: |
+          BOOTSTRAP=$(aws secretsmanager get-secret-value \
+            --secret-id startline/tf-bootstrap \
+            --query SecretString --output text)
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+          APP=$(aws secretsmanager get-secret-value \
+            --secret-id startline/nonprod/app \
+            --query SecretString --output text)
+          echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: '1.10.0'
 
-      - run: terraform init
-      - run: terraform apply -auto-approve -input=false
+      - run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false
