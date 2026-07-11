@@ -48,8 +48,6 @@ jobs:
             --query SecretString --output text)
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
-      - run: aws sts get-caller-identity --output text
-
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
