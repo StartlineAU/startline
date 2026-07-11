@@ -1,4 +1,5 @@
 # Custom policy for the MCP server — broad read + focused write on Startline infra.
+# Secrets Manager access is scoped to nonprod only (prod secrets require the CI role).
 resource "aws_iam_policy" "mcp_server" {
   name        = "StartlineMCPAccess"
   description = "Permissions for MCP server to manage Startline project infrastructure"
@@ -21,8 +22,6 @@ resource "aws_iam_policy" "mcp_server" {
           "amplify:List*",
           "route53:List*",
           "route53:Get*",
-          "secretsmanager:List*",
-          "secretsmanager:GetResourcePolicy",
           "cloudwatch:Describe*",
           "cloudwatch:Get*",
           "cloudwatch:List*",
@@ -92,17 +91,51 @@ resource "aws_iam_policy" "mcp_server" {
           "ec2:ReleaseAddress",
           "ec2:AssociateAddress",
           "ec2:DisassociateAddress",
-          "secretsmanager:CreateSecret",
-          "secretsmanager:PutSecretValue",
-          "secretsmanager:UpdateSecret",
-          "secretsmanager:DeleteSecret",
           "route53:CreateHostedZone",
           "route53:DeleteHostedZone",
           "route53:ChangeResourceRecordSets",
         ]
         Resource = "*"
       },
+      {
+        Sid    = "SecretsManagerNonProd"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecrets",
+          "secretsmanager:GetResourcePolicy",
+          "secretsmanager:CreateSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:DeleteSecret",
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/tf-bootstrap*",
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
+        ]
+      },
     ]
+  })
+}
+
+# Minimal policy for human developers — read nonprod secrets only.
+resource "aws_iam_policy" "startline_dev" {
+  name        = "StartlineDevAccess"
+  description = "Minimal permissions for local dev — read nonprod secrets only"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:ListSecrets",
+      ]
+      Resource = [
+        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/tf-bootstrap*",
+        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
+      ]
+    }]
   })
 }
 

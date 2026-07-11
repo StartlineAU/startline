@@ -21,42 +21,48 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ap-southeast-2
+      - name: Terraform plan
+        shell: bash
+        run: |
+          # Install terraform
+          curl -sLo terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
+          unzip -q terraform.zip -d /tmp/terraform-bin
+          export PATH="/tmp/terraform-bin:$PATH"
 
-      - uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: '1.10.0'
+          # Auth via OIDC
+          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
 
-      - run: terraform init
-      - run: terraform fmt -check
-      - run: terraform validate
+          CREDS=$(aws sts assume-role-with-web-identity \
+            --region ap-southeast-2 \
+            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
+            --role-session-name "gha-plan" \
+            --web-identity-token "$JWT" \
+            --duration-seconds 3600 \
+            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+            --output text)
 
-      - id: plan
-        run: terraform plan -no-color -lock=false -input=false -out=tfplan
-        continue-on-error: true
-        env:
-          TF_VAR_amplify_repository_access_token: ${{ secrets.AMPLIFY_REPOSITORY_ACCESS_TOKEN }}
-          TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AK=$(echo "$CREDS" | awk '{print $1}')
+          SK=$(echo "$CREDS" | awk '{print $2}')
+          ST=$(echo "$CREDS" | awk '{print $3}')
 
-      - uses: actions/github-script@v7
-        env:
-          PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
-        with:
-          script: |
-            const plan = process.env.PLAN_STDOUT;
-            const summary = plan.match(/Plan:.*?(?:\d.*?)?(?:to add|to change|to destroy|No changes).*/)?.[0]?.trim()
-              ?? "See full plan below.";
-            const body = `<details><summary>${summary}</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n\n</details>`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body,
-            });
+          export AWS_ACCESS_KEY_ID=$AK
+          export AWS_SECRET_ACCESS_KEY=$SK
+          export AWS_SESSION_TOKEN=$ST
+          export AWS_DEFAULT_REGION=ap-southeast-2
 
-      - if: steps.plan.outcome == 'failure'
-        run: exit 1
+          # Fetch bootstrap secrets
+          BOOTSTRAP=$(aws secretsmanager get-secret-value \
+            --secret-id startline/tf-bootstrap \
+            --query SecretString --output text)
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+          APP=$(aws secretsmanager get-secret-value \
+            --secret-id startline/nonprod/app \
+            --query SecretString --output text)
+          echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+          # Terraform
+          terraform init -input=false
+          terraform validate -no-tests
+          terraform plan -no-color -lock=false -input=false

@@ -13,5 +13,5 @@ provider "aws" {
 }
 
 provider "cloudflare" {
-  api_token = var.cloudflare_api_token
+  api_token = local.bootstrap.cloudflare_api_token
 }

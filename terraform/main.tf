@@ -1,5 +1,17 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_secretsmanager_secret" "bootstrap" {
+  name = "startline/tf-bootstrap"
+}
+
+data "aws_secretsmanager_secret_version" "bootstrap" {
+  secret_id = data.aws_secretsmanager_secret.bootstrap.id
+}
+
+locals {
+  bootstrap = jsondecode(data.aws_secretsmanager_secret_version.bootstrap.secret_string)
+}
+
 # IAM role shared by both Amplify branches at build + runtime.
 data "aws_iam_policy_document" "amplify_assume" {
   statement {
@@ -25,6 +37,19 @@ resource "aws_iam_role_policy_attachment" "amplify_admin" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
 }
 
+resource "aws_iam_role_policy" "amplify_secrets" {
+  role = aws_iam_role.amplify.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/*/app*"
+    }]
+  })
+}
+
 locals {
   # Use a ternary rather than `&&` — Terraform doesn't short-circuit cleanly
   # when the right operand calls a function that rejects null (trimspace).
@@ -37,7 +62,13 @@ locals {
         preBuild:
           commands:
             - corepack enable && pnpm install --frozen-lockfile
-            - env | grep -E '^(DATABASE_URL|RESEND_API_KEY)=' >> .env.production
+            - >
+              SECRET="startline/nonprod/app"
+              && [ "$AWS_BRANCH" = "production" ] && SECRET="startline/prod/app"
+              && aws secretsmanager get-secret-value
+              --secret-id "$SECRET"
+              --query SecretString --output text
+              | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env.production
             - npx prisma migrate deploy
         build:
           commands:
@@ -89,22 +120,20 @@ resource "aws_amplify_app" "this" {
   compute_role_arn     = aws_iam_role.amplify.arn
 
   repository   = local.connect_repository ? var.amplify_repository_url : null
-  access_token = local.connect_repository ? var.amplify_repository_access_token : null
+  access_token = local.connect_repository ? local.bootstrap.amplify_repository_access_token : null
 
-  # App-level env vars apply to BOTH branches. Per-env values (DATABASE_URL,
-  # Cognito IDs, etc.) are set at the branch level by the env module.
-  environment_variables = merge(
-    var.resend_api_key != null ? { RESEND_API_KEY = var.resend_api_key } : {},
-    var.amplify_environment_variables,
-  )
+  # App-level env vars apply to BOTH branches. Secrets are fetched from
+  # Secrets Manager at build time via the build spec. Branch-level env vars
+  # (DATABASE_URL, bucket names) are set by the env module.
+  environment_variables = var.amplify_environment_variables
 
   lifecycle {
     precondition {
       condition = !local.connect_repository || (
-        var.amplify_repository_access_token != null &&
-        var.amplify_repository_access_token != ""
+        try(local.bootstrap.amplify_repository_access_token, null) != null &&
+        try(local.bootstrap.amplify_repository_access_token, "") != ""
       )
-      error_message = "amplify_repository_access_token must be set when amplify_repository_url is set."
+      error_message = "amplify_repository_access_token must be set in startline/tf-bootstrap secret."
     }
   }
 }
@@ -139,12 +168,10 @@ module "env" {
 
   cognito_deletion_protection = each.value.cognito_deletion_protection
 
-  resend_api_key = var.resend_api_key
+  resend_api_key = local.bootstrap.resend_api_key
   site_url       = each.value.site_url
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
-
-  gitleaks_license = var.gitleaks_license
 }
 
 # Custom apex domain attaches only to the prod branch. Route 53 records that

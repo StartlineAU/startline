@@ -25,22 +25,36 @@ Three portals, domain-routed in production:
 
 ## Getting Started
 
-**Prerequisites:** Docker, pnpm
+**Prerequisites:** Docker, pnpm, direnv, AWS CLI
 
+### 1. Install tools
 ```bash
-# Start infrastructure (PostgreSQL + Mailpit)
+brew install direnv
+# Add to ~/.zshrc: eval "$(direnv hook zsh)"
+```
+
+### 2. Configure direnv whitelist (one-time)
+```bash
+mkdir -p ~/.config/direnv
+cat >> ~/.config/direnv/direnv.toml << 'EOF'
+[whitelist]
+prefix = ["/Users/$(whoami)/"]
+EOF
+```
+This auto-allows `.envrc` files anywhere under your home directory. Each dev runs this once.
+
+### 3. Load environment variables
+```bash
+cd <project-directory>
+```
+direnv loads env vars automatically from AWS Secrets Manager. Run `echo $RESEND_API_KEY` to verify.
+
+### 4. Start infrastructure
+```bash
 docker compose up -d postgres mailpit
-
-# Install dependencies
 pnpm install
-
-# Apply database migrations
 pnpm prisma:migrate
-
-# Seed test data (creates Cognito users + DB records)
 pnpm prisma:seed
-
-# Run development server
 pnpm dev
 ```
 
@@ -57,6 +71,18 @@ Open [http://localhost:3000](http://localhost:3000) to view the site.
 | `pnpm test:e2e` | Playwright e2e tests |
 | `pnpm prisma:migrate` | Apply Prisma migrations |
 | `pnpm prisma:seed` | Seed Cognito + database |
+
+## Environment Variables
+
+Secrets are stored in AWS Secrets Manager and loaded automatically via `.envrc` + direnv:
+
+- `startline/tf-bootstrap` — Terraform bootstrap secrets (API keys for Cloudflare, Resend, Amplify)
+- `startline/nonprod/app` — All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.)
+- `startline/prod/app` — All prod env vars (live values)
+
+The `.envrc` file at the repo root fetches from SM and exports everything into your shell. No `.env` file needed.
+
+**Rotating a key:** Update the secret in AWS Secrets Manager, trigger an Amplify rebuild, done. No code changes.
 
 ## Deployment
 
