@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Meet the team behind StartLine — Australia's fitness event calendar. Founded by Lachlan Martin, Nathan Sweet, and Hugo Shrowder.",
+    "Meet the team behind StartLine — Australia's fitness event calendar. Founded by Lachlan, Nathan, Hugo, and Noah.",
   openGraph: {
     title: "About Us | StartLine",
     description:
@@ -33,19 +33,24 @@ export const metadata: Metadata = {
 
 const founders = [
   {
-    name: "Lachlan Martin",
-    initials: "LM",
+    name: "Lachlan",
+    initials: "L",
     bio: "Lachlan brings a lifelong passion for fitness and competition to StartLine. With experience building products that connect communities, he drives the vision and strategy behind the platform.",
   },
   {
-    name: "Nathan Sweet",
-    initials: "NS",
+    name: "Nathan",
+    initials: "Na",
     bio: "Nathan combines deep technical expertise with a love of endurance sport. He architects the systems that make discovering and registering for events seamless.",
   },
   {
-    name: "Hugo Shrowder",
-    initials: "HS",
+    name: "Hugo",
+    initials: "H",
     bio: "Hugo shapes the athlete experience with a sharp eye for design and detail. He ensures every interaction on StartLine feels fast, precise, and purposeful.",
+  },
+  {
+    name: "Noah",
+    initials: "N",
+    bio: "Noah brings a competitive drive and deep understanding of the athlete journey to StartLine. He focuses on building the tools that make event registration and management effortless.",
   },
 ];
 
@@ -93,7 +98,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 sm:gap-6">
           {founders.map((f) => (
             <div
               key={f.name}
