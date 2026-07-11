@@ -70,6 +70,20 @@ export default function Footer() {
 
             <div>
               <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
+                Company
+              </h4>
+              <div className="space-y-2">
+                <Link
+                  href="/about"
+                  className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+                >
+                  About
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
                 Help
               </h4>
               <div className="space-y-2">
