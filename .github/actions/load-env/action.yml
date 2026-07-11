@@ -11,17 +11,26 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - id: auth
-      uses: aws-actions/configure-aws-credentials@v6
-      with:
-        role-to-assume: ${{ inputs.aws-role-arn }}
-        aws-region: ap-southeast-2
-
     - shell: bash
       run: |
-        echo "AWS_ACCESS_KEY_ID=${{ steps.auth.outputs.aws-access-key-id }}" >> "$GITHUB_ENV"
-        echo "AWS_SECRET_ACCESS_KEY=${{ steps.auth.outputs.aws-secret-access-key }}" >> "$GITHUB_ENV"
-        echo "AWS_SESSION_TOKEN=${{ steps.auth.outputs.aws-session-token }}" >> "$GITHUB_ENV"
+        # Assume the CI role and export credentials
+        CREDS=$(aws sts assume-role-with-web-identity \
+          --role-arn "${{ inputs.aws-role-arn }}" \
+          --role-session-name "gha-load-env" \
+          --web-identity-token "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+          --duration-seconds 3600 \
+          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+          --output text)
+
+        AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
+        AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
+        AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
+
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> "$GITHUB_ENV"
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> "$GITHUB_ENV"
+        echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN" >> "$GITHUB_ENV"
+
+        export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 
         BOOTSTRAP=$(aws secretsmanager get-secret-value \
           --secret-id startline/tf-bootstrap \
