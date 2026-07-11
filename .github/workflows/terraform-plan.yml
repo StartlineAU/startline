@@ -21,18 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - id: auth
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ap-southeast-2
-          output-credentials: true
 
       - run: |
-          echo "AWS_ACCESS_KEY_ID=${{ steps.auth.outputs.aws-access-key-id }}" >> "$GITHUB_ENV"
-          echo "AWS_SECRET_ACCESS_KEY=${{ steps.auth.outputs.aws-secret-access-key }}" >> "$GITHUB_ENV"
-          echo "AWS_SESSION_TOKEN=${{ steps.auth.outputs.aws-session-token }}" >> "$GITHUB_ENV"
-
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/tf-bootstrap \
             --query SecretString --output text)
@@ -43,7 +37,11 @@ jobs:
             --query SecretString --output text)
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
+      - run: aws sts get-caller-identity --output text
+
       - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false
 
       - run: terraform init
       - run: terraform fmt -check
