@@ -20,12 +20,33 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ap-southeast-2
+      - name: Terraform apply
+        shell: bash
+        run: |
+          # Install terraform
+          curl -sLo terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
+          unzip -q terraform.zip -d /tmp/terraform-bin
+          export PATH="/tmp/terraform-bin:$PATH"
 
-      - run: |
+          # Auth via OIDC
+          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+
+          CREDS=$(aws sts assume-role-with-web-identity \
+            --region ap-southeast-2 \
+            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
+            --role-session-name "gha-apply" \
+            --web-identity-token "$JWT" \
+            --duration-seconds 3600 \
+            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+            --output text)
+
+          export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
+          export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
+          export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
+          export AWS_DEFAULT_REGION=ap-southeast-2
+
+          # Fetch bootstrap + app secrets
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/tf-bootstrap \
             --query SecretString --output text)
@@ -36,10 +57,6 @@ jobs:
             --query SecretString --output text)
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
-      - uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: '1.10.0'
-
-      - run: |
+          # Terraform
           terraform init -input=false
           terraform apply -auto-approve -input=false
