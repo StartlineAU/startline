@@ -34,8 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11.10.0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -52,8 +50,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11.10.0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -87,8 +83,6 @@ jobs:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
           environment: nonprod
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11.10.0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
