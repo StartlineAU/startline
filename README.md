@@ -84,10 +84,6 @@ The `.envrc` file at the repo root fetches from SM and exports everything into y
 
 **Rotating a key:** Update the secret in AWS Secrets Manager, trigger an Amplify rebuild, done. No code changes.
 
-## Deployment
-
-See [docs/Deployment.md](docs/Deployment.md) for CI/CD, branch strategy, and environments.
-
 ## License
 
 MIT
