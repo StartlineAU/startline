@@ -12,11 +12,8 @@
     },
     "aws": {
       "type": "local",
-      "command": ["uvx", "awslabs.aws-api-mcp-server@latest"],
-      "env": {
-        "AWS_REGION": "ap-southeast-2",
-        "AWS_PROFILE": "mcp-server"
-      }
+      "command": ["uvx", "mcp-proxy-for-aws@1.6.3", "https://aws-mcp.us-east-1.api.aws/mcp", "--metadata", "AWS_REGION=ap-southeast-2", "--profile", "mcp-server"],
+      "timeout": 100000
     },
     "cloudflare": {
       "type": "local",
