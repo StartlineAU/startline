@@ -1641,7 +1641,7 @@ export default function NewListingPage() {
       }
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return false; }
+      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return; }
       if (asDraft && !eventId && data.id) setEventId(data.id);
       router.push("/organiser/dashboard");
     } catch {
