@@ -9,7 +9,6 @@ import {
   MoreHorizontal, Pencil, LayoutDashboard,
   ArrowUp, ArrowDown, ArrowUpDown,
 } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -211,7 +210,7 @@ export default function ListingsPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 lg:pb-12 page-in">

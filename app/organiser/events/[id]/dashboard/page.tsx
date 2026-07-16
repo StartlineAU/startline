@@ -8,7 +8,6 @@ import {
   ArrowLeft, DollarSign, Megaphone, Plus, Pencil,
   MapPin, Calendar, ChevronRight, AlertCircle, Send, Trash2, Users
 } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,7 +130,6 @@ export default function EventDashboardPage({
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <OrganiserTopBar />
         <main className="pt-14">
           <div className="max-w-[1100px] mx-auto px-6 py-16 text-center">
             <div className="w-6 h-6 border-2 border-dark-lighter border-t-primary rounded-full animate-spin mx-auto" />
@@ -144,7 +142,6 @@ export default function EventDashboardPage({
   if (error || !data) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <OrganiserTopBar />
         <main className="pt-14">
           <div className="max-w-[1100px] mx-auto px-6 py-16 text-center">
             <div className="w-12 h-12 rounded-full bg-red-400/10 flex items-center justify-center mx-auto mb-4">
@@ -165,8 +162,7 @@ export default function EventDashboardPage({
   const capacityPct = event.cap ? Math.min(100, Math.round((event.registrationCount / event.cap) * 100)) : null;
 
   return (
-    <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+      <div className="min-h-screen bg-dark-darker">
 
       <main className="pt-14">
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-12 page-in">

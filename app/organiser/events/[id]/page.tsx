@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, MapPin, Calendar, Pencil, AlertCircle, Clock, CheckCircle, XCircle, FileText, Send } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 
 type EventStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
 
@@ -145,7 +144,6 @@ export default function EventStatusPage({
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <OrganiserTopBar />
         <main className="pt-14">
           <div className="max-w-[900px] mx-auto px-6 py-16 text-center">
             <div className="w-5 h-5 border-2 border-dark-lighter border-t-primary rounded-full animate-spin mx-auto" />
@@ -158,7 +156,6 @@ export default function EventStatusPage({
   if (error || !event) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <OrganiserTopBar />
         <main className="pt-14">
           <div className="max-w-[900px] mx-auto px-6 py-16 text-center">
             <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-3" />
@@ -179,8 +176,7 @@ export default function EventStatusPage({
   const isDraft    = event.status === "DRAFT";
 
   return (
-    <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+      <div className="min-h-screen bg-dark-darker">
 
       <main className="pt-14">
         <div className="max-w-[900px] mx-auto px-6 py-8 pb-24 lg:pb-12 page-in">

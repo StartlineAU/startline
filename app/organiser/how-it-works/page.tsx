@@ -9,7 +9,6 @@ import {
   Search, ChevronRight, Award, Layers, UserCircle2,
   BarChart2, Ticket, ImageIcon, Mail, CheckCheck,
 } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -148,7 +147,7 @@ export default function HowItWorksPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <OrganiserTopBar />
+
       <main className="pt-14 page-in">
 
         {/* ── HERO ──────────────────────────────────────────────────────── */}
