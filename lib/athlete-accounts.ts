@@ -56,7 +56,13 @@ export async function getCognitoUserStatus(email: string): Promise<{ exists: boo
       Username: normalized,
     }));
     return { exists: true, status: result.UserStatus ?? null };
-  } catch {
-    return { exists: false, status: null };
+  } catch (err) {
+    // Only a definitive "no such user" means the account doesn't exist.
+    // Anything else (AccessDenied, throttling, network) must propagate —
+    // otherwise real account holders get told they have no account.
+    if ((err as { name?: string }).name === "UserNotFoundException") {
+      return { exists: false, status: null };
+    }
+    throw err;
   }
 }
