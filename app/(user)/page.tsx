@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import HeroCarousel from "@/components/HeroCarousel";
 import HeroSearch from "@/components/HeroSearch";
 import HomeEventCard from "@/components/HomeEventCard";
+import VerifiedBanner from "@/components/VerifiedBanner";
 import { ScrollCarousel } from "@/components/ui/ScrollCarousel";
 import type { UserEvent } from "@/types";
 
@@ -44,6 +45,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-dark-darker">
+      <VerifiedBanner />
 
       {/* ── Hero ── */}
       <section className="relative min-h-[520px] sm:min-h-[600px] flex items-end overflow-hidden">

@@ -56,6 +56,7 @@ resource "aws_iam_policy" "mcp_server" {
           "cognito-idp:CreateUserPoolClient",
           "cognito-idp:UpdateUserPoolClient",
           "cognito-idp:DeleteUserPoolClient",
+          "cognito-idp:AdminGetUser",
           "cognito-idp:AdminCreateUser",
           "cognito-idp:AdminSetUserPassword",
           "cognito-idp:AdminAddUserToGroup",

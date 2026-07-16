@@ -117,6 +117,14 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) {
+        // Existence check unavailable (e.g. server lacks Cognito admin perms).
+        // Fall through to the password step — signIn() itself will report
+        // "no account" / "wrong password" accurately.
+        setUserExists(true);
+        setUserStatus("CONFIRMED");
+        return;
+      }
       const data = await res.json();
       if (!data.exists) {
         setUserExists(false);
@@ -124,15 +132,19 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       } else {
         setUserExists(true);
         setUserStatus(data.status);
-        if (data.status === "CONFIRMED") {
-          // Show password field — signInStep is implicitly "password" via userExists + userStatus
+        if (data.status === "CONFIRMED" || data.status === "UNCONFIRMED") {
+          // Show password field — for UNCONFIRMED users signIn() throws
+          // UserNotConfirmedException, which routes them to verify-email.
+          if (data.status === "UNCONFIRMED") setUserStatus("CONFIRMED");
         } else {
           // FORCE_CHANGE_PASSWORD or RESET_REQUIRED → start reset flow
           setNewPwStep("initial");
         }
       }
     } catch {
-      setError("Could not verify email. Please try again.");
+      // Network failure reaching our own API — same graceful fallback.
+      setUserExists(true);
+      setUserStatus("CONFIRMED");
     } finally {
       setCheckingEmail(false);
     }
@@ -148,10 +160,10 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       const result = await signIn({ username: email, password });
 
       if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") {
-        onClose(); router.push("/customer/verify-email?email=" + encodeURIComponent(email)); return;
+        onClose(); router.push("/auth/verify-email?email=" + encodeURIComponent(email)); return;
       }
       if (result.nextStep.signInStep === "RESET_PASSWORD") {
-        onClose(); router.push("/customer/forgot-password?email=" + encodeURIComponent(email)); return;
+        onClose(); router.push("/auth/forgot-password?email=" + encodeURIComponent(email)); return;
       }
       if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
         setPassword("");
@@ -179,8 +191,6 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             }),
           });
           sessionStorage.removeItem("startline_pending_name");
-          sessionStorage.removeItem("startline_pending_dob");
-          sessionStorage.removeItem("startline_pending_phone");
           sessionStorage.removeItem("startline_pending_username");
         }
       } catch {}
@@ -194,7 +204,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       if (errName === "NotAuthorizedException" || msg.includes("Incorrect username or password")) {
         setError("Incorrect email or password.");
       } else if (errName === "UserNotConfirmedException") {
-        onClose(); router.push("/customer/verify-email?email=" + encodeURIComponent(email));
+        onClose(); router.push("/auth/verify-email?email=" + encodeURIComponent(email));
       } else if (errName === "UserNotFoundException") {
         setError("No account found with that email.");
       } else {
@@ -361,6 +371,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             phone_number: e164Phone,
             birthdate:    isoDate,
           },
+          autoSignIn: true,
         },
       });
       try {
@@ -391,7 +402,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       try { sessionStorage.setItem("startline_pending_username", username.trim().toLowerCase()); } catch {}
     }
     onClose();
-    router.push("/customer/verify-email?email=" + encodeURIComponent(email));
+    router.push("/auth/verify-email?email=" + encodeURIComponent(email));
   };
 
   const switchView = (v: "signin" | "signup") => {
@@ -469,10 +480,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
             <form onSubmit={(e) => { e.preventDefault(); handleCheckEmail(); }} className="space-y-4">
               <div>
-                <label className={labelCls}>Email</label>
+                <label htmlFor="signin-email" className={labelCls}>Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                   <input
+                    id="signin-email"
                     type="email"
                     required
                     value={email}
@@ -540,12 +552,13 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted">Password</label>
-                  <Link href="/customer/forgot-password" onClick={onClose} className="font-headline text-[11px] uppercase tracking-widest text-muted hover:text-primary transition-colors">Forgot?</Link>
+                  <label htmlFor="signin-password" className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted">Password</label>
+                  <Link href="/auth/forgot-password" onClick={onClose} className="font-headline text-[11px] uppercase tracking-widest text-muted hover:text-primary transition-colors">Forgot?</Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                   <input
+                    id="signin-password"
                     type={showPw ? "text" : "password"}
                     required
                     value={password}
@@ -595,10 +608,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             {newPwStep === "sent" && (
               <form onSubmit={(e) => { e.preventDefault(); handleCompleteReset(); }} className="space-y-3">
                 <div>
-                  <label className={labelCls}>Verification Code</label>
+                  <label htmlFor="reset-code" className={labelCls}>Verification Code</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                     <input
+                      id="reset-code"
                       type="text"
                       inputMode="numeric"
                       required
@@ -612,10 +626,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                   <p className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-1">Enter the 6-digit code sent to {email}</p>
                 </div>
                 <div>
-                  <label className={labelCls}>New Password</label>
+                  <label htmlFor="reset-new-password" className={labelCls}>New Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                     <input
+                      id="reset-new-password"
                       type={showPw ? "text" : "password"}
                       required
                       value={newPassword}
@@ -629,10 +644,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                   </div>
                 </div>
                 <div>
-                  <label className={labelCls}>Confirm Password</label>
+                  <label htmlFor="reset-confirm-password" className={labelCls}>Confirm Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                     <input
+                      id="reset-confirm-password"
                       type={showPw ? "text" : "password"}
                       required
                       value={newPwConfirm}
@@ -689,10 +705,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
             <form onSubmit={(e) => { e.preventDefault(); handleConfirmNewPassword(); }} className="space-y-3">
               <div>
-                <label className={labelCls}>New Password</label>
+                <label htmlFor="challenge-new-password" className={labelCls}>New Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                   <input
+                    id="challenge-new-password"
                     type={showPw ? "text" : "password"}
                     required
                     value={newPassword}
@@ -707,10 +724,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Confirm Password</label>
+                <label htmlFor="challenge-confirm-password" className={labelCls}>Confirm Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                   <input
+                    id="challenge-confirm-password"
                     type={showPw ? "text" : "password"}
                     required
                     value={newPwConfirm}
@@ -742,27 +760,27 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
             <form onSubmit={handleSignUp} className="space-y-3">
               <div>
-                <label className={labelCls}>Email</label>
+                <label htmlFor="signup-email" className={labelCls}>Email</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputCls} />
+                  <input id="signup-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Password</label>
+                <label htmlFor="signup-password" className={labelCls}>Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type={showPw ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className={inputCls + " pr-11"} />
+                  <input id="signup-password" type={showPw ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min 8 characters" className={inputCls + " pr-11"} />
                   <button type="button" onClick={() => setShowPw(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-dark hover:text-primary transition-colors">
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Confirm Password</label>
+                <label htmlFor="signup-confirm-password" className={labelCls}>Confirm Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type={showPw ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" className={inputCls} />
+                  <input id="signup-confirm-password" type={showPw ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" className={inputCls} />
                 </div>
               </div>
               <button type="submit" disabled={loading} className={btnCls}>
@@ -789,25 +807,25 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
               {/* First / Last name */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className={labelCls}>First Name</label>
+                  <label htmlFor="onboarding-first-name" className={labelCls}>First Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                    <input autoFocus type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First" className={inputCls} />
+                    <input id="onboarding-first-name" autoFocus type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First" className={inputCls} />
                   </div>
                 </div>
                 <div>
-                  <label className={labelCls}>Last Name</label>
+                  <label htmlFor="onboarding-last-name" className={labelCls}>Last Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                    <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last" className={inputCls} />
+                    <input id="onboarding-last-name" type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last" className={inputCls} />
                   </div>
                 </div>
               </div>
 
               {/* Date of birth — three text inputs */}
               <div>
-                <label className={labelCls}>Date of Birth</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label id="onboarding-dob-label" className={labelCls}>Date of Birth</label>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="onboarding-dob-label">
                   <div>
                     <input
                       ref={dobDayRef}
@@ -821,6 +839,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                         if (v.length === 2) dobMonthRef.current?.focus();
                       }}
                       placeholder="DD"
+                      aria-label="Day"
                       className={dobInputCls}
                     />
                   </div>
@@ -837,6 +856,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                         if (v.length === 2) dobYearRef.current?.focus();
                       }}
                       placeholder="MM"
+                      aria-label="Month"
                       className={dobInputCls}
                     />
                   </div>
@@ -849,6 +869,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                       value={dobYear}
                       onChange={(e) => setDobYear(e.target.value.replace(/\D/g, ""))}
                       placeholder="YYYY"
+                      aria-label="Year"
                       className={dobInputCls}
                     />
                   </div>
@@ -857,10 +878,10 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
               {/* Phone */}
               <div>
-                <label className={labelCls}>Phone Number</label>
+                <label htmlFor="onboarding-phone" className={labelCls}>Phone Number</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+61 400 000 000" className={inputCls} />
+                  <input id="onboarding-phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+61 400 000 000" className={inputCls} />
                 </div>
               </div>
 
@@ -943,10 +964,11 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
             <div className="space-y-4">
               <div>
-                <label className={labelCls}>Username</label>
+                <label htmlFor="username-input" className={labelCls}>Username</label>
                 <div className="relative">
                   <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                   <input
+                    id="username-input"
                     autoFocus
                     type="text"
                     value={username}

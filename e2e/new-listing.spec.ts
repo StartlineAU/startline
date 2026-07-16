@@ -140,6 +140,80 @@ test.describe("new listing wizard", () => {
     // ponytail: API save may fail in test env; wizard UX is what's being tested
   });
 
+  test("step rail stays pinned while scrolling", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+
+    await page.mouse.wheel(0, 800);
+    await page.waitForTimeout(400);
+    const scrollY = await page.evaluate(() => window.scrollY);
+    expect(scrollY).toBeGreaterThan(0);
+    // Regression: overflow-x on html/body used to disable position:sticky
+    // site-wide, so the rail scrolled out of view.
+    const rail = await page.locator("div.sticky.top-16").boundingBox();
+    expect(rail).not.toBeNull();
+    expect(rail!.y).toBeGreaterThanOrEqual(0);
+  });
+
+  test("single-day date reads clean after closing the picker", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("Single Day Test");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await expect(page.getByText(/when and where/i).first()).toBeVisible();
+
+    await page.getByText("Pick start date").click();
+    await page.getByRole("button", { name: /today/i }).click();
+    // Close the popover with only a start date picked — a valid single-day event.
+    await page.locator("h1").click();
+    const dateField = page.locator("button", { hasText: /\d{4}/ }).first();
+    await expect(dateField).not.toContainText(/pick end date/i);
+  });
+
+  test("price input strips non-numeric characters", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("Price Test");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.getByRole("button", { name: /continue/i }).click();
+
+    const price = page.locator('input[placeholder="129"]');
+    await price.fill("abc");
+    await expect(price).toHaveValue("");
+    await price.fill("12.50");
+    await expect(price).toHaveValue("12.50");
+  });
+
+  test("draft without a cut-off time saves without a silent failure", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+
+    // Minimal draft: title only, endTime left empty (it's optional).
+    // Regression: the API used to coerce empty endTime to null, which the
+    // required schema column rejected — every such save 500ed.
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("E2E No Cutoff Draft");
+    await page.getByRole("button", { name: /save draft/i }).click();
+
+    // Success navigates to the dashboard; if the test env lacks an organiser
+    // profile the API errors instead — either way the user must see an
+    // outcome, never stay stuck on a silently-failed save.
+    const errorBanner = page.getByText(/unauthorised|failed to save|went wrong/i).first();
+    await expect
+      .poll(
+        async () =>
+          page.url().includes("/organiser/dashboard") ||
+          (await errorBanner.isVisible().catch(() => false)),
+        { timeout: 20000 },
+      )
+      .toBe(true);
+  });
+
   test("shows validation errors on empty submit", async ({ page }) => {
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");

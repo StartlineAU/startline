@@ -65,7 +65,7 @@ export async function PATCH(
         eventDate:         data.eventDate         ?? undefined,
         endDate:           data.endDate           ?? null,
         startTime:         data.startTime         ?? undefined,
-        endTime:           data.endTime           || null,
+        endTime:           data.endTime           ?? undefined,
         venue:             data.venue             ?? undefined,
         address:           data.address           ?? undefined,
         city:              data.city              ?? undefined,
