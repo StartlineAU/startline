@@ -292,11 +292,9 @@ export default function OrganiserTopBar() {
               <div className="w-7 h-7 rounded-lg bg-primary text-dark font-headline font-black italic text-sm flex items-center justify-center shrink-0">
                 {initial}
               </div>
-              {displayName && (
-                <span className="font-headline text-[12px] font-bold uppercase tracking-widest text-white/70">
-                  {displayName}
-                </span>
-              )}
+              <span className="font-headline text-[12px] font-bold uppercase tracking-widest text-white/70 min-w-[80px] inline-block text-left">
+                {displayName || ""}
+              </span>
               <svg className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>

@@ -194,7 +194,8 @@ function DatePickerPopover({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-dark border border-dark-lighter rounded-xl shadow-xl p-4 w-full sm:w-72 modal-in">
+        <div tabIndex={-1} onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+          className="absolute top-full left-0 mt-2 z-50 bg-dark border border-dark-lighter rounded-xl shadow-xl p-4 w-full sm:w-72 modal-in">
           {isRange && (
             <div className="mb-3 flex items-center justify-between">
               <span className={`font-headline text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md ${picking === "start" ? "bg-primary/10 text-primary" : "text-muted-dark"}`}>
@@ -1380,7 +1381,7 @@ export default function NewListingPage() {
         });
       })
       .catch(() => {})
-      .finally(() => setLoadingEvent(false));
+      .finally(() => { setLoadingEvent(false); setStep(4); setVisited(new Set([0, 1, 2, 3, 4])); });
   }, []);
 
   const stepHasErrors = (s: number): boolean => {
@@ -1562,6 +1563,7 @@ export default function NewListingPage() {
                     {STEP_HEADINGS[step].h}
                   </h1>
                   <p className="font-headline text-muted mt-2 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
+                  <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-2"><span className="text-primary font-black text-[13px]">*</span> = required</div>
                 </div>
 
                 {step === 0 && <BasicsStep  form={form} update={update} />}

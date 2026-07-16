@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { CalendarDays, ArrowRight, MapPin } from "lucide-react";
+import { CalendarDays, ArrowRight, MapPin, Plus } from "lucide-react";
 import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,11 +116,18 @@ export default function DashboardPage() {
                   : "No live events right now. Submit a draft to go live."}
               </p>
             </div>
-            <Button asChild size="lg" className="self-start sm:self-end shrink-0">
-              <Link href="/organiser/listings">
-                <CalendarDays className="w-4 h-4" /> View my events
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2 self-start sm:self-end">
+              <Button asChild size="lg" variant="outline">
+                <Link href="/organiser/new-listing">
+                  <Plus className="w-4 h-4" /> Add listing
+                </Link>
+              </Button>
+              <Button asChild size="lg">
+                <Link href="/organiser/listings">
+                  <CalendarDays className="w-4 h-4" /> View my events
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Stats — 2-col on mobile, 3-col on sm+ */}
