@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, startTransition } from "react";
 import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
 
 export type Role = "user" | "organiser" | "admin";
@@ -66,15 +66,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    hydrate();
+    startTransition(() => hydrate());
   }, [hydrate]);
 
   // Fetch role when auth status changes
   useEffect(() => {
-    if (status !== "authenticated") {
-      setRole(null);
-      return;
-    }
+    if (status !== "authenticated") return;
     let cancelled = false;
     fetch("/api/user/role")
       .then(r => (r.ok ? r.json() : null))

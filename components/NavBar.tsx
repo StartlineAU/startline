@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -115,7 +115,7 @@ export default function NavBar() {
   }, [role]);
 
   useEffect(() => {
-    if (status === "authenticated" && role) fetchName();
+    if (status === "authenticated" && role) startTransition(() => fetchName());
   }, [status, role, fetchName]);
 
   const fetchNotifications = useCallback(async () => {
@@ -124,15 +124,17 @@ export default function NavBar() {
       const r = await fetch("/api/organiser/notifications");
       if (!r.ok) return;
       const data: { notifications: Notification[]; unreadCount: number } = await r.json();
-      setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      startTransition(() => {
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+      });
     } catch {}
   }, [role]);
 
   useEffect(() => {
     if (role !== "organiser") return;
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30_000);
+    startTransition(() => fetchNotifications());
+    const interval = setInterval(() => startTransition(() => fetchNotifications()), 30_000);
     return () => clearInterval(interval);
   }, [role, fetchNotifications]);
 
