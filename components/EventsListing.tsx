@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useLayoutEffect, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, MapPin, Calendar, X, SlidersHorizontal, LayoutGrid } from "lucide-react";
-import type { UserEvent, FilterState, EventType, AustralianState, CompetitionFormat } from "@/types";
+import { Search, MapPin, Clock, Users, X, LayoutGrid, ChevronDown, Check } from "lucide-react";
+import type { UserEvent, FilterState, EventType, AustralianState, CompetitionFormat, ExperienceLevel, SortOption } from "@/types";
 import {
   EVENT_TYPE_LABELS, STATE_LABELS, STATE_OPTIONS, EVENT_TYPE_OPTIONS,
-  FORMAT_OPTIONS, DATE_RANGE_OPTIONS,
+  FORMAT_OPTIONS, DATE_RANGE_OPTIONS, LEVEL_OPTIONS, SORT_OPTIONS,
+  PRICE_RANGE_MIN, PRICE_RANGE_MAX,
 } from "@/types";
-import { filterEvents, sortEventsByDate, formatShortDate } from "@/lib/utils";
-import { getEventImage } from "@/lib/images";
+import { filterEvents, sortEvents, formatShortDate, formatTime, formatCompetitionFormat } from "@/lib/utils";
 import { toUserEvents } from "@/lib/user-events";
 import { getEventCoords } from "@/lib/australia-coords";
 import { useAuthContext } from "@/context/AuthContext";
@@ -23,164 +24,126 @@ const STATE_CHIP_OPTIONS  = STATE_OPTIONS.map((o) => ({ value: o.value, label: o
 const FORMAT_CHIP_OPTIONS = FORMAT_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
 const DATE_CHIP_OPTIONS   = DATE_RANGE_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
 
+const RANGE_THUMB_CLASS =
+  "range-thumb absolute inset-0 w-full h-4 appearance-none bg-transparent pointer-events-none " +
+  "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-dark " +
+  "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-dark";
+
+function pillClass(active: boolean): string {
+  return `px-3.5 py-2 rounded-full font-headline text-xs font-medium uppercase tracking-widest border transition-colors whitespace-nowrap ${active ? "border-primary bg-primary text-dark" : "border-dark-lighter text-muted hover:border-primary/50 hover:text-light"}`;
+}
+
+function toggleInArray<T>(arr: T[], value: T, setArr: (v: T[]) => void) {
+  setArr(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
+}
+
+function FilterTrigger({
+  label, active, isOpen, onToggle, panelClassName, align = "left", children,
+}: {
+  label: string; active: boolean; isOpen: boolean; onToggle: () => void; panelClassName?: string; align?: "left" | "right"; children: React.ReactNode;
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left?: number; right?: number } | null>(null);
+
+  // Panels render into a portal (not a sibling of this scrollable pill row)
+  // since overflow-x-auto on the row would otherwise clip them — position
+  // is computed from the trigger's on-screen rect each time it opens. Right-
+  // aligned triggers (e.g. the rightmost pill) anchor via `right` instead of
+  // `left` so the panel doesn't overhang past the viewport edge.
+  useLayoutEffect(() => {
+    if (!isOpen || !buttonRef.current) { setPos(null); return; }
+    const rect = buttonRef.current.getBoundingClientRect();
+    if (align === "right") {
+      setPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    } else {
+      setPos({ top: rect.bottom + 8, left: rect.left });
+    }
+  }, [isOpen, align]);
+
+  return (
+    <div className="flex-shrink-0">
+      <button ref={buttonRef} onClick={onToggle}
+        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full font-headline text-xs font-bold uppercase tracking-widest border transition-colors whitespace-nowrap ${active || isOpen ? "border-primary/35 bg-primary/[0.08] text-primary" : "border-transparent text-muted hover:text-light"}`}
+      >
+        {label}
+        <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen && pos && createPortal(
+        <div data-filter-panel style={{ position: "fixed", top: pos.top, left: pos.left, right: pos.right }}
+          className={`z-30 bg-dark border border-dark-lighter rounded-2xl shadow-2xl shadow-black/50 p-4 ${panelClassName ?? "w-56"}`}
+        >
+          {children}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 function EventCard({ event, selected, onSelect }: { event: UserEvent; selected: boolean; onSelect: () => void }) {
-  const [eDay, eMonth] = formatShortDate(event.date).split(" ");
-  const img = getEventImage(event.type, event.id, 800, 80);
+  const [day, month] = formatShortDate(event.date).split(" ");
+  const img = event.image;
+  const typeLabel = EVENT_TYPE_LABELS[event.type];
   return (
     <div
       onClick={onSelect}
-      className={`cursor-pointer rounded-2xl overflow-hidden transition-all duration-200 ${selected ? "ring-2 ring-primary bg-primary/5" : "hover:bg-dark-light/50"}`}
+      className={`cursor-pointer h-full bg-dark border rounded-2xl transition-all duration-300 transform-gpu ${selected ? "border-primary ring-2 ring-primary bg-primary/5" : "border-dark-lighter hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50"}`}
     >
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-dark">
+      <div className="relative w-full aspect-video overflow-hidden rounded-t-2xl">
         <Image
           src={img}
           alt={event.title}
           fill
-          className="pointer-events-none object-cover brightness-75 transition-all duration-500"
+          className="pointer-events-none object-cover brightness-[0.55] transition-all duration-700"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
-        <div className="absolute top-2.5 left-2.5">
-          <span className="font-headline text-[10px] font-bold uppercase tracking-widest bg-primary text-dark px-2 py-1 rounded-full">
-            {EVENT_TYPE_LABELS[event.type]}
-          </span>
+        <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-transparent" />
+        <div className="absolute top-3 right-3 bg-dark-light/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center leading-tight">
+          <span className="block font-headline text-[9px] font-bold uppercase tracking-widest text-muted">{month}</span>
+          <span className="block font-headline text-xl font-black text-light leading-none mt-0.5">{day}</span>
         </div>
       </div>
-      <div className="px-2.5 pb-2.5 pt-2">
-        <h3 className="font-headline text-sm font-black italic tracking-tighter text-light leading-tight mb-1">
+
+      <div className="p-4">
+        <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
+          {typeLabel}
+        </span>
+        <h3 className="font-headline text-lg sm:text-xl font-black italic tracking-tighter text-light leading-tight mb-3 line-clamp-2">
           {event.title}
         </h3>
-        <div className="flex items-center gap-1.5 font-headline text-xs text-muted uppercase tracking-widest mb-0.5">
-          <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
-          {event.city}, {STATE_LABELS[event.state]}
+
+        <div className="space-y-1.5 mb-3">
+          <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+            <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+            <span className="truncate">{event.city}, {STATE_LABELS[event.state]}</span>
+          </div>
+          <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+            <Clock className="w-3 h-3 text-primary flex-shrink-0" />
+            <span>{formatTime(event.time)}</span>
+          </div>
+          <div className="flex items-center gap-2 font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
+            <Users className="w-3 h-3 text-primary flex-shrink-0" />
+            <span>{formatCompetitionFormat(event.format)}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 font-headline text-xs text-muted uppercase tracking-widest">
-          <Calendar className="w-3 h-3 text-primary flex-shrink-0" />
-          {eDay} {eMonth}
-        </div>
-        {event.ticketDrops && event.ticketDrops.length > 0 && (
-          <p className="font-headline text-xs font-bold text-light mt-1.5">
-            From ${event.ticketDrops[0].price}
+
+        {event.description && (
+          <p className="font-headline text-xs text-muted leading-relaxed line-clamp-2 mb-3">
+            {event.description}
           </p>
         )}
-        <Link
-          href={`/events/${event.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-2 inline-flex items-center gap-1 font-headline text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
-        >
-          View Details →
-        </Link>
-      </div>
-    </div>
-  );
-}
 
-interface FiltersPanelProps {
-  typeFilter:   string;
-  stateFilter:  string;
-  formatFilter: string;
-  dateFilter:   FilterState["dateRange"];
-  setTypeFilter:   (v: EventType | "")         => void;
-  setStateFilter:  (v: AustralianState | "")   => void;
-  setFormatFilter: (v: CompetitionFormat | "") => void;
-  setDateFilter:   (v: FilterState["dateRange"]) => void;
-  onClose:          () => void;
-  clearFilters:     () => void;
-  hasActiveFilters: boolean;
-  displayCount:     number;
-}
-
-function FiltersPanel({
-  typeFilter, stateFilter, formatFilter, dateFilter,
-  setTypeFilter, setStateFilter, setFormatFilter, setDateFilter,
-  onClose, clearFilters, hasActiveFilters, displayCount,
-}: FiltersPanelProps) {
-  const [sheetDragY, setSheetDragY] = useState(0);
-
-  const header = (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-dark-lighter flex-shrink-0">
-      <h2 className="font-headline text-sm font-black uppercase tracking-widest text-light">Filters</h2>
-      <div className="flex items-center gap-4">
-        {hasActiveFilters && (
-          <button onClick={clearFilters} className="font-headline text-xs font-medium uppercase tracking-widest text-primary hover:text-primary/70 transition-colors">Clear all</button>
-        )}
-        <button onClick={onClose}><X className="w-5 h-5 text-muted hover:text-light transition-colors" /></button>
-      </div>
-    </div>
-  );
-
-  const body = (
-    <div className="overflow-y-auto flex-1 px-6 py-6 space-y-7">
-      <div>
-        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-3">Discipline</p>
-        <div className="flex flex-wrap gap-2">
-          {DISCIPLINE_OPTIONS.map((opt) => (
-            <button key={opt.value} onClick={() => setTypeFilter(typeFilter === opt.value ? "" : opt.value as EventType)}
-              className={`px-4 py-2 rounded-full font-headline text-xs font-medium uppercase tracking-widest border transition-colors ${typeFilter === opt.value ? "border-primary bg-primary text-dark" : "border-dark-lighter text-muted hover:border-primary/50 hover:text-light"}`}
-            >{opt.label}</button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-3">State</p>
-        <div className="flex flex-wrap gap-2">
-          {STATE_CHIP_OPTIONS.map((opt) => (
-            <button key={opt.value} onClick={() => setStateFilter(stateFilter === opt.value ? "" : opt.value as AustralianState)}
-              className={`px-4 py-2 rounded-full font-headline text-xs font-medium uppercase tracking-widest border transition-colors ${stateFilter === opt.value ? "border-primary bg-primary text-dark" : "border-dark-lighter text-muted hover:border-primary/50 hover:text-light"}`}
-            >{opt.label}</button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-3">Format</p>
-        <div className="flex flex-wrap gap-2">
-          {FORMAT_CHIP_OPTIONS.map((opt) => (
-            <button key={opt.value} onClick={() => setFormatFilter(formatFilter === opt.value ? "" : opt.value as CompetitionFormat)}
-              className={`px-4 py-2 rounded-full font-headline text-xs font-medium uppercase tracking-widest border transition-colors ${formatFilter === opt.value ? "border-primary bg-primary text-dark" : "border-dark-lighter text-muted hover:border-primary/50 hover:text-light"}`}
-            >{opt.label}</button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-3">Date</p>
-        <div className="flex flex-wrap gap-2">
-          {DATE_CHIP_OPTIONS.map((opt) => (
-            <button key={opt.value} onClick={() => setDateFilter(opt.value as FilterState["dateRange"])}
-              className={`px-4 py-2 rounded-full font-headline text-xs font-medium uppercase tracking-widest border transition-colors ${dateFilter === opt.value ? "border-primary bg-primary text-dark" : "border-dark-lighter text-muted hover:border-primary/50 hover:text-light"}`}
-            >{opt.label}</button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const footer = (
-    <div className="flex-shrink-0 px-6 pb-6 pt-4 border-t border-dark-lighter">
-      <button onClick={onClose}
-        className="w-full bg-machined text-dark font-headline text-sm font-bold uppercase tracking-widest py-4 rounded-xl machined-button-shadow hover:-translate-y-0.5 transition-transform duration-100"
-      >
-        Show {displayCount} event{displayCount !== 1 ? "s" : ""}
-      </button>
-    </div>
-  );
-
-  return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-dark-darker/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-dark rounded-t-2xl max-h-[85dvh] flex flex-col"
-        style={{ transform: `translateY(${sheetDragY}px)`, transition: sheetDragY === 0 ? "transform 0.3s ease" : "none" }}
-      >
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
-          onTouchStart={(e) => { (window as unknown as Record<string, unknown>)._dragStart = e.touches[0].clientY; (window as unknown as Record<string, unknown>)._isDragging = true; }}
-          onTouchMove={(e) => { if (!(window as unknown as Record<string, unknown>)._isDragging) return; const d = (e.touches[0].clientY - (window as unknown as Record<string, unknown>)._dragStart) as number; if (d > 0) setSheetDragY(d); }}
-          onTouchEnd={() => { if (sheetDragY > 120) { onClose(); } setSheetDragY(0); (window as unknown as Record<string, unknown>)._isDragging = false; }}
-        >
-          <div className="w-10 h-1 rounded-full bg-dark-lighter" />
-        </div>
-        {header}{body}{footer}
-      </div>
-      <div className="hidden lg:flex absolute inset-0 items-center justify-center p-8">
-        <div className="relative bg-dark rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col border border-dark-lighter shadow-2xl">
-          {header}{body}{footer}
+        <div className="flex items-center justify-between gap-2">
+          {event.fromPrice !== null && (
+            <span className="font-headline text-sm font-bold text-primary">From ${event.fromPrice}</span>
+          )}
+          <Link
+            href={`/events/${event.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="ml-auto inline-flex items-center gap-1 font-headline text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+          >
+            View Details →
+          </Link>
         </div>
       </div>
     </div>
@@ -194,6 +157,7 @@ function EventsListingInner() {
   const [initialCenter, setInitialCenter] = useState<{ lng: number; lat: number; zoom: number } | undefined>(undefined);
   const mapRef = useRef<EventMapHandle>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const subNavRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/events")
@@ -217,44 +181,97 @@ function EventsListingInner() {
   }, [status]);
 
   const searchParams = useSearchParams();
-  const [whatQuery,    setWhatQuery]    = useState(searchParams.get("what")  ?? "");
-  const [whereQuery,   setWhereQuery]   = useState(searchParams.get("where") ?? "");
-  const [typeFilter,   setTypeFilter]   = useState<EventType | "">((searchParams.get("type") as EventType) ?? "");
-  const [stateFilter,  setStateFilter]  = useState<AustralianState | "">("");
-  const [formatFilter, setFormatFilter] = useState<CompetitionFormat | "">("");
-  const [dateFilter,   setDateFilter]   = useState<FilterState["dateRange"]>("all");
-  const [filtersOpen,  setFiltersOpen]  = useState(false);
-  const [mobileSearch, setMobileSearch] = useState(false);
+  const [whatQuery,     setWhatQuery]     = useState(searchParams.get("what")  ?? "");
+  const [whereQuery,    setWhereQuery]    = useState(searchParams.get("where") ?? "");
+  const [typeFilters,   setTypeFilters]   = useState<EventType[]>(searchParams.get("type") ? [searchParams.get("type") as EventType] : []);
+  const [stateFilters,  setStateFilters]  = useState<AustralianState[]>([]);
+  const [formatFilters, setFormatFilters] = useState<CompetitionFormat[]>([]);
+  const [levelFilters,  setLevelFilters]  = useState<ExperienceLevel[]>([]);
+  const [priceRange,    setPriceRange]    = useState<[number, number] | null>(null);
+  const [dateFilter,    setDateFilter]    = useState<FilterState["dateRange"]>("all");
+  const [sortBy,        setSortBy]        = useState<SortOption>("date");
+  const [openDropdown,  setOpenDropdown]  = useState<string | null>(null);
+  const [mobileSearch,  setMobileSearch]  = useState(false);
   const [view, setView] = useState<"list" | "map">(searchParams.get("view") === "map" ? "map" : "list");
   // Latches true the first time the Map tab is viewed, so EventMap mounts
   // once and then just toggles visibility (avoids re-init/re-fetch on every tab switch).
   const [mapEverViewed, setMapEverViewed] = useState(view === "map");
 
+  // Close an open filter dropdown on outside click / Escape.
+  useEffect(() => {
+    if (!openDropdown) return;
+    function onPointerDown(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (subNavRef.current?.contains(target)) return;
+      if (target.closest("[data-filter-panel]")) return;
+      setOpenDropdown(null);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpenDropdown(null);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [openDropdown]);
+
   const filterState: FilterState = useMemo(() => ({
-    types:       typeFilter   ? [typeFilter as EventType]          : [],
-    states:      stateFilter  ? [stateFilter as AustralianState]   : [],
-    format:      formatFilter ? (formatFilter as CompetitionFormat) : null,
+    types:       typeFilters,
+    states:      stateFilters,
+    formats:     formatFilters,
+    levels:      levelFilters,
+    priceRange,
     dateRange:   dateFilter,
     searchQuery: whatQuery,
-  }), [typeFilter, stateFilter, formatFilter, dateFilter, whatQuery]);
+  }), [typeFilters, stateFilters, formatFilters, levelFilters, priceRange, dateFilter, whatQuery]);
 
   const displayEvents = useMemo(() => {
     let results = filterEvents(allEvents, filterState);
-    results = sortEventsByDate(results);
+    results = sortEvents(results, sortBy);
     if (whereQuery.trim()) {
       const q = whereQuery.toLowerCase();
       results = results.filter((e) => e.city.toLowerCase().includes(q) || e.state.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
     }
     return results;
-  }, [allEvents, filterState, whereQuery]);
+  }, [allEvents, filterState, whereQuery, sortBy]);
 
   function clearFilters() {
     setWhatQuery(""); setWhereQuery("");
-    setTypeFilter(""); setStateFilter(""); setFormatFilter(""); setDateFilter("all");
+    setTypeFilters([]); setStateFilters([]); setFormatFilters([]); setLevelFilters([]);
+    setPriceRange(null); setDateFilter("all");
   }
 
-  const hasActiveFilters  = !!(typeFilter || stateFilter || formatFilter || dateFilter !== "all" || whatQuery || whereQuery);
-  const activeFilterCount = [typeFilter, stateFilter, formatFilter, dateFilter !== "all" ? dateFilter : ""].filter(Boolean).length;
+  const hasActiveFilters = typeFilters.length > 0 || stateFilters.length > 0 || formatFilters.length > 0
+    || levelFilters.length > 0 || !!priceRange || dateFilter !== "all" || !!whatQuery || !!whereQuery;
+
+  interface ActiveChip { key: string; label: string; onRemove: () => void }
+  const activeChips: ActiveChip[] = useMemo(() => {
+    const chips: ActiveChip[] = [];
+    typeFilters.forEach((t) => chips.push({ key: `type-${t}`, label: EVENT_TYPE_LABELS[t], onRemove: () => setTypeFilters(typeFilters.filter((v) => v !== t)) }));
+    stateFilters.forEach((s) => chips.push({ key: `state-${s}`, label: STATE_LABELS[s], onRemove: () => setStateFilters(stateFilters.filter((v) => v !== s)) }));
+    formatFilters.forEach((f) => {
+      const opt = FORMAT_CHIP_OPTIONS.find((o) => o.value === f);
+      chips.push({ key: `format-${f}`, label: opt?.label ?? f, onRemove: () => setFormatFilters(formatFilters.filter((v) => v !== f)) });
+    });
+    levelFilters.forEach((l) => {
+      const opt = LEVEL_OPTIONS.find((o) => o.value === l);
+      chips.push({ key: `level-${l}`, label: opt?.label ?? l, onRemove: () => setLevelFilters(levelFilters.filter((v) => v !== l)) });
+    });
+    if (dateFilter !== "all") {
+      const opt = DATE_CHIP_OPTIONS.find((o) => o.value === dateFilter);
+      chips.push({ key: "date", label: opt?.label ?? dateFilter, onRemove: () => setDateFilter("all") });
+    }
+    if (priceRange) {
+      chips.push({
+        key: "price",
+        label: `$${priceRange[0]} – $${priceRange[1]}${priceRange[1] === PRICE_RANGE_MAX ? "+" : ""}`,
+        onRemove: () => setPriceRange(null),
+      });
+    }
+    return chips;
+  }, [typeFilters, stateFilters, formatFilters, levelFilters, dateFilter, priceRange]);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId((prev) => {
@@ -305,17 +322,7 @@ function EventsListingInner() {
             </div>
           </div>
         </div>
-        <button onClick={() => setFiltersOpen(true)}
-          className={`flex items-center gap-1.5 px-3 rounded-xl font-headline text-xs font-bold uppercase tracking-widest border transition-colors duration-100 flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50 hover:text-light"}`}
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
-          {activeFilterCount > 0 && <span className="w-4 h-4 rounded-full bg-primary text-dark font-headline text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
-        </button>
         {viewToggle}
-      </div>
-      <div className="flex items-center justify-between mt-2 px-0.5">
-        <span className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
-        {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-[10px] font-medium uppercase tracking-widest text-primary hover:text-primary/70 transition-colors">Clear all</button>}
       </div>
     </div>
   );
@@ -348,23 +355,168 @@ function EventsListingInner() {
               {whatQuery || whereQuery ? [whatQuery, whereQuery].filter(Boolean).join(" · ") : "Search events…"}
             </span>
           </button>
-          <button onClick={() => setFiltersOpen(true)}
-            className={`flex items-center gap-1.5 px-3 h-11 rounded-xl font-headline text-xs font-medium uppercase tracking-widest border transition-colors flex-shrink-0 ${activeFilterCount > 0 ? "border-primary text-primary bg-primary/5" : "border-dark-lighter text-muted bg-dark hover:border-primary/50"}`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            {activeFilterCount > 0 && <span className="w-4 h-4 rounded-full bg-primary text-dark font-headline text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
-          </button>
+          {viewToggle}
         </div>
       )}
-      <div className="flex items-center justify-between mt-2.5">
-        <span className="font-headline text-xs font-medium uppercase tracking-widest text-muted">{displayEvents.length} event{displayEvents.length !== 1 ? "s" : ""}</span>
-        <div className="flex items-center gap-3">
-          {hasActiveFilters && <button onClick={clearFilters} className="font-headline text-xs font-medium uppercase tracking-widest text-primary">Clear all</button>}
-          {viewToggle}
+    </div>
+  );
+
+  const disciplineDropdown = (
+    <div className="space-y-1">
+      {DISCIPLINE_OPTIONS.map((opt) => {
+        const checked = typeFilters.includes(opt.value as EventType);
+        return (
+          <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer group py-1">
+            <span className={`w-[17px] h-[17px] rounded-[5px] border flex items-center justify-center flex-shrink-0 transition-colors ${checked ? "bg-primary border-primary" : "border-dark-lighter group-hover:border-primary/50"}`}>
+              {checked && <Check className="w-3 h-3 text-dark" strokeWidth={3} />}
+            </span>
+            <input type="checkbox" className="sr-only" checked={checked}
+              onChange={() => toggleInArray(typeFilters, opt.value as EventType, setTypeFilters)} />
+            <span className="font-headline text-xs font-medium uppercase tracking-widest text-light">{opt.label}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+
+  const locationDropdown = (
+    <div className="flex flex-wrap gap-2">
+      {STATE_CHIP_OPTIONS.map((opt) => (
+        <button key={opt.value} onClick={() => toggleInArray(stateFilters, opt.value as AustralianState, setStateFilters)}
+          className={pillClass(stateFilters.includes(opt.value as AustralianState))}
+        >{opt.label}</button>
+      ))}
+    </div>
+  );
+
+  const dateDropdown = (
+    <div className="flex flex-col gap-2">
+      {DATE_CHIP_OPTIONS.map((opt) => (
+        <button key={opt.value} onClick={() => setDateFilter(opt.value as FilterState["dateRange"])}
+          className={`${pillClass(dateFilter === opt.value)} text-left`}
+        >{opt.label}</button>
+      ))}
+    </div>
+  );
+
+  const [priceMin, priceMax] = priceRange ?? [PRICE_RANGE_MIN, PRICE_RANGE_MAX];
+  const priceDropdown = (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <span className="font-headline text-sm font-bold text-light">
+          ${priceMin} – ${priceMax}{priceMax === PRICE_RANGE_MAX ? "+" : ""}
+        </span>
+        {priceRange && (
+          <button onClick={() => setPriceRange(null)} className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/70">Reset</button>
+        )}
+      </div>
+      <div className="relative h-4 mt-2 mb-1">
+        <div className="absolute top-1/2 -translate-y-1/2 w-full h-1 rounded-full bg-dark-lighter" />
+        <div className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full bg-primary"
+          style={{ left: `${(priceMin / PRICE_RANGE_MAX) * 100}%`, right: `${100 - (priceMax / PRICE_RANGE_MAX) * 100}%` }}
+        />
+        <input type="range" min={PRICE_RANGE_MIN} max={PRICE_RANGE_MAX} value={priceMin}
+          onChange={(e) => setPriceRange([Math.min(Number(e.target.value), priceMax - 5), priceMax])}
+          className={RANGE_THUMB_CLASS} />
+        <input type="range" min={PRICE_RANGE_MIN} max={PRICE_RANGE_MAX} value={priceMax}
+          onChange={(e) => setPriceRange([priceMin, Math.max(Number(e.target.value), priceMin + 5)])}
+          className={RANGE_THUMB_CLASS} />
+      </div>
+      <div className="flex items-center justify-between mt-1">
+        <span className="font-headline text-[10px] text-muted">${PRICE_RANGE_MIN}</span>
+        <span className="font-headline text-[10px] text-muted">${PRICE_RANGE_MAX}+</span>
+      </div>
+    </div>
+  );
+
+  const formatLevelDropdown = (
+    <div className="space-y-4">
+      <div>
+        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-2">Format</p>
+        <div className="flex flex-wrap gap-2">
+          {FORMAT_CHIP_OPTIONS.map((opt) => (
+            <button key={opt.value} onClick={() => toggleInArray(formatFilters, opt.value as CompetitionFormat, setFormatFilters)}
+              className={pillClass(formatFilters.includes(opt.value as CompetitionFormat))}
+            >{opt.label}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-2">Level</p>
+        <div className="flex flex-wrap gap-2">
+          {LEVEL_OPTIONS.map((opt) => (
+            <button key={opt.value} onClick={() => toggleInArray(levelFilters, opt.value, setLevelFilters)}
+              className={pillClass(levelFilters.includes(opt.value))}
+            >{opt.label}</button>
+          ))}
         </div>
       </div>
     </div>
   );
+
+  const filterSubNav = (
+    <div ref={subNavRef} className="border-b border-dark-lighter bg-dark-darker px-3 lg:px-6 py-2 flex items-center gap-1 overflow-x-auto flex-shrink-0">
+      <FilterTrigger label="Discipline" active={typeFilters.length > 0} isOpen={openDropdown === "discipline"}
+        onToggle={() => setOpenDropdown(openDropdown === "discipline" ? null : "discipline")}>
+        {disciplineDropdown}
+      </FilterTrigger>
+      <FilterTrigger label="Location" active={stateFilters.length > 0} isOpen={openDropdown === "location"}
+        onToggle={() => setOpenDropdown(openDropdown === "location" ? null : "location")} panelClassName="w-56">
+        {locationDropdown}
+      </FilterTrigger>
+      <FilterTrigger label="Date" active={dateFilter !== "all"} isOpen={openDropdown === "date"}
+        onToggle={() => setOpenDropdown(openDropdown === "date" ? null : "date")} panelClassName="w-48">
+        {dateDropdown}
+      </FilterTrigger>
+      <FilterTrigger label="Price" active={!!priceRange} isOpen={openDropdown === "price"}
+        onToggle={() => setOpenDropdown(openDropdown === "price" ? null : "price")} panelClassName="w-64">
+        {priceDropdown}
+      </FilterTrigger>
+      <FilterTrigger label="Format & Level" active={formatFilters.length > 0 || levelFilters.length > 0} isOpen={openDropdown === "format-level"}
+        onToggle={() => setOpenDropdown(openDropdown === "format-level" ? null : "format-level")} panelClassName="w-60">
+        {formatLevelDropdown}
+      </FilterTrigger>
+      {hasActiveFilters && (
+        <button onClick={clearFilters} className="ml-1 flex-shrink-0 font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-light transition-colors">Clear All</button>
+      )}
+    </div>
+  );
+
+  const sortDropdown = (
+    <div className="flex flex-col gap-2">
+      {SORT_OPTIONS.map((opt) => (
+        <button key={opt.value} onClick={() => { setSortBy(opt.value); setOpenDropdown(null); }}
+          className={`${pillClass(sortBy === opt.value)} text-left`}
+        >{opt.label}</button>
+      ))}
+    </div>
+  );
+
+  const resultsHeader = (
+    <div className="px-3 lg:px-6 pt-4 pb-1 flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
+      <h2 className="font-headline text-base lg:text-xl font-black italic tracking-tighter text-light">
+        <span className="text-primary">{displayEvents.length}</span> event{displayEvents.length !== 1 ? "s" : ""} found
+      </h2>
+      <FilterTrigger label={SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Sort"} active={sortBy !== "date"}
+        isOpen={openDropdown === "sort"} onToggle={() => setOpenDropdown(openDropdown === "sort" ? null : "sort")}
+        panelClassName="w-48" align="right"
+      >
+        {sortDropdown}
+      </FilterTrigger>
+    </div>
+  );
+
+  const activeChipsRow = activeChips.length > 0 ? (
+    <div className="px-3 lg:px-6 pb-3 pt-2 flex flex-wrap gap-2 flex-shrink-0">
+      {activeChips.map((chip) => (
+        <button key={chip.key} onClick={chip.onRemove}
+          className="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary font-headline text-[11px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-colors"
+        >
+          {chip.label} <X className="w-3 h-3" />
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   const emptyState = (
     <div className="p-10 text-center">
@@ -379,7 +531,7 @@ function EventsListingInner() {
   const gridContent = (
     <div className={view === "list" ? "flex-1 overflow-y-auto px-3 lg:px-6 py-4 lg:py-5" : "hidden"}>
       {displayEvents.length === 0 ? emptyState : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
           {displayEvents.map((event) => (
             <EventCard key={event.id} event={event} selected={false} onSelect={() => {}} />
           ))}
@@ -427,20 +579,14 @@ function EventsListingInner() {
     <div className="flex flex-col" style={{ height: "calc(100dvh - 56px)" }}>
       {desktopHeader}
       {mobileHeader}
+      {filterSubNav}
+      {resultsHeader}
+      {activeChipsRow}
 
       <div className="flex-1 min-h-0 flex flex-col">
         {gridContent}
         {mapContent}
       </div>
-
-      {filtersOpen && (
-        <FiltersPanel
-          typeFilter={typeFilter} stateFilter={stateFilter} formatFilter={formatFilter} dateFilter={dateFilter}
-          setTypeFilter={setTypeFilter} setStateFilter={setStateFilter} setFormatFilter={setFormatFilter} setDateFilter={setDateFilter}
-          onClose={() => setFiltersOpen(false)} clearFilters={clearFilters}
-          hasActiveFilters={hasActiveFilters} displayCount={displayEvents.length}
-        />
-      )}
     </div>
   );
 }
