@@ -17,7 +17,7 @@ function FieldLabel({ label, hint, required }: { label: string; hint?: string; r
   return (
     <div className="flex items-baseline justify-between mb-1.5">
       <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted-light">
-        {label}{required && <span className="text-primary ml-0.5">*</span>}
+        {label}{required && <span className="text-primary font-black text-[14px] leading-none ml-0.5">*</span>}
       </label>
       {hint && <span className="font-headline text-[10px] uppercase tracking-widest text-muted-dark">{hint}</span>}
     </div>

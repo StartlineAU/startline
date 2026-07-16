@@ -228,20 +228,13 @@ const EventMap = forwardRef<EventMapHandle, EventMapProps>(function EventMap({ e
     }
 
     fitBounds();
-    if (rotationRef.current) cancelAnimationFrame(rotationRef.current);
-    resumeSpin(2500);
   }, [events]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Resume spin and zoom out when deselected
+  // Zoom out when deselected
   useEffect(() => {
     if (!selectedId && mapRef.current) {
       mapRef.current.flyTo({ center: [defaultCenter.current.lng, defaultCenter.current.lat], zoom: defaultCenter.current.zoom, duration: 1200 });
-      if (!rotationRef.current) {
-        const t = setTimeout(() => { rotationRef.current = requestAnimationFrame(spin); }, 1500);
-        return () => clearTimeout(t);
-      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   return <div ref={containerRef} className="w-full h-full" />;
