@@ -15,6 +15,7 @@ export default function OrganiserSetupPage() {
   const [error, setError] = useState("");
 
   if (status === "unauthenticated") {
+    try { sessionStorage.setItem("startline_intent_organiser", "true"); } catch {}
     return (
       <main className="min-h-screen bg-dark-darker flex items-center justify-center pt-20">
         <div className="text-center max-w-md px-6">
@@ -22,9 +23,12 @@ export default function OrganiserSetupPage() {
           <h1 className="font-headline text-3xl font-black italic tracking-tighter text-light mb-2">
             Sign in to continue
           </h1>
-          <p className="text-muted text-sm mb-6">You need to be signed in to set up an organiser profile.</p>
-          <Link href="/" className="font-headline text-xs font-bold uppercase tracking-widest text-primary hover:underline">
-            Back to home
+          <p className="text-muted text-sm mb-8">You need to be signed in to set up an organiser profile. If you don&apos;t have an account yet, create one first — we&apos;ll guide you back here.</p>
+          <Link
+            href="/?signin=true"
+            className="bg-machined shadow-machined inline-flex items-center gap-2 text-dark font-headline text-sm font-bold uppercase tracking-widest py-4 px-8 rounded-md hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-transform"
+          >
+            Sign in or create account <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </main>

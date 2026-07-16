@@ -2,10 +2,17 @@
 
 import VerifyEmailForm from "@/components/VerifyEmailForm";
 
+const redirectPath = () => {
+  try {
+    if (sessionStorage.getItem("startline_intent_organiser")) return "/organiser-setup";
+  } catch {}
+  return "/";
+};
+
 const config = {
   logoHref: "/",
   sessionEndpoint: "/api/user/auth/session",
-  redirectPath: "/",
+  redirectPath: redirectPath(),
   emailPlaceholder: "you@example.com",
   inputIdPrefix: "verify",
   verifiedSubtext: "Taking you to Startline…",
@@ -32,6 +39,7 @@ const applyPendingProfile = async () => {
   } finally {
     sessionStorage.removeItem("startline_pending_name");
     sessionStorage.removeItem("startline_pending_username");
+    sessionStorage.removeItem("startline_intent_organiser");
   }
 };
 
