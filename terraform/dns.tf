@@ -185,3 +185,16 @@ resource "aws_route53_record" "organiser_cname" {
   records         = [local.amplify_organiser_target]
   allow_overwrite = true
 }
+
+resource "aws_route53_record" "cdn_alias" {
+  zone_id         = aws_route53_zone.primary.zone_id
+  name            = "cdn.startlineau.com"
+  type            = "A"
+  allow_overwrite = true
+
+  alias {
+    name                   = module.env["prod"].cdn_distribution_domain_name
+    zone_id                = local.cloudfront_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
