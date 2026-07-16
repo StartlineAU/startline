@@ -170,6 +170,8 @@ export default function NavBar() {
     }
   };
 
+  if (pathname?.startsWith("/admin/login")) return null;
+
   const displayName = profileName ?? orgName ?? user?.email ?? "";
   const initial     = displayName[0]?.toUpperCase() ?? "A";
   const activePage  = ADMIN_NAV.find(({ href }) => pathname === href || (pathname?.startsWith(href + "/") ?? false));
