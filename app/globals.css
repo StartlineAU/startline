@@ -34,7 +34,9 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  /* `clip` prevents horizontal overflow without creating a scroll container —
+     `hidden` here silently disables every position:sticky descendant. */
+  overflow-x: clip;
 }
 
 body {

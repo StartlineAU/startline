@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         eventDate:        body.eventDate         ?? "",
         endDate:          body.endDate           ?? null,
         startTime:        body.startTime         ?? "",
-        endTime:          body.endTime           || null,
+        endTime:          body.endTime           || "",
         venue:            body.venue             ?? "",
         address:          body.address           ?? null,
         city:             body.city              ?? "",

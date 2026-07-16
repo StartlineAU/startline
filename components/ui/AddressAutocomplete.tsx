@@ -126,19 +126,19 @@ export default function AddressAutocomplete({
       />
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <div className="w-4 h-4 border-2 border-lime-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
       {open && suggestions.length > 0 && (
         <div ref={listRef} id="address-suggestions"
-          className="absolute top-full left-0 mt-1 z-50 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-y-auto max-h-64 modal-in">
+          className="absolute top-full left-0 mt-1 z-50 w-full bg-dark border border-dark-lighter rounded-xl shadow-xl overflow-y-auto max-h-64 modal-in">
           {suggestions.map((item, i) => (
             <button key={item.placeId} type="button"
               onClick={() => select(item)}
               onMouseEnter={() => setActiveIdx(i)}
               className={`w-full px-4 py-3 text-left transition-colors
-                ${i === activeIdx ? "bg-lime-50" : "hover:bg-gray-50"}`}>
-              <span className={`font-headline text-[14px] ${i === activeIdx ? "text-lime-700" : "text-gray-900"}`}>
+                ${i === activeIdx ? "bg-primary/10" : "hover:bg-white/5"}`}>
+              <span className={`font-headline text-[14px] ${i === activeIdx ? "text-primary" : "text-light"}`}>
                 {item.label}
               </span>
             </button>

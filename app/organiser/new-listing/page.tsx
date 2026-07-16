@@ -171,7 +171,9 @@ function DatePickerPopover({
     ? value
       ? rangeEnd && rangeEnd !== value ? `${fmtDateShort(value)} — ${fmtDateShort(rangeEnd)}`
         : rangeEnd && rangeEnd === value ? fmtDateShort(value) + " (1 day)"
-        : fmtDateShort(value) + " → pick end date"
+        // Only prompt for an end date while the picker is open — a closed
+        // picker with just a start date is a valid single-day event.
+        : open ? fmtDateShort(value) + " → pick end date" : fmtDateShort(value)
       : ""
     : value ? fmtDateShort(value) : "";
 
@@ -784,7 +786,8 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
                   ) : (
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 font-headline text-[13px] text-muted">A$</span>
-                      <input value={w.price} onChange={e => updateWave(i, { price: e.target.value })}
+                      <input value={w.price} inputMode="decimal"
+                        onChange={e => updateWave(i, { price: e.target.value.replace(/[^\d.]/g, "") })}
                         placeholder="129" className={`${inputCls} pl-9`} />
                     </div>
                   )}
@@ -1576,7 +1579,7 @@ export default function NewListingPage() {
     setStep(target);
   };
 
-  const submitToApi = async (asDraft: boolean, overrideTitle?: string) => {
+  const submitToApi = async (asDraft: boolean, overrideTitle?: string): Promise<boolean> => {
     setSaving(true); setApiError(""); setSubmitErrors([]);
     try {
       let coverImageUrl: string | null = null;
@@ -1585,7 +1588,8 @@ export default function NewListingPage() {
         fd.append("file", form.coverImage);
         fd.append("type", "cover");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (uploadRes.ok) { const { fileUrl } = await uploadRes.json(); coverImageUrl = fileUrl; }
+        if (!uploadRes.ok) { setApiError("Cover image upload failed. Please try again or remove the image."); return false; }
+        const { fileUrl } = await uploadRes.json(); coverImageUrl = fileUrl;
       }
 
       const photoUrls: string[] = [...form.photoUrls];
@@ -1594,7 +1598,8 @@ export default function NewListingPage() {
         fd.append("file", photo);
         fd.append("type", "photo");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (uploadRes.ok) { const { fileUrl } = await uploadRes.json(); photoUrls.push(fileUrl); }
+        if (!uploadRes.ok) { setApiError(`Gallery photo "${photo.name}" failed to upload. Please try again or remove it.`); return false; }
+        const { fileUrl } = await uploadRes.json(); photoUrls.push(fileUrl);
       }
 
       const payload = {
@@ -1635,10 +1640,14 @@ export default function NewListingPage() {
         res = await fetch("/api/organiser/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       }
 
-      const data = await res.json();
-      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return; }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return false; }
       if (asDraft && !eventId && data.id) setEventId(data.id);
       router.push("/organiser/dashboard");
+      return true;
+    } catch {
+      setApiError("Something went wrong. Please check your connection and try again.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -1824,7 +1833,7 @@ export default function NewListingPage() {
               Your event details haven&apos;t been saved yet. Save as a draft so you can come back and finish it later.
             </p>
             <div className="flex flex-col gap-3">
-              <button onClick={async () => { setShowCancelModal(false); await submitToApi(true, form.title.trim() || "Untitled draft"); router.push("/organiser/dashboard"); }}
+              <button onClick={async () => { await submitToApi(true, form.title.trim() || "Untitled draft"); setShowCancelModal(false); }}
                 disabled={saving}
                 className="w-full font-headline text-[13px] font-bold uppercase tracking-widest px-6 py-3.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
                 {saving ? "Saving…" : <><Check className="w-4 h-4" /> Save draft &amp; leave</>}
