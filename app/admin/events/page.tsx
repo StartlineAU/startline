@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -518,16 +518,14 @@ function AdminEventsContent() {
   const statusParam  = (searchParams.get("status") ?? "PENDING").toUpperCase() as EventStatus;
   const activeTab    = TABS.find((t) => t.status === statusParam)?.status ?? "PENDING";
 
-  const [events,      setEvents]      = useState<AdminEventRow[]>([]);
-  const [loading,     setLoading]     = useState(true);
+  const [events,      setEvents]      = useState<AdminEventRow[] | null>(null);
+  const loading = events === null;
   const [total,       setTotal]       = useState(0);
   const [page,        setPage]        = useState(1);
   const [totalPages,  setTotalPages]  = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const fetchEvents = useCallback(async (status: EventStatus, p = 1) => {
-    setLoading(true);
-    setSelectedIds(new Set());
     try {
       const res  = await fetch(`/api/admin/events?status=${status}&page=${p}&limit=50`);
       const data = await res.json() as { events: AdminEventRow[]; total: number; totalPages: number };
@@ -540,17 +538,18 @@ function AdminEventsContent() {
         setTotal(0);
         setTotalPages(1);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      setEvents([]);
     }
   }, []);
 
   useEffect(() => {
-    fetchEvents(activeTab, 1);
-    setPage(1);
+    startTransition(() => fetchEvents(activeTab, 1));
   }, [activeTab, fetchEvents]);
 
   const switchTab = (status: EventStatus) => {
+    setSelectedIds(new Set());
+    setPage(1);
     router.push(`/admin/events?status=${status}`, { scroll: false });
   };
 
@@ -563,30 +562,31 @@ function AdminEventsContent() {
   };
 
   const toggleSelectAll = () => {
+    if (!events) return;
     setSelectedIds((prev) =>
       prev.size === events.length ? new Set() : new Set(events.map((e) => e.id))
     );
   };
 
   const handleReviewed = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setEvents((prev) => (prev ?? []).filter((e) => e.id !== id));
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
   };
 
   const handleDeleted = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setEvents((prev) => (prev ?? []).filter((e) => e.id !== id));
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
   };
 
   const handlePinToggled = (id: string, isPinned: boolean) => {
-    setEvents((prev) => prev.map((e) => e.id === id ? { ...e, isPinned } : e));
+    setEvents((prev) => (prev ?? []).map((e) => e.id === id ? { ...e, isPinned } : e));
   };
 
   const handleBulkDone = (ids: string[]) => {
-    setEvents((prev) => prev.filter((e) => !ids.includes(e.id)));
+    setEvents((prev) => (prev ?? []).filter((e) => !ids.includes(e.id)));
   };
 
-  const allSelected = events.length > 0 && selectedIds.size === events.length;
+  const allSelected = events != null && events.length > 0 && selectedIds.size === events.length;
 
   return (
     <div className="min-h-screen bg-dark-darker">

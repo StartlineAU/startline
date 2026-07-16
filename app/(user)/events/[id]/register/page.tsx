@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, startTransition } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -114,7 +114,9 @@ function RegisterContent() {
   const [selectedWave, setSelectedWave] = useState(preselectedWave);
   const [clientSecret, setClientSecret] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("auth");
+  const [userStep, setUserStep] = useState<CheckoutStep | null>(null);
+  const autoStep: CheckoutStep = status === "authenticated" || guestMode ? "details" : "auth";
+  const checkoutStep = userStep ?? autoStep;
 
   const isGroupRegistration = registrationMode === "multiple";
 
@@ -128,22 +130,6 @@ function RegisterContent() {
       })
       .catch(() => setLoading(false));
   }, [eventId]);
-
-  useEffect(() => {
-    if (status === "loading") return;
-
-    if (status === "authenticated") {
-      setCheckoutStep("details");
-      return;
-    }
-
-    if (guestMode) {
-      setCheckoutStep("details");
-      return;
-    }
-
-    setCheckoutStep("auth");
-  }, [status, guestMode]);
 
   useEffect(() => {
     if (status !== "authenticated" || profileLoaded) return;
@@ -208,7 +194,7 @@ function RegisterContent() {
 
   useEffect(() => {
     if (registrationMode !== "self" || !profileData) return;
-    setParticipants([buildSelfParticipant()]);
+    startTransition(() => setParticipants([buildSelfParticipant()]));
   }, [registrationMode, profileData, buildSelfParticipant]);
 
   const handleRegistrationModeChange = (mode: RegistrationMode) => {
@@ -312,7 +298,7 @@ function RegisterContent() {
 
     setError("");
     if (requiresEmailVerification) {
-      setCheckoutStep("verify-email");
+      setUserStep("verify-email");
       return;
     }
 
@@ -338,7 +324,7 @@ function RegisterContent() {
         return;
       }
       setClientSecret(data.clientSecret);
-      setCheckoutStep("payment");
+      setUserStep("payment");
     } catch {
       setError("Something went wrong. Please try again.");
     }
@@ -377,7 +363,7 @@ function RegisterContent() {
         return;
       }
       setClientSecret(data.clientSecret);
-      setCheckoutStep("payment");
+      setUserStep("payment");
     } catch {
       setError("Something went wrong. Please try again.");
     }
@@ -621,7 +607,7 @@ function RegisterContent() {
             emails={emailsToVerify}
             onBack={() => {
               setError("");
-              setCheckoutStep("details");
+              setUserStep("details");
             }}
             onComplete={proceedToCheckout}
           />
@@ -642,7 +628,7 @@ function RegisterContent() {
         onClose={() => setIsSignInOpen(false)}
         onSuccess={() => {
           setGuestMode(false);
-          setCheckoutStep("details");
+          setUserStep("details");
         }}
       />
     </div>

@@ -132,15 +132,13 @@ function OrganiserCard({
 }
 
 export default function AdminOrganisersPage() {
-  const [organisers, setOrganisers] = useState<OrganiserRow[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  const [organisers, setOrganisers] = useState<OrganiserRow[] | null>(null);
+  const loading = organisers === null;
 
   const fetchOrganisers = useCallback(() => {
-    setLoading(true);
     fetch("/api/admin/organisers")
       .then(r => r.json())
-      .then(data => { setOrganisers(Array.isArray(data) ? data : []); })
-      .finally(() => setLoading(false));
+      .then(data => { setOrganisers(Array.isArray(data) ? data : []); });
   }, []);
 
   useEffect(() => { fetchOrganisers(); }, [fetchOrganisers]);
@@ -150,7 +148,7 @@ export default function AdminOrganisersPage() {
       const res = await fetch(`/api/admin/organisers/${id}/verify`, { method: "PATCH" });
       if (res.ok) {
         const updated = await res.json() as { verified: boolean };
-        setOrganisers((prev) => prev.map((o) => o.id === id ? { ...o, verified: updated.verified } : o));
+        setOrganisers((prev) => (prev ?? []).map((o) => o.id === id ? { ...o, verified: updated.verified } : o));
       }
     } catch { /* silent */ }
   }, []);
@@ -160,7 +158,7 @@ export default function AdminOrganisersPage() {
       const res = await fetch(`/api/admin/organisers/${id}/suspend`, { method: "PATCH" });
       if (res.ok) {
         const updated = await res.json() as { status: string };
-        setOrganisers((prev) => prev.map((o) => o.id === id ? { ...o, status: updated.status } : o));
+        setOrganisers((prev) => (prev ?? []).map((o) => o.id === id ? { ...o, status: updated.status } : o));
       }
     } catch { /* silent */ }
   }, []);

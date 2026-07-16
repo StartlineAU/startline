@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
@@ -140,7 +140,7 @@ function DatePickerPopover({
     return () => document.removeEventListener("mousedown", h);
   }, []);
   useEffect(() => {
-    if (value) { const [y, m] = value.split("-").map(Number); setViewYear(y); setViewMonth(m - 1); }
+    if (value) { const [y, m] = value.split("-").map(Number); startTransition(() => { setViewYear(y); setViewMonth(m - 1); }); }
   }, [value]);
 
   const toIso = (d: number) => `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -927,12 +927,8 @@ function GalleryThumb({ src, onRemove }: { src: string; onRemove: () => void }) 
 }
 
 function GalleryFileThumb({ file, onRemove }: { file: File; onRemove: () => void }) {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setSrc(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  const src = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(src), [src]);
   return src ? <GalleryThumb src={src} onRemove={onRemove} /> : null;
 }
 
@@ -1087,12 +1083,8 @@ function LivePreview({ form }: { form: FormState }) {
   const sDay  = sp[2] || null;
   const sMon  = sp[1] ? MONTHS_SHORT[parseInt(sp[1]) - 1] : null;
   const price = form.waves.find(w => w.price === "0" || !!w.price)?.price;
-  const [coverSrc, setCoverSrc] = useState<string | null>(null);
-  useEffect(() => {
-    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null;
-    setCoverSrc(url);
-    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
-  }, [form.coverImage, form.coverImageUrl]);
+  const coverSrc = useMemo(() => form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null, [form.coverImage, form.coverImageUrl]);
+  useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
   const descriptionText = stripHtml(form.description || "");
 
   return (
@@ -1224,19 +1216,11 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
   const fmtCloseDate = (iso: string) =>
     new Date(iso + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 
-  const [coverSrc, setCoverSrc] = useState<string | null>(null);
-  useEffect(() => {
-    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
-    setCoverSrc(url || null);
-    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
-  }, [form.coverImage, form.coverImageUrl]);
+  const coverSrc = useMemo(() => (form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl) || null, [form.coverImage, form.coverImageUrl]);
+  useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
 
-  const [photoSrcs, setPhotoSrcs] = useState<string[]>([]);
-  useEffect(() => {
-    const urls = form.photos.map(f => URL.createObjectURL(f));
-    setPhotoSrcs(urls);
-    return () => urls.forEach(u => URL.revokeObjectURL(u));
-  }, [form.photos]);
+  const photoSrcs = useMemo(() => form.photos.map(f => URL.createObjectURL(f)), [form.photos]);
+  useEffect(() => () => photoSrcs.forEach(u => URL.revokeObjectURL(u)), [photoSrcs]);
   const gallery = [...form.photoUrls, ...photoSrcs];
 
   const prizeAmount = form.prizeMoney ? normalisePrizeAmount(form.prizeMoneyAmount) : "";
@@ -1485,7 +1469,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const [step,            setStep]            = useState(0);
   const [form,            setForm]            = useState<FormState>(INITIAL);
-  const [loadingEvent,    setLoadingEvent]    = useState(false);
+  const [loadingEvent,    setLoadingEvent]    = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("id"));
   const [saving,          setSaving]          = useState(false);
   const [apiError,        setApiError]        = useState("");
   const [submitErrors,    setSubmitErrors]    = useState<number[]>([]);
@@ -1503,7 +1487,6 @@ export default function NewListingPage() {
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
-    setLoadingEvent(true);
     fetch(`/api/organiser/events/${id}`)
       .then(r => r.json())
       .then(e => {

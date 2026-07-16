@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Star, Eye, EyeOff, BadgeCheck, Trash2, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -167,19 +167,17 @@ function AdminReviewsContent() {
   const filterParam  = (searchParams.get("filter") ?? "all").toLowerCase() as Filter;
   const activeFilter = TABS.find((t) => t.filter === filterParam)?.filter ?? "all";
 
-  const [reviews, setReviews] = useState<ReviewRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState<ReviewRow[] | null>(null);
+  const loading = reviews === null;
 
   const fetchReviews = (filter: Filter) => {
-    setLoading(true);
     fetch(`/api/admin/reviews?filter=${filter}`)
       .then(r => r.json())
-      .then(data => { setReviews(Array.isArray(data) ? data : []); })
-      .finally(() => setLoading(false));
+      .then(data => { setReviews(Array.isArray(data) ? data : []); });
   };
 
   useEffect(() => {
-    fetchReviews(activeFilter);
+    startTransition(() => fetchReviews(activeFilter));
   }, [activeFilter]);
 
   const switchFilter = (filter: Filter) => {
@@ -189,15 +187,15 @@ function AdminReviewsContent() {
   const handleChanged = (updated: ReviewRow) => {
     setReviews((prev) =>
       activeFilter === "all"
-        ? prev.map((r) => (r.id === updated.id ? updated : r))
-        : prev.filter((r) =>
+        ? (prev ?? []).map((r) => (r.id === updated.id ? updated : r))
+        : (prev ?? []).filter((r) =>
             activeFilter === "published" ? updated.isPublished : !updated.isPublished,
           ),
     );
   };
 
   const handleDeleted = (id: string) => {
-    setReviews((prev) => prev.filter((r) => r.id !== id));
+    setReviews((prev) => (prev ?? []).filter((r) => r.id !== id));
   };
 
   return (
