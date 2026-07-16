@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
@@ -10,7 +11,7 @@ const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? "";
 const client     = new CognitoIdentityProviderClient({ region });
 
 function generateTempPassword(): string {
-  const rand = crypto.randomBytes(8).toString("hex");
+  const rand = randomBytes(8).toString("hex");
   return rand + "A!";
 }
 

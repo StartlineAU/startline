@@ -170,11 +170,16 @@ function AdminReviewsContent() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`/api/admin/reviews?filter=${activeFilter}`)
+  const fetchReviews = (filter: Filter) => {
+    setLoading(true);
+    fetch(`/api/admin/reviews?filter=${filter}`)
       .then(r => r.json())
       .then(data => { setReviews(Array.isArray(data) ? data : []); })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchReviews(activeFilter);
   }, [activeFilter]);
 
   const switchFilter = (filter: Filter) => {
