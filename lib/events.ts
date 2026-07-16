@@ -19,14 +19,19 @@ export async function getAllEvents() {
         startTime: true,
         endTime: true,
         venue: true,
+        address: true,
         city: true,
         state: true,
         format: true,
         level: true,
         categories: true,
+        cap: true,
+        minAge: true,
         waves: true,
         extras: true,
+        refundPolicy: true,
         coverImageUrl: true,
+        photos: true,
         registrationType: true,
         registrationUrl: true,
         feeStructure: true,
@@ -34,12 +39,16 @@ export async function getAllEvents() {
         organiser: {
           select: { id: true, orgName: true, logoUrl: true, stripeAccountId: true, stripeOnboardingComplete: true },
         },
+        _count: {
+          select: { registrations: true },
+        },
       },
     });
 
     return events.map((e) => ({
       ...e,
       fromPrice: lowestPrice(e.waves),
+      registrationCount: e._count.registrations,
     }));
   } catch {
     return [];

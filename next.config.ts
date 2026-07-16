@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
             value: [
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+              "worker-src blob: 'self'",
             ].join("; "),
           },
         ],

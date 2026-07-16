@@ -3,8 +3,7 @@ import Image from "next/image";
 import { MapPin, Clock, Users, Calendar } from "lucide-react";
 import type { UserEvent } from "@/types";
 import { EVENT_TYPE_LABELS, STATE_LABELS } from "@/types";
-import { cn, formatMediumDate, formatShortDate, formatTime, formatCompetitionFormat } from "@/lib/utils";
-import { getEventImage } from "@/lib/images";
+import { cn, formatMediumDate, formatShortDate, formatTime, formatCompetitionFormat, stripHtml } from "@/lib/utils";
 import { getEventStatus } from "@/lib/event-status";
 import SaveEventButton from "./SaveEventButton";
 
@@ -74,7 +73,7 @@ export default function EventCard({ event, variant = "default", cardClassName }:
     );
   }
 
-  const bannerUrl = getEventImage(event.type, event.id);
+  const bannerUrl = event.image;
 
   return (
     <Link href={`/events/${event.id}`} className="block group">
@@ -129,7 +128,7 @@ export default function EventCard({ event, variant = "default", cardClassName }:
             </div>
           </div>
           <p className="text-xs sm:text-sm font-medium text-muted border-l-2 border-dark-lighter pl-3 line-clamp-2 flex-1">
-            {event.description}
+            {stripHtml(event.description)}
           </p>
         </div>
       </div>

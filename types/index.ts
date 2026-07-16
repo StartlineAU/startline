@@ -31,6 +31,8 @@ export interface TicketDrop {
   date?: string;
   price?: string;
   qty?: number;
+  closes?: string;
+  startTime?: string;
 }
 
 export interface UserEvent {
@@ -39,15 +41,22 @@ export interface UserEvent {
   description: string;
   fullDescription?: string;
   date: string;
+  endDate?: string;
   time: string;
   endTime?: string;
   dates?: string[];
   location: string;
+  address?: string;
   city: string;
   state: AustralianState;
   type: EventType;
+  discipline: string;
   format: string;
   level: string;
+  categories?: string[];
+  cap?: number | null;
+  minAge?: number | null;
+  refundPolicy?: string;
   image: string;
   registrationUrl: string | null;
   registrationType: string;
@@ -60,6 +69,8 @@ export interface UserEvent {
   fromPrice: number | null;
   tagline?: string | null;
   coverImageUrl?: string | null;
+  photos?: string[];
+  registrationCount: number;
   organiser?: {
     id: string;
     orgName: string | null;
@@ -70,10 +81,24 @@ export interface UserEvent {
 export interface FilterState {
   types: EventType[];
   states: AustralianState[];
-  format: CompetitionFormat | null;
+  formats: CompetitionFormat[];
+  levels: ExperienceLevel[];
+  priceRange: [number, number] | null;
   dateRange: "this-month" | "next-3" | "all";
   searchQuery: string;
 }
+
+export type SortOption = "date" | "price-asc" | "price-desc" | "popular";
+
+export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "date",       label: "Date: Soonest" },
+  { value: "price-asc",  label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "popular",    label: "Most Popular" },
+];
+
+export const PRICE_RANGE_MIN = 0;
+export const PRICE_RANGE_MAX = 300;
 
 export interface EventTypeOption {
   value: EventType;
@@ -134,6 +159,12 @@ export const FORMAT_OPTIONS = [
   { value: "team",       label: "Team / Pairs" },
   { value: "both",       label: "Individual & Team" },
 ] as const;
+
+export const LEVEL_OPTIONS: { value: ExperienceLevel; label: string }[] = [
+  { value: "open",     label: "Open" },
+  { value: "beginner", label: "Beginner" },
+  { value: "elite",    label: "Elite" },
+];
 
 export const DATE_RANGE_OPTIONS = [
   { value: "this-month", label: "This Month" },
