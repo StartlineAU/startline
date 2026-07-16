@@ -13,8 +13,8 @@ test.describe("organiser login", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("heading", { name: /organiser/i })).toBeVisible();
-    await expect(page.getByText(/sign in to your user account/i)).toBeVisible();
-    await expect(page.getByRole("link", { name: /go to startline/i })).toBeVisible();
+    await expect(page.getByText(/sign up for a free user account/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /get started/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /go to dashboard/i })).toBeVisible();
   });
 });
