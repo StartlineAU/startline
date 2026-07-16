@@ -7,7 +7,6 @@ import {
   MapPin, Calendar, Check, X, RefreshCw, ChevronDown, ChevronUp,
   Pin, PinOff, Trash2, CheckSquare, Square,
 } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -591,7 +590,7 @@ function AdminEventsContent() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       {selectedIds.size > 0 && (
         <BulkActionBar

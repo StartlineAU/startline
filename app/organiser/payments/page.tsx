@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertCircle, CreditCard, ArrowRight, ExternalLink, ShieldCheck, RefreshCw, UserCog } from "lucide-react";
 import Link from "next/link";
@@ -141,7 +140,6 @@ function PaymentsContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <OrganiserTopBar />
         <main className="pt-14">
           <div className="max-w-[760px] mx-auto px-6 py-16 text-center">
             <div className="w-5 h-5 border-2 border-dark-lighter border-t-primary rounded-full animate-spin mx-auto" />
@@ -155,8 +153,7 @@ function PaymentsContent() {
   const inProgress  = !!profile?.stripeAccountId && !isConnected;
 
   return (
-    <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+      <div className="min-h-screen bg-dark-darker">
 
       <main className="pt-14">
         <div className="max-w-[760px] mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 lg:pb-12 page-in">

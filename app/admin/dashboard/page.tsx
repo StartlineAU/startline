@@ -3,7 +3,6 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getAdminSession } from "@/lib/amplify-server";
 import { archivePastEvents } from "@/lib/archive-events";
-import AdminNav from "@/components/admin/AdminNav";
 import { ArrowRight, Clock, CheckCircle, XCircle, Users, UserCircle, ClipboardList, BarChart2, ScrollText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +67,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">

@@ -10,7 +10,6 @@ import {
   AlignLeft, Trophy,
 } from "lucide-react";
 import { encodePrizePool, parsePrizePool, normalisePrizeAmount } from "@/lib/prize-pool";
-import OrganiserTopBar      from "@/components/organiser/TopBar";
 import AddressAutocomplete  from "@/components/ui/AddressAutocomplete";
 import SuburbAutocomplete   from "@/components/ui/SuburbAutocomplete";
 
@@ -1496,7 +1495,7 @@ export default function NewListingPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+
       <div className="pt-14">
         <div className="anim-fade-slide">
 

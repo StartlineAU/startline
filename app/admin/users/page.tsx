@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, RefreshCw, Ban, CheckCircle2, Building2, UserX } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -167,7 +166,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">

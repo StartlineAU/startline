@@ -39,6 +39,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
 export function useSettings(): SettingsCtx {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useSettings must be used inside SettingsProvider");
+  if (!ctx) return { isOpen: false, section: "personal" as const, open: () => {}, close: () => {}, setSection: () => {}, profileSavedAt: 0, notifyProfileSaved: () => {} };
   return ctx;
 }
