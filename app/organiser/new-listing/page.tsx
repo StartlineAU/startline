@@ -1579,7 +1579,7 @@ export default function NewListingPage() {
     setStep(target);
   };
 
-  const submitToApi = async (asDraft: boolean, overrideTitle?: string): Promise<boolean> => {
+  const submitToApi = async (asDraft: boolean, overrideTitle?: string): Promise<void> => {
     setSaving(true); setApiError(""); setSubmitErrors([]);
     try {
       let coverImageUrl: string | null = null;
@@ -1588,7 +1588,7 @@ export default function NewListingPage() {
         fd.append("file", form.coverImage);
         fd.append("type", "cover");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!uploadRes.ok) { setApiError("Cover image upload failed. Please try again or remove the image."); return false; }
+        if (!uploadRes.ok) { setApiError("Cover image upload failed. Please try again or remove the image."); return; }
         const { fileUrl } = await uploadRes.json(); coverImageUrl = fileUrl;
       }
 
@@ -1598,7 +1598,7 @@ export default function NewListingPage() {
         fd.append("file", photo);
         fd.append("type", "photo");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!uploadRes.ok) { setApiError(`Gallery photo "${photo.name}" failed to upload. Please try again or remove it.`); return false; }
+        if (!uploadRes.ok) { setApiError(`Gallery photo "${photo.name}" failed to upload. Please try again or remove it.`); return; }
         const { fileUrl } = await uploadRes.json(); photoUrls.push(fileUrl);
       }
 
@@ -1644,10 +1644,8 @@ export default function NewListingPage() {
       if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return false; }
       if (asDraft && !eventId && data.id) setEventId(data.id);
       router.push("/organiser/dashboard");
-      return true;
     } catch {
       setApiError("Something went wrong. Please check your connection and try again.");
-      return false;
     } finally {
       setSaving(false);
     }

@@ -191,8 +191,6 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             }),
           });
           sessionStorage.removeItem("startline_pending_name");
-          sessionStorage.removeItem("startline_pending_dob");
-          sessionStorage.removeItem("startline_pending_phone");
           sessionStorage.removeItem("startline_pending_username");
         }
       } catch {}
