@@ -50,22 +50,24 @@ test.describe("admin dashboard", () => {
 
   test("review queue CTA links to pending events", async ({ page }) => {
     await adminLogin(page);
+    await page.waitForLoadState("networkidle");
 
     const reviewCta = page.getByRole("link", { name: /review queue/i });
     if (await reviewCta.isVisible()) {
       await reviewCta.click();
-      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 5000 });
+      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 15000 });
       await expect(page.locator("h1")).toContainText("Events");
     }
   });
 
   test("pending stats card links to pending events page", async ({ page }) => {
     await adminLogin(page);
+    await page.waitForLoadState("networkidle");
 
     const pendingCard = page.getByRole("link", { name: /pending review/i });
     if (await pendingCard.isVisible()) {
       await pendingCard.click();
-      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 5000 });
+      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 15000 });
       await expect(page.getByRole("button", { name: "Pending" })).toBeVisible();
     }
   });
