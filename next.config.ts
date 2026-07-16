@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "cdn.startlineau.com", pathname: "/uploads/**" },
+      { protocol: "https", hostname: "*.cloudfront.net", pathname: "/uploads/**" },
       { protocol: "https", hostname: "*.s3.ap-southeast-2.amazonaws.com", pathname: "/uploads/**" },
       { protocol: "http", hostname: "localhost", port: "3000", pathname: "/uploads/**" },
     ],

@@ -188,6 +188,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     GUEST_EMAIL_VERIFICATION_SECRET   = random_password.guest_email_verification.result
     AWS_S3_BUCKET                     = aws_s3_bucket.uploads.id
     AWS_S3_REGION                     = "ap-southeast-2"
+    NEXT_PUBLIC_CDN_URL               = var.cdn_custom_domain != null ? "https://${var.cdn_custom_domain}" : "https://${aws_cloudfront_distribution.cdn.domain_name}"
     DATABASE_URL                      = local.database_url
     NEXT_PUBLIC_SITE_URL              = var.site_url
     NEXT_PUBLIC_BASE_URL              = var.site_url
@@ -383,19 +384,6 @@ resource "aws_amplify_branch" "this" {
 
 # ===== S3 upload bucket =====
 
-data "aws_iam_policy_document" "uploads_public_read" {
-  statement {
-    sid    = "PublicReadForImages"
-    effect = "Allow"
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-    actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.uploads.arn}/images/*"]
-  }
-}
-
 resource "aws_s3_bucket" "uploads" {
   bucket = "${var.project_name}-${var.name}-uploads"
 
@@ -426,14 +414,32 @@ resource "aws_s3_bucket_public_access_block" "uploads" {
   bucket = aws_s3_bucket.uploads.id
 
   block_public_acls       = true
-  block_public_policy     = false
+  block_public_policy     = true
   ignore_public_acls      = true
-  restrict_public_buckets = false
+  restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_policy" "uploads_public_read" {
+data "aws_iam_policy_document" "uploads_oac" {
+  statement {
+    sid    = "AllowCloudFrontOAC"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.uploads.arn}/images/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.cdn.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "uploads_oac" {
   bucket = aws_s3_bucket.uploads.id
-  policy = data.aws_iam_policy_document.uploads_public_read.json
+  policy = data.aws_iam_policy_document.uploads_oac.json
 }
 
 resource "aws_s3_bucket_cors_configuration" "uploads" {
@@ -449,6 +455,71 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
       allowed_origins = [cors_rule.value.origin]
       expose_headers  = ["ETag"]
       max_age_seconds = 3600
+    }
+  }
+}
+
+# ===== CloudFront CDN for upload bucket =====
+
+resource "aws_cloudfront_origin_access_control" "cdn" {
+  name                              = "${var.project_name}-${var.name}-cdn-oac"
+  description                       = "OAC for ${var.name} upload bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+resource "aws_cloudfront_distribution" "cdn" {
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = "CDN for ${var.name} upload bucket"
+  price_class     = "PriceClass_100"
+  aliases         = var.cdn_custom_domain != null ? [var.cdn_custom_domain] : []
+
+  origin {
+    domain_name              = aws_s3_bucket.uploads.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.cdn.id
+    origin_id                = "s3-uploads"
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "s3-uploads"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 3600
+    default_ttl = 86400
+    max_ttl     = 604800
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.cdn_custom_domain != null ? [1] : []
+    content {
+      acm_certificate_arn      = var.cdn_cert_arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
+    }
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.cdn_custom_domain == null ? [1] : []
+    content {
+      cloudfront_default_certificate = true
+    }
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
     }
   }
 }

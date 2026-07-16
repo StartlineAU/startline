@@ -172,6 +172,9 @@ module "env" {
   site_url       = each.value.site_url
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
+
+  cdn_custom_domain = each.key == "prod" ? "cdn.startlineau.com" : null
+  cdn_cert_arn      = each.key == "prod" ? aws_acm_certificate.cdn.arn : null
 }
 
 # Custom apex domain attaches only to the prod branch. Route 53 records that

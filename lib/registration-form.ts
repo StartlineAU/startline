@@ -82,7 +82,7 @@ export function calcAgeFromIsoDate(dateOfBirth: string): number {
 export function maxDateOfBirthForMinAge(minAge: number = MIN_REGISTRATION_AGE): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - minAge);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function isValidIsoDate(dateOfBirth: string): boolean {
