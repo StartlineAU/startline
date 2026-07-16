@@ -85,6 +85,7 @@ export async function PATCH(
         registrationUrl:   data.registrationUrl   ?? undefined,
         accessibilityInfo: data.accessibilityInfo ?? undefined,
         coverImageUrl:     data.coverImageUrl     ?? undefined,
+        photos:            Array.isArray(data.photos) ? data.photos : undefined,
         status:            submit ? "PENDING" : "DRAFT",
       },
     });

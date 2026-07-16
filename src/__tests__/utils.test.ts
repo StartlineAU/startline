@@ -1,5 +1,5 @@
 ﻿import { describe, it, expect } from "vitest";
-import { cn, formatEventDate, formatShortDate, formatTime, formatCompetitionFormat, truncateTitle, filterEvents, sortEventsByDate, getUpcomingEvents, getTotalUpcomingEvents } from "@/lib/utils";
+import { cn, formatEventDate, formatShortDate, formatTime, formatCompetitionFormat, truncateTitle, filterEvents, sortEventsByDate, sortEvents, getUpcomingEvents, getTotalUpcomingEvents } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import type { UserEvent, FilterState } from "@/types";
 
@@ -97,11 +97,12 @@ describe("sortEventsByDate", () => {
 
 describe("filterEvents", () => {
   const baseEvents: UserEvent[] = [
-    { date: "2026-08-20", type: "crossfit", state: "vic", format: "team", title: "CrossFit Melbourne", city: "Melbourne", location: "Melbourne Arena" } as UserEvent,
-    { date: "2025-01-01", type: "running", state: "qld", format: "individual", title: "Old Event", city: "Brisbane", location: "GABBA" } as UserEvent,
+    { date: "2026-08-20", type: "crossfit", state: "vic", format: "team", level: "elite", fromPrice: 150, title: "CrossFit Melbourne", city: "Melbourne", location: "Melbourne Arena" } as UserEvent,
+    { date: "2025-01-01", type: "running", state: "qld", format: "individual", level: "open", fromPrice: 40, title: "Old Event", city: "Brisbane", location: "GABBA" } as UserEvent,
+    { date: "2026-09-10", type: "running", state: "nsw", format: "individual", level: "open", fromPrice: 40, title: "Fun Run", city: "Sydney", location: "Park" } as UserEvent,
   ];
 
-  const emptyFilters: FilterState = { types: [], states: [], format: null, dateRange: "all", searchQuery: "" };
+  const emptyFilters: FilterState = { types: [], states: [], formats: [], levels: [], priceRange: null, dateRange: "all", searchQuery: "" };
 
   it("excludes past events", () => {
     const result = filterEvents(baseEvents, emptyFilters);
@@ -122,9 +123,49 @@ describe("filterEvents", () => {
   });
 
   it("filters by format", () => {
-    const result = filterEvents(baseEvents, { ...emptyFilters, format: "team" });
+    const result = filterEvents(baseEvents, { ...emptyFilters, formats: ["team"] });
     expect(result).toHaveLength(1);
     expect(result[0].format).toBe("team");
+  });
+
+  it("filters by level", () => {
+    const result = filterEvents(baseEvents, { ...emptyFilters, levels: ["elite"] });
+    expect(result).toHaveLength(1);
+    expect(result[0].level).toBe("elite");
+  });
+
+  it("filters by price range", () => {
+    const result = filterEvents(baseEvents, { ...emptyFilters, priceRange: [100, 200] });
+    expect(result).toHaveLength(1);
+    expect(result[0].fromPrice).toBe(150);
+  });
+});
+
+describe("sortEvents", () => {
+  const events: UserEvent[] = [
+    { date: "2026-09-01", fromPrice: 100, registrationCount: 5 } as UserEvent,
+    { date: "2026-05-10", fromPrice: 40,  registrationCount: 50 } as UserEvent,
+    { date: "2026-07-15", fromPrice: 200, registrationCount: 20 } as UserEvent,
+  ];
+
+  it("sorts by date by default", () => {
+    const result = sortEvents(events, "date");
+    expect(result.map((e) => e.date)).toEqual(["2026-05-10", "2026-07-15", "2026-09-01"]);
+  });
+
+  it("sorts by price ascending", () => {
+    const result = sortEvents(events, "price-asc");
+    expect(result.map((e) => e.fromPrice)).toEqual([40, 100, 200]);
+  });
+
+  it("sorts by price descending", () => {
+    const result = sortEvents(events, "price-desc");
+    expect(result.map((e) => e.fromPrice)).toEqual([200, 100, 40]);
+  });
+
+  it("sorts by popularity", () => {
+    const result = sortEvents(events, "popular");
+    expect(result.map((e) => e.registrationCount)).toEqual([50, 20, 5]);
   });
 });
 

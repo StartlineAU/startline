@@ -172,7 +172,10 @@ async function main() {
           abn: "51 824 753 556",
           website: "https://startlineau.com",
           instagram: "apexenduranceevents",
-          bio: "Test organiser for development and testing purposes.",
+          facebook: "apexenduranceevents",
+          bio: "Melbourne-based crew behind The Apex Throwdown and the Hybrid Hustle Series. We've been putting on functional fitness and endurance events across Victoria since 2019 — athlete-first programming, tight heat schedules, and a finish-line party worth staying for.",
+          logoUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80",
+          coverImageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=1600&q=80",
           photos: [],
         },
       });
@@ -192,29 +195,62 @@ async function main() {
 
   // ── Events ───────────────────────────────────────────────────────────
 
+  // Fully populated example event — exercises every field the listing wizard
+  // collects, so the public event page can be reviewed with realistic data.
+  const apexThrowdown = {
+    status: "APPROVED" as const,
+    title: "The Apex Throwdown 2026",
+    discipline: "crossfit",
+    tagline: "Two days. One leaderboard. Every rep counts.",
+    description: [
+      "<p>Victoria's premier functional fitness competition returns for its fourth year. Six scored events across two days, programmed to test every energy system — raw strength, engine, and skill under fatigue. Whether you're chasing a podium or your first competition floor, there's a division for you.</p>",
+      "<h3>The Format</h3>",
+      "<ul>",
+      "<li><b>Day 1 — Saturday:</b> Three scored events, including a max-lift ladder and a partner chipper</li>",
+      "<li><b>Day 2 — Sunday:</b> Two scored events, then the finale — top 10 per division only</li>",
+      "</ul>",
+      "<h3>Divisions</h3>",
+      "<p>Scaled, RX and Elite divisions for individual athletes, plus a Team-of-2 division (any gender mix). Every division gets its own podium and share of the prize pool.</p>",
+      "<h3>What's Included</h3>",
+      "<ul>",
+      "<li>Event t-shirt and finisher medal</li>",
+      "<li>Live leaderboard with online score tracking</li>",
+      "<li>Athlete recovery zone with physios on site</li>",
+      "<li>Post-event party at the venue bar</li>",
+      "</ul>",
+      "<h4>Athlete check-in</h4>",
+      "<p>Check-in opens 6:45am at Gate 3, bag drop available. First heat briefing is 7:15am sharp — don't be late.</p>",
+    ].join(""),
+    eventDate: "2026-08-15", endDate: "2026-08-16", startTime: "07:30", endTime: "17:00",
+    venue: "Melbourne Sports & Aquatic Centre", address: "30 Aughtie Drive, Albert Park",
+    city: "Melbourne", state: "vic", format: "both", level: "high",
+    categories: ["Individual Scaled", "Individual RX", "Individual Elite", "Team of 2"],
+    cap: 320, minAge: 16,
+    waves: [
+      { label: "Early Bird", price: "95",  closes: "2026-05-01", startTime: "",      qty: 80  },
+      { label: "General",    price: "115", closes: "2026-07-15", startTime: "",      qty: 150 },
+      { label: "Late Entry", price: "135", closes: "2026-08-07", startTime: "09:00", qty: 90  },
+    ],
+    inclusions: "Event t-shirt, finisher medal, post-event party, online score tracking",
+    extras: "Prize pool: 8,000 — Awarded to podium finishers per division", activations: "Vendor expo Friday evening.",
+    refundPolicy: "Full refund 30+ days out. 50% refund 14–30 days. Deferrals accepted. Free transfer to another athlete until 7 August 2026.",
+    registrationType: "startline", feeStructure: "athlete",
+    coverImageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80",
+    photos: [
+      "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=1200&q=80",
+      "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=1200&q=80",
+      "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=1200&q=80",
+      "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1200&q=80",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=80",
+      "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=1200&q=80",
+    ],
+    bagDrop: "Bag drop at Gate 3 from 6:45am.", parking: "MSAC car park $12/day.", accessibilityInfo: "Wheelchair accessible venue.",
+  };
+
   const event1 = await prisma.event.upsert({
     where:  { id: "seed-event-001" },
-    update: { status: "APPROVED" },
-    create: {
-      id: "seed-event-001",
-      organiserId: org.id,
-      status: "APPROVED",
-      title: "The Apex Throwdown 2026",
-      discipline: "functional_fitness",
-      tagline: "Two days. One leaderboard. Every rep counts.",
-      description: "Victoria's premier functional fitness competition. Three workouts across two days. Scaled, RX, and Elite divisions.",
-      eventDate: "2026-08-15", endDate: "2026-08-16", startTime: "07:30", endTime: "17:00",
-      venue: "Melbourne Sports & Aquatic Centre", address: "Albert Road, Albert Park",
-      city: "Melbourne", state: "vic", format: "both", level: "open",
-      categories: ["Individual Scaled", "Individual RX", "Individual Elite", "Team of 2"],
-      cap: 320, minAge: 16,
-      waves: [{ label: "Early Bird", date: "2026-05-01", price: "95", qty: 80 }, { label: "General", date: "2026-06-15", price: "115", qty: 150 }, { label: "Late Entry", date: "2026-07-31", price: "135", qty: 90 }],
-      inclusions: "Event t-shirt, finisher medal, post-event party, online score tracking",
-      extras: "Prize pool: 8,000 — Awarded to podium finishers per division", activations: "Vendor expo Friday evening.",
-      refundPolicy: "Moderate", registrationType: "startline", feeStructure: "athlete",
-      coverImageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=80",
-      bagDrop: "Bag drop at Gate 3 from 6:45am.", parking: "MSAC car park $12/day.", accessibilityInfo: "Wheelchair accessible venue.",
-    },
+    update: apexThrowdown,
+    create: { id: "seed-event-001", organiserId: org.id, ...apexThrowdown },
   });
 
   const event2 = await prisma.event.upsert({

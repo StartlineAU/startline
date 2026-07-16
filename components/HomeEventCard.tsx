@@ -3,18 +3,17 @@ import Image from "next/image";
 import { MapPin, Clock, Users } from "lucide-react";
 import type { UserEvent } from "@/types";
 import { EVENT_TYPE_LABELS, STATE_LABELS } from "@/types";
-import { formatShortDate, formatTime, formatCompetitionFormat } from "@/lib/utils";
-import { getEventImage } from "@/lib/images";
+import { cn, formatShortDate, formatTime, formatCompetitionFormat, stripHtml } from "@/lib/utils";
 
-export default function HomeEventCard({ event }: { event: UserEvent }) {
+export default function HomeEventCard({ event, className }: { event: UserEvent; className?: string }) {
   const [day, month] = formatShortDate(event.date).split(" ");
-  const img = getEventImage(event.type, event.id);
+  const img = event.image;
   const typeLabel = EVENT_TYPE_LABELS[event.type];
 
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex-shrink-0 w-[280px] sm:w-[340px]"
+      className={cn("group", className ?? "flex-shrink-0 w-[280px] sm:w-[340px]")}
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="h-full bg-dark border border-dark-lighter rounded-2xl group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-black/50 transition-all duration-300 transform-gpu">
@@ -63,7 +62,7 @@ export default function HomeEventCard({ event }: { event: UserEvent }) {
 
           {event.description && (
             <p className="font-headline text-xs text-muted leading-relaxed line-clamp-2 mb-3">
-              {event.description}
+              {stripHtml(event.description)}
             </p>
           )}
 

@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO, isAfter, isBefore, startOfDay, addMonths, endOfMonth } from "date-fns";
-import type { UserEvent, FilterState } from "@/types";
+import type { UserEvent, FilterState, SortOption, ExperienceLevel } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,6 +19,10 @@ export function formatMediumDate(dateString: string): string {
   return format(parseISO(dateString), "d MMM yyyy");
 }
 
+export function formatLongDate(dateString: string): string {
+  return format(parseISO(dateString), "d MMMM yyyy");
+}
+
 export function formatTime(timeString: string): string {
   const [hours, minutes] = timeString.split(":");
   const hour = parseInt(hours, 10);
@@ -31,6 +35,53 @@ export function formatCompetitionFormat(format: string): string {
   if (format === "team") return "Team";
   if (format === "both") return "Individual & Team";
   return "Individual";
+}
+
+const LEVEL_LABELS: Record<string, string> = {
+  low: "Low",
+  moderate: "Moderate",
+  high: "High",
+  extreme: "Extreme",
+  open: "Open",
+  beginner: "Beginner",
+  elite: "Elite",
+};
+
+export function formatLevel(level: string): string {
+  return LEVEL_LABELS[level.toLowerCase()] ?? "Open";
+}
+
+const DISCIPLINE_LABELS: Record<string, string> = {
+  crossfit: "CrossFit",
+  running: "Running",
+  hybrid: "Hybrid",
+  cycling: "Cycling",
+  swimming: "Swimming",
+  triathlon: "Triathlon",
+  other: "Other",
+};
+
+export function formatDiscipline(discipline: string): string {
+  const d = discipline.toLowerCase();
+  if (DISCIPLINE_LABELS[d]) return DISCIPLINE_LABELS[d];
+  // title-case unknown values, e.g. "functional_fitness" → "Functional Fitness"
+  return d
+    .split(/[_\-\s]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+export function formatEventDateRange(start: string, end?: string): string {
+  if (!end || end === start) return formatEventDate(start);
+  const s = parseISO(start);
+  const e = parseISO(end);
+  if (format(s, "yyyy") !== format(e, "yyyy")) {
+    return `${format(s, "d MMMM yyyy")} — ${format(e, "d MMMM yyyy")}`;
+  }
+  if (format(s, "MM") === format(e, "MM")) {
+    return `${format(s, "d")}–${format(e, "d MMMM yyyy")}`;
+  }
+  return `${format(s, "d MMMM")} — ${format(e, "d MMMM yyyy")}`;
 }
 
 function isOnOrAfterToday(dateString: string, today: Date): boolean {
@@ -53,9 +104,20 @@ export function filterEvents(
     if (filters.types.length > 0 && !filters.types.includes(event.type)) return false;
     if (filters.states.length > 0 && !filters.states.includes(event.state)) return false;
 
-    if (filters.format) {
-      if (filters.format === "individual" && event.format === "team")   return false;
-      if (filters.format === "team"       && event.format === "individual") return false;
+    if (filters.formats.length > 0) {
+      const compatible = filters.formats.some((f) => {
+        if (f === "individual" && event.format === "team")      return false;
+        if (f === "team"       && event.format === "individual") return false;
+        return true;
+      });
+      if (!compatible) return false;
+    }
+
+    if (filters.levels.length > 0 && !filters.levels.includes(event.level as ExperienceLevel)) return false;
+
+    if (filters.priceRange && event.fromPrice !== null) {
+      const [min, max] = filters.priceRange;
+      if (event.fromPrice < min || event.fromPrice > max) return false;
     }
 
     if (filters.dateRange === "this-month") {
@@ -84,6 +146,20 @@ export function sortEventsByDate(events: UserEvent[]): UserEvent[] {
   );
 }
 
+export function sortEvents(events: UserEvent[], sortBy: SortOption): UserEvent[] {
+  switch (sortBy) {
+    case "price-asc":
+      return [...events].sort((a, b) => (a.fromPrice ?? Infinity) - (b.fromPrice ?? Infinity));
+    case "price-desc":
+      return [...events].sort((a, b) => (b.fromPrice ?? -Infinity) - (a.fromPrice ?? -Infinity));
+    case "popular":
+      return [...events].sort((a, b) => b.registrationCount - a.registrationCount);
+    case "date":
+    default:
+      return sortEventsByDate(events);
+  }
+}
+
 export function getUpcomingEvents(events: UserEvent[], limit = 10): UserEvent[] {
   const today = startOfDay(new Date());
   const upcoming = events.filter((e) => isOnOrAfterToday(e.date, today));
@@ -93,6 +169,11 @@ export function getUpcomingEvents(events: UserEvent[], limit = 10): UserEvent[] 
 export function getTotalUpcomingEvents(events: UserEvent[]): number {
   const today = startOfDay(new Date());
   return events.filter((e) => isOnOrAfterToday(e.date, today)).length;
+}
+
+/** Flatten rich-text HTML (organiser descriptions) to plain text for card previews. */
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/&[^;\s]+;/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function truncateTitle(title: string, maxLength = 28): string {
