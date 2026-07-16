@@ -64,6 +64,8 @@ interface FormState {
   registrationUrl: string;
   coverImage: File | null;
   coverImageUrl: string;
+  photos: File[];
+  photoUrls: string[];
 }
 
 const INITIAL: FormState = {
@@ -76,6 +78,7 @@ const INITIAL: FormState = {
   refundPolicy: "",
   registrationType: "startline", feeStructure: "athlete", registrationUrl: "",
   coverImage: null, coverImageUrl: "",
+  photos: [], photoUrls: [],
 };
 
 /* ── Shared field primitive ─────────────────────────────────── */
@@ -254,7 +257,7 @@ function fmt24to12(t: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <div className="relative flex items-center">
       <input type="time" value={value} onChange={e => onChange(e.target.value)}
@@ -905,9 +908,41 @@ function TicketsStep({ form, update }: { form: FormState; update: (p: Partial<Fo
 /* ═══════════════════════════════════════════════════════════════
    STEP 4 — MEDIA & DESCRIPTION
    ══════════════════════════════════════════════════════════════ */
+const MAX_GALLERY_PHOTOS = 8;
+
+function GalleryThumb({ src, onRemove }: { src: string; onRemove: () => void }) {
+  return (
+    <div className="relative aspect-square rounded-md overflow-hidden border border-dark-lighter">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" className="w-full h-full object-cover" />
+      <button type="button" onClick={onRemove}
+        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-dark/70 text-muted hover:text-white flex items-center justify-center transition-colors">
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function GalleryFileThumb({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return src ? <GalleryThumb src={src} onRemove={onRemove} /> : null;
+}
+
 function MediaStep({ form, update }: { form: FormState; update: (p: Partial<FormState>) => void }) {
   const coverSrc = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
   useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
+
+  const galleryCount = form.photoUrls.length + form.photos.length;
+  const addGalleryFiles = (list: FileList | null) => {
+    const files = Array.from(list ?? []).filter(f => f.type.startsWith("image/"));
+    const remaining = MAX_GALLERY_PHOTOS - galleryCount;
+    if (files.length && remaining > 0) update({ photos: [...form.photos, ...files.slice(0, remaining)] });
+  };
 
   return (
     <div>
@@ -932,6 +967,30 @@ function MediaStep({ form, update }: { form: FormState; update: (p: Partial<Form
           <input type="file" accept="image/*" className="sr-only"
             onChange={e => update({ coverImage: e.target.files?.[0] ?? null })} />
         </label>
+      </Field>
+
+      <Field label="Gallery photos" hint={`${galleryCount}/${MAX_GALLERY_PHOTOS} · Optional`}>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+          {form.photoUrls.map((url, i) => (
+            <GalleryThumb key={url} src={url}
+              onRemove={() => update({ photoUrls: form.photoUrls.filter((_, j) => j !== i) })} />
+          ))}
+          {form.photos.map((file, i) => (
+            <GalleryFileThumb key={`${file.name}-${file.lastModified}-${i}`} file={file}
+              onRemove={() => update({ photos: form.photos.filter((_, j) => j !== i) })} />
+          ))}
+          {galleryCount < MAX_GALLERY_PHOTOS && (
+            <label className="aspect-square rounded-md border-2 border-dashed border-dark-lighter hover:border-primary/40 bg-dark-light flex flex-col items-center justify-center cursor-pointer transition-colors">
+              <Plus className="w-5 h-5 text-primary mb-1" />
+              <span className="font-headline text-[9px] font-bold uppercase tracking-widest text-muted">Add photos</span>
+              <input type="file" accept="image/*" multiple className="sr-only"
+                onChange={e => { addGalleryFiles(e.target.files); e.target.value = ""; }} />
+            </label>
+          )}
+        </div>
+        <p className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-2">
+          Shown as a gallery on your event page — venue, atmosphere, past editions.
+        </p>
       </Field>
 
       <Field label="Full description" required hint={`${stripHtml(form.description).length} chars`}>
@@ -969,6 +1028,7 @@ function ReviewStep({ form, setStep, confirmed, onConfirm }: {
     { k: "Refund policy",  v: form.refundPolicy || "—",                                                            step: 2 },
     { k: "Prize money",    v: form.prizeMoney ? (normalisePrizeAmount(form.prizeMoneyAmount) ? `$${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool` : "Yes") : "No", step: 2 },
     { k: "Cover image",    v: form.coverImage || form.coverImageUrl ? "Uploaded" : "No image",                    step: 3 },
+    { k: "Gallery",        v: (() => { const n = form.photoUrls.length + form.photos.length; return n ? `${n} photo${n !== 1 ? "s" : ""}` : "None"; })(), step: 3 },
     { k: "Description",    v: form.description ? `${stripHtml(form.description).slice(0, 60)}…` : "—", step: 3 },
   ];
 
@@ -1132,29 +1192,52 @@ const FORMAT_LABELS_PREVIEW: Record<string, string> = {
 };
 
 function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => void }) {
-  const discipline  = DISC_LABEL[form.discipline] || "—";
-  const stateLabel  = form.state.toUpperCase();
+  const discipline  = DISC_LABEL[form.discipline] || "";
+  const stateLabel  = form.state ? form.state.toUpperCase() : "";
   const formatLabel = FORMAT_LABELS_PREVIEW[form.format] || "—";
   const intensity   = form.level ? INTENSITY_LABELS[form.level] : "—";
 
+  // Mirrors formatEventDate / formatEventDateRange on the public event page.
   const dateLabel = (() => {
     if (!form.date) return "Date TBC";
-    const d = new Date(form.date + "T00:00:00");
-    const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" };
+    const s = new Date(form.date + "T00:00:00");
     if (form.endDate && form.endDate !== form.date) {
       const e = new Date(form.endDate + "T00:00:00");
-      return `${d.toLocaleDateString("en-AU", { day: "numeric", month: "long" })} – ${e.toLocaleDateString("en-AU", opts)}`;
+      if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+        return `${s.getDate()}–${e.getDate()} ${e.toLocaleDateString("en-AU", { month: "long", year: "numeric" })}`;
+      }
+      return `${s.toLocaleDateString("en-AU", { day: "numeric", month: "long" })} — ${e.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`;
     }
-    return d.toLocaleDateString("en-AU", opts);
+    return s.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   })();
 
-  const titleWords = (form.title || "Your Event Title").split(" ");
+  const today = (() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  })();
+  const drops = form.waves
+    .filter(w => w.price === "0" || !!w.price)
+    .map(w => ({ ...w, isClosed: !!w.closes && w.closes < today }));
+  const fmtCloseDate = (iso: string) =>
+    new Date(iso + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+
   const [coverSrc, setCoverSrc] = useState<string | null>(null);
   useEffect(() => {
     const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
-    setCoverSrc(url);
+    setCoverSrc(url || null);
     return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
   }, [form.coverImage, form.coverImageUrl]);
+
+  const [photoSrcs, setPhotoSrcs] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = form.photos.map(f => URL.createObjectURL(f));
+    setPhotoSrcs(urls);
+    return () => urls.forEach(u => URL.revokeObjectURL(u));
+  }, [form.photos]);
+  const gallery = [...form.photoUrls, ...photoSrcs];
+
+  const prizeAmount = form.prizeMoney ? normalisePrizeAmount(form.prizeMoneyAmount) : "";
+  const cap = form.cap ? parseInt(form.cap) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overlay-in">
@@ -1173,145 +1256,221 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
         </div>
 
         <div className="relative flex-1 overflow-y-auto bg-dark-darker">
-          <section className="relative h-72 sm:h-96 w-full overflow-hidden flex items-end">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {coverSrc && <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover brightness-50" />}
-            <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark-lighter to-dark-darker" />
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(#d4ff00 1px, transparent 1px), linear-gradient(90deg, #d4ff00 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
-            <div className="relative z-10 w-full px-6 sm:px-10 pb-8 sm:pb-12">
+
+          {/* ── Banner — mirrors the public event page ── */}
+          <div className="relative overflow-hidden w-full" style={{ aspectRatio: "4/3", maxHeight: "420px" }}>
+            {coverSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={coverSrc} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 placeholder-stripes scan-grid" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-dark-darker via-dark-darker/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-5">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                {form.discipline && <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-dark bg-primary px-3 py-1 rounded-full">{discipline}</span>}
-                <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/40 px-2.5 py-1 rounded-full">Draft</span>
-              </div>
-              <h1 className="font-headline text-4xl sm:text-6xl font-black italic tracking-tighter leading-none mb-3 text-light">
-                {titleWords.map((word, i) =>
-                  i === titleWords.length - 1
-                    ? <span key={i} className="text-primary"> {word}</span>
-                    : <span key={i}>{i > 0 ? " " : ""}{word}</span>
+                {discipline && (
+                  <span className="inline-block font-headline text-[10px] font-bold uppercase tracking-widest bg-primary text-dark px-3 py-1 rounded-full">
+                    {discipline}
+                  </span>
                 )}
+                <span className="inline-block font-headline text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/40 px-2.5 py-1 rounded-full">
+                  Draft
+                </span>
+              </div>
+              <h1 className="font-headline text-[28px] sm:text-4xl lg:text-5xl font-black italic tracking-tighter text-light leading-tight mb-2">
+                {form.title || "Your event title"}
               </h1>
-              <span className="inline-flex items-center gap-3 bg-primary/20 border border-primary/30 text-primary font-headline text-[12px] font-black uppercase tracking-widest px-6 py-3 rounded-xl cursor-default">
-                Register Now <ExternalLink className="w-4 h-4" />
-              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  {form.venue || form.city || "Venue TBC"}{stateLabel ? `, ${stateLabel}` : ""}
+                </span>
+                <span className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
+                  <Calendar className="w-3.5 h-3.5 text-primary" />
+                  {dateLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <section className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
+              {/* ── Main content ── */}
+              <div className="order-2 lg:order-none lg:col-span-2 space-y-6 sm:space-y-8">
+
+                <div>
+                  <h2 className="font-headline text-xs font-medium uppercase tracking-widest text-primary mb-3">Event Overview</h2>
+                  {form.description ? (
+                    <div
+                      className="text-sm font-medium text-muted leading-relaxed
+                        [&_h3]:font-headline [&_h3]:font-black [&_h3]:text-base [&_h3]:text-light [&_h3]:mt-4 [&_h3]:mb-1
+                        [&_h4]:font-headline [&_h4]:font-bold [&_h4]:text-sm [&_h4]:text-light [&_h4]:mt-3 [&_h4]:mb-1
+                        [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_li]:mb-0.5"
+                      dangerouslySetInnerHTML={{ __html: form.description }}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-muted-dark italic">Full description will appear here.</p>
+                  )}
+                </div>
+
+                {prizeAmount && (
+                  <div className="bg-dark rounded-xl px-5 sm:px-6 py-5 flex items-center gap-4">
+                    <Trophy className="w-7 h-7 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-headline text-xl font-black text-primary leading-tight">
+                        ${prizeAmount} prize pool
+                      </p>
+                      {form.prizeMoneyDetails.trim() && (
+                        <p className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted mt-1">
+                          {form.prizeMoneyDetails.trim()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {drops.length > 0 && (
+                  <div>
+                    <h2 className="font-headline text-xs font-medium uppercase tracking-widest text-primary mb-3">Pricing</h2>
+                    <div className="space-y-2">
+                      {drops.map((w, i) => (
+                        <div key={i} className={`flex items-center justify-between bg-dark rounded-xl px-4 sm:px-6 py-4 ${w.isClosed ? "opacity-50" : ""}`}>
+                          <div>
+                            <p className="font-headline text-sm font-bold text-light flex items-center gap-2 flex-wrap">
+                              {w.label || "General admission"}
+                              {w.isClosed && (
+                                <span className="font-headline text-[9px] font-bold uppercase tracking-widest text-muted border border-dark-lighter px-2 py-0.5 rounded-full">
+                                  Closed
+                                </span>
+                              )}
+                            </p>
+                            {w.startTime && (
+                              <p className="font-headline text-xs text-muted uppercase tracking-widest mt-0.5 flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> Wave start {fmt24to12(w.startTime)}
+                              </p>
+                            )}
+                            {w.closes && (
+                              <p className="font-headline text-xs text-muted uppercase tracking-widest mt-0.5">
+                                {w.isClosed ? "Closed" : "Closes"} {fmtCloseDate(w.closes)}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`font-headline text-2xl font-black italic ${w.isClosed ? "text-muted line-through" : "text-primary"}`}>
+                            {w.price === "0" ? "Free" : `$${w.price}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {gallery.length > 0 && (
+                  <div>
+                    <h2 className="font-headline text-xs font-medium uppercase tracking-widest text-primary mb-3">Gallery</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                      {gallery.map((src, i) => (
+                        <div key={i} className="relative aspect-video rounded-xl overflow-hidden bg-dark">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* ── Sidebar: CTAs + details ── */}
+              <div className="order-1 lg:order-none space-y-4">
+                <div className="flex flex-col gap-3">
+                  <span className="w-full flex items-center justify-center gap-2 bg-machined shadow-machined text-dark font-headline text-[13px] font-bold uppercase tracking-widest px-6 py-3.5 rounded-md cursor-default">
+                    Register Now
+                    {form.registrationType === "external" ? <ExternalLink className="w-4 h-4" /> : <Ticket className="w-4 h-4" />}
+                  </span>
+                  <span className="w-full flex items-center justify-center gap-2 border border-dark-lighter text-light font-headline text-[13px] font-bold uppercase tracking-widest px-6 py-3.5 rounded-md cursor-default">
+                    <MapPin className="w-4 h-4" />
+                    View on Maps
+                  </span>
+                </div>
+
+                <div className="bg-dark rounded-xl p-5 sm:p-6">
+                  <h3 className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-4">Event Details</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div>
+                      <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Date</p>
+                      <p className="font-headline text-base font-black italic text-light">{dateLabel}</p>
+                    </div>
+                    <div>
+                      <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Time</p>
+                      <p className="font-headline text-base font-black italic text-light">
+                        {form.startTime ? fmt24to12(form.startTime) : "TBC"}
+                        {form.endTime && ` — ${fmt24to12(form.endTime)}`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Location</p>
+                      <p className="font-headline text-base font-black italic text-light">{form.venue || "Venue TBC"}</p>
+                      {form.address && (
+                        <p className="font-headline text-xs text-muted uppercase tracking-widest mt-0.5">{form.address}</p>
+                      )}
+                      {form.city && (
+                        <p className="font-headline text-xs text-muted uppercase tracking-widest mt-0.5">{form.city}{stateLabel ? `, ${stateLabel}` : ""}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Format</p>
+                      <p className="font-headline text-base font-black italic text-light">{formatLabel}</p>
+                    </div>
+                    {form.categories.length > 0 && (
+                      <div>
+                        <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-1">Divisions</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {form.categories.map(c => (
+                            <span key={c} className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary border border-primary/30 bg-primary/10 px-2 py-1 rounded-md">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Intensity</p>
+                      <p className="font-headline text-base font-black italic text-light">{intensity}</p>
+                    </div>
+                    {(cap || form.minAge !== "") && (
+                      <div className="grid grid-cols-2 gap-3">
+                        {cap != null && cap > 0 && (
+                          <div>
+                            <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Participant Cap</p>
+                            <p className="font-headline text-base font-black italic text-light">{cap.toLocaleString()}</p>
+                          </div>
+                        )}
+                        {form.minAge !== "" && (
+                          <div>
+                            <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-0.5">Minimum Age</p>
+                            <p className="font-headline text-base font-black italic text-light">
+                              {form.minAge === "0" ? "All ages" : `${form.minAge}+`}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {form.refundPolicy.trim() && (
+                  <div className="bg-dark rounded-xl p-5 sm:p-6">
+                    <h3 className="font-headline text-xs font-medium uppercase tracking-widest text-muted mb-2">Refund &amp; Transfer Policy</h3>
+                    <p className="text-sm font-medium text-muted leading-relaxed">{form.refundPolicy}</p>
+                  </div>
+                )}
+              </div>
+
             </div>
           </section>
-
-          <div className="px-5 sm:px-10 py-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { icon: <Calendar className="w-4 h-4 text-primary" />, label: "Date",     value: dateLabel },
-                { icon: <Clock    className="w-4 h-4 text-primary" />, label: "Start",    value: form.startTime ? fmt24to12(form.startTime) : "TBC" },
-                { icon: <MapPin   className="w-4 h-4 text-primary" />, label: "Location", value: form.city ? `${form.city}, ${stateLabel}` : "TBC" },
-                { icon: <Users    className="w-4 h-4 text-primary" />, label: "Format",   value: formatLabel },
-              ].map(s => (
-                <div key={s.label} className="bg-dark rounded-xl px-4 py-3 flex items-center gap-3">
-                  {s.icon}
-                  <div>
-                    <span className="font-headline text-[10px] tracking-widest text-muted uppercase block">{s.label}</span>
-                    <span className="font-headline text-[13px] font-black text-light">{s.value}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="px-5 sm:px-10 pb-16 space-y-4">
-            <PreviewSection number="01" title="Event Overview">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 bg-dark rounded-xl p-5">
-                  <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-3 block">About This Event</span>
-                  {form.description ? (
-                    <div className="font-headline text-[13px] font-medium text-muted leading-relaxed [&_h3]:text-light [&_h3]:font-black [&_h3]:text-[15px] [&_h3]:mb-1 [&_h4]:text-light [&_h4]:font-bold [&_h4]:text-[13px] [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-0.5"
-                      dangerouslySetInnerHTML={{ __html: form.description }} />
-                  ) : (
-                    <p className="font-headline text-muted-dark text-[12px] italic">Full description will appear here.</p>
-                  )}
-                </div>
-                <div className="bg-dark rounded-xl p-5 border-l-4 border-primary flex flex-col gap-4">
-                  <div>
-                    <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-2 block">Discipline</span>
-                    {form.discipline
-                      ? <span className="bg-primary text-dark font-headline text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">{discipline}</span>
-                      : <span className="font-headline text-muted-dark text-[12px]">—</span>}
-                  </div>
-                  <div>
-                    <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-1 block">Intensity</span>
-                    <span className="font-headline text-xl font-black italic text-light">{intensity}</span>
-                  </div>
-                </div>
-              </div>
-            </PreviewSection>
-
-            <PreviewSection number="02" title="Date, Time & Location">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-dark rounded-xl p-5">
-                  <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-3 flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-primary" /> Date</span>
-                  <div className="font-headline text-[15px] font-black text-light">{dateLabel}</div>
-                </div>
-                <div className="bg-dark rounded-xl p-5">
-                  <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-primary" /> Times</span>
-                  <div className="font-headline text-[13px] font-medium text-muted">Start: <span className="text-light font-bold">{form.startTime ? fmt24to12(form.startTime) : "TBC"}</span></div>
-                  {form.endTime && <div className="font-headline text-[13px] font-medium text-muted mt-1">Cut-off: <span className="text-light font-bold">{fmt24to12(form.endTime)}</span></div>}
-                </div>
-                <div className="bg-dark rounded-xl p-5">
-                  <span className="font-headline text-[10px] tracking-widest text-muted uppercase mb-3 flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-primary" /> Venue</span>
-                  <div className="font-headline text-[16px] font-black italic text-light leading-tight">{form.venue || "Venue TBC"}</div>
-                  {form.address && <p className="font-headline text-[12px] text-muted mt-1">{form.address}</p>}
-                  {form.city && <p className="font-headline text-[12px] uppercase tracking-widest text-muted mt-0.5">{form.city}{stateLabel ? `, ${stateLabel}` : ""}</p>}
-                </div>
-              </div>
-            </PreviewSection>
-
-            {form.waves.some(w => w.price === "0" || !!w.price) && (
-              <PreviewSection number="03" title="Registration & Tickets">
-                <div className={`grid gap-4 ${form.waves.length === 1 ? "grid-cols-1" : form.waves.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
-                  {form.waves.filter(w => w.price === "0" || !!w.price).map((w, i) => (
-                    <div key={i} className={`bg-dark rounded-xl p-5 ${i === 0 ? "border-l-4 border-primary" : ""}`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Ticket className="w-4 h-4 text-primary" />
-                        <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted">{w.label || "General admission"}</span>
-                      </div>
-                      <div className="font-headline text-3xl font-black text-primary leading-none mb-1">{w.price === "0" ? "Free" : `A$${w.price}`}</div>
-                      {w.startTime && <div className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted-dark flex items-center gap-1"><Clock className="w-3 h-3" /> {fmt24to12(w.startTime)}</div>}
-                      {w.closes && <div className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted-dark mt-1">Closes {w.closes}</div>}
-                    </div>
-                  ))}
-                </div>
-              </PreviewSection>
-            )}
-
-            {form.prizeMoney && normalisePrizeAmount(form.prizeMoneyAmount) && (
-              <div className="bg-dark rounded-xl px-5 sm:px-6 py-5 flex items-center gap-4">
-                <Trophy className="w-7 h-7 text-primary shrink-0" />
-                <div className="min-w-0">
-                  <p className="font-headline text-xl font-black text-primary leading-tight">
-                    ${normalisePrizeAmount(form.prizeMoneyAmount)} prize pool
-                  </p>
-                  {form.prizeMoneyDetails.trim() && (
-                    <p className="font-headline text-[11px] font-medium uppercase tracking-widest text-muted mt-1">
-                      {form.prizeMoneyDetails.trim()}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function PreviewSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
-  return (
-    <div className="pt-2">
-      <div className="flex items-center gap-3 mb-3">
-        <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary/60">{number}</span>
-        <div className="h-px flex-1 bg-dark-lighter" />
-        <h2 className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted">{title}</h2>
-        <div className="h-px flex-1 bg-dark-lighter" />
-      </div>
-      {children}
     </div>
   );
 }
@@ -1377,6 +1536,8 @@ export default function NewListingPage() {
           registrationUrl:   e.registrationUrl   ?? "",
           coverImage:        null,
           coverImageUrl:     e.coverImageUrl  ?? "",
+          photos:            [],
+          photoUrls:         Array.isArray(e.photos) ? e.photos.filter((p: unknown): p is string => typeof p === "string") : [],
         });
       })
       .catch(() => {})
@@ -1427,6 +1588,15 @@ export default function NewListingPage() {
         if (uploadRes.ok) { const { fileUrl } = await uploadRes.json(); coverImageUrl = fileUrl; }
       }
 
+      const photoUrls: string[] = [...form.photoUrls];
+      for (const photo of form.photos) {
+        const fd = new FormData();
+        fd.append("file", photo);
+        fd.append("type", "photo");
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+        if (uploadRes.ok) { const { fileUrl } = await uploadRes.json(); photoUrls.push(fileUrl); }
+      }
+
       const payload = {
         title:             overrideTitle ?? form.title,
         discipline:        form.discipline,
@@ -1455,6 +1625,7 @@ export default function NewListingPage() {
         accessibilityInfo: originalFields.current.accessibilityInfo ?? null,
         submit:            !asDraft,
         coverImageUrl:     coverImageUrl ?? form.coverImageUrl ?? null,
+        photos:            photoUrls,
       };
 
       let res: Response;
