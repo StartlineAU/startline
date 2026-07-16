@@ -106,4 +106,11 @@ variable "database_secret_recovery_window_days" {
   default     = 0
 }
 
+# --- Outline docs ---
+
+variable "docs_droplet_ip" {
+  description = "IP address of the DigitalOcean droplet running Outline docs."
+  type        = string
+}
+
 

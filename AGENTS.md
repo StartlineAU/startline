@@ -75,6 +75,10 @@ prefix = ["/Users/Lachlan/"]
 
 All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, Mailpit) runs on the main checkout — worktrees connect to it. **Never run `docker compose up` in a worktree.** Just `pnpm dev`.
 
+## Outline docs
+
+Internal wiki at `docs.startlineau.com` (self-hosted Outline). Standalone infra in **`StartlineAU/docs`** repo — Docker Compose + DO droplet terraform + Cognito OIDC (separate user pool). DNS record `docs.startlineau.com` managed in this repo's `cloudflare-dns.tf`.
+
 ## Terraform + Amplify CI/CD
 
 Infra in `terraform/`:

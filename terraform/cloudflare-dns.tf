@@ -190,6 +190,18 @@ resource "cloudflare_record" "organiser" {
 }
 
 # Amplify ACM certificate validation — must be DNS-only (unproxied)
+# ===== Outline docs =====
+
+resource "cloudflare_record" "docs" {
+  zone_id = cloudflare_zone.primary.id
+  name    = "docs"
+  type    = "CNAME"
+  ttl     = 3600
+  content = var.docs_droplet_ip
+  proxied = true
+}
+
+# Amplify ACM certificate validation — must be DNS-only (unproxied)
 resource "cloudflare_record" "amplify_cert_validation" {
   zone_id = cloudflare_zone.primary.id
   name    = trimsuffix(local.amplify_cert_record[0], ".")
