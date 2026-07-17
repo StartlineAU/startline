@@ -26,10 +26,11 @@ export async function POST(req: NextRequest) {
 
   if (useS3) {
     const { PutObjectCommand } = await import("@aws-sdk/client-s3");
-    const { s3, S3_BUCKET, S3_REGION } = await import("@/lib/s3");
+    const { s3, S3_BUCKET } = await import("@/lib/s3");
     const key = `uploads/${session.sub}/${type}/${filename}`;
     await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, Body: buffer, ContentType: file.type }));
-    return NextResponse.json({ fileUrl: `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${key}` });
+    const baseUrl = process.env.NEXT_PUBLIC_CDN_URL || `https://${S3_BUCKET}.s3.ap-southeast-2.amazonaws.com`;
+    return NextResponse.json({ fileUrl: `${baseUrl}/${key}` });
   }
 
   // Local dev: save to public/uploads/

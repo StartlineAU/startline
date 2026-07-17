@@ -133,3 +133,17 @@ variable "bucket_cors_allowed_origins" {
   description = "CORS allowed origins for the uploads bucket."
   type        = list(string)
 }
+
+# --- CloudFront CDN ---
+
+variable "cdn_custom_domain" {
+  description = "Custom domain for the upload CDN (e.g. cdn.startlineau.com). Null means use CloudFront default domain."
+  type        = string
+  default     = null
+}
+
+variable "cdn_cert_arn" {
+  description = "ACM certificate ARN (us-east-1) for the CDN custom domain. Required if cdn_custom_domain is set."
+  type        = string
+  default     = null
+}

@@ -200,7 +200,17 @@ resource "cloudflare_record" "organiser" {
   proxied = true
 }
 
-# Amplify ACM certificate validation — must be DNS-only (unproxied)
+# ===== Upload CDN (CloudFront) =====
+
+resource "cloudflare_record" "cdn" {
+  zone_id = cloudflare_zone.primary.id
+  name    = "cdn"
+  type    = "CNAME"
+  ttl     = 1
+  content = module.env["prod"].cdn_distribution_domain_name
+}
+
+# ===== Amplify ACM certificate validation — must be DNS-only (unproxied) =====
 resource "cloudflare_record" "amplify_cert_validation" {
   zone_id = cloudflare_zone.primary.id
   name    = trimsuffix(local.amplify_cert_record[0], ".")

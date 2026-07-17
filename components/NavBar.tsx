@@ -96,6 +96,13 @@ export default function NavBar() {
   const userRef  = useRef<HTMLDivElement>(null);
   const navRef   = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("signin") === "true" && status !== "authenticated") {
+      startTransition(() => setIsSignInOpen(true));
+    }
+  }, [status]);
+
   const fetchName = useCallback(async () => {
     if (role === "organiser") {
       try {
