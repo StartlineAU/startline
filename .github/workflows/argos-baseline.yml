@@ -42,41 +42,12 @@ jobs:
       - run: npx playwright install chromium
       - run: npx prisma generate
       - run: npx prisma migrate deploy
-      - name: Seed database with AWS credentials
+      - name: Seed database
         shell: bash
-        run: |
-          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          CREDS=$(aws sts assume-role-with-web-identity \
-            --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN_READONLY }}" \
-            --role-session-name "gha-seed" \
-            --web-identity-token "$JWT" \
-            --duration-seconds 3600 \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-          export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
-          export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
-          export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
-          export AWS_DEFAULT_REGION=ap-southeast-2
-          npx prisma db seed
+        run: npx prisma db seed
       - name: Start Next.js dev server
         shell: bash
         run: |
-          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          CREDS=$(aws sts assume-role-with-web-identity \
-            --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN_READONLY }}" \
-            --role-session-name "gha-dev" \
-            --web-identity-token "$JWT" \
-            --duration-seconds 3600 \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-          export AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')
-          export AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')
-          export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
-          export AWS_DEFAULT_REGION=ap-southeast-2
           pnpm dev -p 3000 &
           npx wait-on http://localhost:3000/admin/login --timeout 60000
       - run: pnpm test:e2e

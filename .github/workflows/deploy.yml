@@ -27,6 +27,13 @@ jobs:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
           environment: ${{ github.ref_name == 'production' && 'prod' || 'nonprod' }}
 
+      - name: Resolve Amplify app ID
+        id: amplify-app
+        shell: bash
+        run: |
+          APP_ID=$(aws amplify list-apps --query "apps[?name=='startline'].appId" --output text)
+          echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
+
       - name: Start deployment
         id: deployment
         uses: actions/github-script@v9
@@ -56,7 +63,7 @@ jobs:
         shell: bash
         run: |
           JOB_ID=$(aws amplify start-job \
-            --app-id ${{ vars.AMPLIFY_APP_ID }} \
+            --app-id ${{ steps.amplify-app.outputs.app_id }} \
             --branch-name ${{ github.ref_name }} \
             --job-type RELEASE \
             --commit-id ${{ github.sha }} \
@@ -67,7 +74,7 @@ jobs:
           echo "Polling Amplify build $JOB_ID on ${{ github.ref_name }}..."
           for i in $(seq 1 60); do
             STATUS=$(aws amplify get-job \
-              --app-id ${{ vars.AMPLIFY_APP_ID }} \
+              --app-id ${{ steps.amplify-app.outputs.app_id }} \
               --branch-name ${{ github.ref_name }} \
               --job-id "$JOB_ID" \
               --query 'job.summary.status' --output text)
