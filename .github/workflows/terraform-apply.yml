@@ -52,6 +52,7 @@ jobs:
               environment: 'non-production',
               description: 'Terraform apply (${{ github.sha }})',
               auto_merge: false,
+              required_contexts: [],
             })
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
