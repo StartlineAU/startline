@@ -61,10 +61,16 @@ locals {
       phases:
         preBuild:
           commands:
-            - corepack enable && pnpm install --frozen-lockfile
-            - SECRET="startline/nonprod/app" && [ "$AWS_BRANCH" = "prod" ] && SECRET="startline/prod/app" && aws secretsmanager get-secret-value --secret-id "$SECRET" --query SecretString --output text | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env.production
-            - [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production
-            - [ -z "$AWS_PULL_REQUEST_ID" ] && npx prisma migrate deploy
+            - >
+              corepack enable && pnpm install --frozen-lockfile
+              && SECRET="startline/nonprod/app"
+              && [ "$AWS_BRANCH" = "prod" ] && SECRET="startline/prod/app"
+              && aws secretsmanager get-secret-value
+              --secret-id "$SECRET"
+              --query SecretString --output text
+              | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env.production
+              && ( [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production ; true )
+              && ( [ -z "$AWS_PULL_REQUEST_ID" ] && npx prisma migrate deploy ; true )
         build:
           commands:
             - pnpm run build
