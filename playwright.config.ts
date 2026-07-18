@@ -9,7 +9,7 @@ export default defineConfig({
   retries: 1,
   workers: process.env.CI ? 2 : 4,
   reporter: [
-    ["list"],
+    ["dot"],
     ["@argos-ci/playwright/reporter", {}],
   ],
   use: {
