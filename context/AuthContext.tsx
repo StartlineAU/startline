@@ -1,7 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, startTransition } from "react";
 import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
+
+export type Role = "user" | "organiser" | "admin";
 
 export type AuthUser = {
   sub:   string;
@@ -12,6 +14,7 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthContextValue = {
   user:    AuthUser | null;
+  role:    Role | null;
   status:  AuthStatus;
   loading: boolean;
   refresh: () => Promise<void>;
@@ -20,6 +23,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue>({
   user:    null,
+  role:    null,
   status:  "loading",
   loading: true,
   refresh: async () => {},
@@ -28,6 +32,7 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user,   setUser]   = useState<AuthUser | null>(null);
+  const [role,   setRole]   = useState<Role | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const hydrate = useCallback(async () => {
@@ -61,8 +66,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    hydrate();
+    startTransition(() => hydrate());
   }, [hydrate]);
+
+  // Fetch role when auth status changes
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    fetch("/api/user/role")
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!cancelled && data?.role) setRole(data.role);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   const logout = useCallback(async () => {
     await signOut();
@@ -71,15 +91,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        status,
-        loading: status === "loading",
-        refresh: hydrate,
-        logout,
-      }}
-    >
+      <AuthContext.Provider
+        value={{
+          user,
+          role,
+          status,
+          loading: status === "loading",
+          refresh: hydrate,
+          logout,
+        }}
+      >
       {children}
     </AuthContext.Provider>
   );

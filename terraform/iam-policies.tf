@@ -112,7 +112,7 @@ resource "aws_iam_policy" "mcp_server" {
           "secretsmanager:DeleteSecret",
         ]
         Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/tf-bootstrap*",
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
         ]
       },
@@ -133,7 +133,7 @@ resource "aws_iam_policy" "startline_dev" {
         "secretsmanager:ListSecrets",
       ]
       Resource = [
-        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/tf-bootstrap*",
+        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
         "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
       ]
     }]

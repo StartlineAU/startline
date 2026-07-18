@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 
 // The registration flow is a 3-step design: Select ticket → Your details →
 // Review & pay, with a sticky order-summary sidebar. Step 1 uses per-tier
@@ -40,6 +41,12 @@ test.describe("registration flow", () => {
     await expect(cont).toBeDisabled();
     await addTickets(page, 1);
     await expect(cont).toBeEnabled();
+  });
+
+  test("register page visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001/register");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "register-page");
   });
 
   test("quantity stepper adds and removes tickets, updating the total", async ({ page }) => {
@@ -197,6 +204,12 @@ test.describe("registration flow", () => {
 });
 
 test.describe("confirmation page", () => {
+  test("confirmation page visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001/register/confirmation");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "registration-confirmation");
+  });
+
   test("renders standalone with confirmation message and links", async ({ page }) => {
     await page.goto("/events/seed-event-001/register/confirmation");
     await page.waitForLoadState("networkidle");

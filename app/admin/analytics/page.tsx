@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/amplify-server";
 import prisma from "@/lib/prisma";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   TrendingUp, DollarSign, Users, CalendarDays,
@@ -117,7 +116,6 @@ export default async function AdminAnalyticsPage() {
   if (!data) {
     return (
       <div className="min-h-screen bg-dark-darker">
-        <AdminNav />
         <main className="pt-14">
           <div className="max-w-[1200px] mx-auto px-6 py-10">
             <p className="text-muted">Failed to load analytics data.</p>
@@ -136,8 +134,6 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
-
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">
 

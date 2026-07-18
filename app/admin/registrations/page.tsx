@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense, startTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, RefreshCw, RotateCcw, DollarSign } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -171,8 +170,8 @@ function RegistrationsContent() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") ?? undefined;
 
-  const [regs,       setRegs]       = useState<Registration[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  const [regs,       setRegs]       = useState<Registration[] | null>(null);
+  const loading = regs === null;
   const [search,     setSearch]     = useState("");
   const [query,      setQuery]      = useState("");
   const [activeTab,  setActiveTab]  = useState<RegStatus | "ALL">("ALL");
@@ -181,7 +180,6 @@ function RegistrationsContent() {
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchRegs = useCallback(async (status: RegStatus | "ALL", q: string, p: number) => {
-    setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "50" });
       if (status !== "ALL") params.set("status", status);
@@ -196,12 +194,12 @@ function RegistrationsContent() {
       } else {
         setRegs([]);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      setRegs([]);
     }
   }, [eventId]);
 
-  useEffect(() => { fetchRegs(activeTab, query, page); }, [activeTab, query, page, fetchRegs]);
+  useEffect(() => { startTransition(() => fetchRegs(activeTab, query, page)); }, [activeTab, query, page, fetchRegs]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,12 +208,12 @@ function RegistrationsContent() {
   };
 
   const handleRefunded = (id: string) => {
-    setRegs((prev) => prev.map((r) => r.id === id ? { ...r, status: "REFUNDED" } : r));
+    setRegs((prev) => (prev ?? []).map((r) => r.id === id ? { ...r, status: "REFUNDED" } : r));
   };
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">

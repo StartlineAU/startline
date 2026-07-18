@@ -55,6 +55,9 @@ next-env.d.ts
 # prisma local database
 /dev.db
 
+# local Cognito emulator
+/.cognito/
+
 # terraform
 terraform/.terraform/
 terraform/terraform.tfvars

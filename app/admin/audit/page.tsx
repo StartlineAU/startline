@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import { RefreshCw, ShieldCheck } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -67,15 +66,14 @@ const ALL_ACTIONS = [
 ];
 
 export default function AdminAuditPage() {
-  const [logs,       setLogs]       = useState<AuditLog[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  const [logs,       setLogs]       = useState<AuditLog[] | null>(null);
+  const loading = logs === null;
   const [filter,     setFilter]     = useState("");
   const [total,      setTotal]      = useState(0);
   const [page,       setPage]       = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchLogs = useCallback(async (action: string, p: number) => {
-    setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "50" });
       if (action) params.set("action", action);
@@ -88,12 +86,12 @@ export default function AdminAuditPage() {
       } else {
         setLogs([]);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      setLogs([]);
     }
   }, []);
 
-  useEffect(() => { fetchLogs(filter, page); }, [filter, page, fetchLogs]);
+  useEffect(() => { startTransition(() => fetchLogs(filter, page)); }, [filter, page, fetchLogs]);
 
   const handleFilterChange = (action: string) => {
     setFilter(action);
@@ -102,8 +100,6 @@ export default function AdminAuditPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
-
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">
 

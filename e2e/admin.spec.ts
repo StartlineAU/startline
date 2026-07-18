@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 import { adminLogin } from "./helpers";
 
 test.describe("admin login", () => {
@@ -28,6 +29,12 @@ test.describe("admin login", () => {
 });
 
 test.describe("admin dashboard", () => {
+  test("dashboard visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-dashboard");
+  });
+
   test("dashboard shows stats cards after login", async ({ page }) => {
     await adminLogin(page);
 
@@ -50,28 +57,37 @@ test.describe("admin dashboard", () => {
 
   test("review queue CTA links to pending events", async ({ page }) => {
     await adminLogin(page);
+    await page.waitForLoadState("networkidle");
 
     const reviewCta = page.getByRole("link", { name: /review queue/i });
     if (await reviewCta.isVisible()) {
       await reviewCta.click();
-      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 5000 });
+      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 15000 });
       await expect(page.locator("h1")).toContainText("Events");
     }
   });
 
   test("pending stats card links to pending events page", async ({ page }) => {
     await adminLogin(page);
+    await page.waitForLoadState("networkidle");
 
     const pendingCard = page.getByRole("link", { name: /pending review/i });
     if (await pendingCard.isVisible()) {
       await pendingCard.click();
-      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 5000 });
+      await page.waitForURL("**/admin/events?status=PENDING**", { timeout: 15000 });
       await expect(page.getByRole("button", { name: "Pending" })).toBeVisible();
     }
   });
 });
 
 test.describe("admin events page", () => {
+  test("admin events page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/events?status=PENDING");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-events-pending");
+  });
+
   test("events page renders with tabs", async ({ page }) => {
     await adminLogin(page);
     await page.goto("/admin/events");

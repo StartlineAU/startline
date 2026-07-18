@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import { Search, RefreshCw, Ban, CheckCircle2, Building2, UserX } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -126,8 +125,8 @@ function UserRowItem({
 }
 
 export default function AdminUsersPage() {
-  const [users,      setUsers]      = useState<UserRow[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  const [users,      setUsers]      = useState<UserRow[] | null>(null);
+  const loading = users === null;
   const [search,     setSearch]     = useState("");
   const [query,      setQuery]      = useState("");
   const [total,      setTotal]      = useState(0);
@@ -135,7 +134,6 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const fetchUsers = useCallback(async (q: string, p: number) => {
-    setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "50" });
       if (q) params.set("search", q);
@@ -148,12 +146,12 @@ export default function AdminUsersPage() {
       } else {
         setUsers([]);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      setUsers([]);
     }
   }, []);
 
-  useEffect(() => { fetchUsers(query, page); }, [query, page, fetchUsers]);
+  useEffect(() => { startTransition(() => fetchUsers(query, page)); }, [query, page, fetchUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,12 +160,12 @@ export default function AdminUsersPage() {
   };
 
   const handleBanToggled = (id: string, isBanned: boolean) => {
-    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, isBanned } : u));
+    setUsers((prev) => (prev ?? []).map((u) => u.id === id ? { ...u, isBanned } : u));
   };
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">

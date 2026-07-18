@@ -124,6 +124,17 @@ resource "cloudflare_record" "resend_dkim" {
   content = "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCxZV6xZfEAVwIGGNjvbOZlYPABNnYesQswgsrcrHBZNXAzfaGSSSkIp8N5UGpEcPIwofFHj2I8BD9TuKlZk9P0CSOsSar8Ao85og76GI/ZjWTe9e9uWUjdqIuFr/dwS58H9JGpl/qQreeVMPCOyuWpYMsQKNFM8kLPz9VooufRQIDAQAB"
 }
 
+# ===== Outline docs (Docker droplet) =====
+
+resource "cloudflare_record" "docs" {
+  zone_id = cloudflare_zone.primary.id
+  name    = "docs"
+  type    = "A"
+  ttl     = 1
+  content = var.docs_droplet_ip
+  proxied = true
+}
+
 # ===== Apex TXT (verifications + SPF) =====
 
 resource "cloudflare_record" "apex_txt" {
@@ -189,7 +200,17 @@ resource "cloudflare_record" "organiser" {
   proxied = true
 }
 
-# Amplify ACM certificate validation — must be DNS-only (unproxied)
+# ===== Upload CDN (CloudFront) =====
+
+resource "cloudflare_record" "cdn" {
+  zone_id = cloudflare_zone.primary.id
+  name    = "cdn"
+  type    = "CNAME"
+  ttl     = 1
+  content = module.env["prod"].cdn_distribution_domain_name
+}
+
+# ===== Amplify ACM certificate validation — must be DNS-only (unproxied) =====
 resource "cloudflare_record" "amplify_cert_validation" {
   zone_id = cloudflare_zone.primary.id
   name    = trimsuffix(local.amplify_cert_record[0], ".")

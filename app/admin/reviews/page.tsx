@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Star, Eye, EyeOff, BadgeCheck, Trash2, RefreshCw } from "lucide-react";
-import AdminNav from "@/components/admin/AdminNav";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -168,14 +167,17 @@ function AdminReviewsContent() {
   const filterParam  = (searchParams.get("filter") ?? "all").toLowerCase() as Filter;
   const activeFilter = TABS.find((t) => t.filter === filterParam)?.filter ?? "all";
 
-  const [reviews, setReviews] = useState<ReviewRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState<ReviewRow[] | null>(null);
+  const loading = reviews === null;
+
+  const fetchReviews = (filter: Filter) => {
+    fetch(`/api/admin/reviews?filter=${filter}`)
+      .then(r => r.json())
+      .then(data => { setReviews(Array.isArray(data) ? data : []); });
+  };
 
   useEffect(() => {
-    fetch(`/api/admin/reviews?filter=${activeFilter}`)
-      .then(r => r.json())
-      .then(data => { setReviews(Array.isArray(data) ? data : []); })
-      .finally(() => setLoading(false));
+    startTransition(() => fetchReviews(activeFilter));
   }, [activeFilter]);
 
   const switchFilter = (filter: Filter) => {
@@ -185,20 +187,20 @@ function AdminReviewsContent() {
   const handleChanged = (updated: ReviewRow) => {
     setReviews((prev) =>
       activeFilter === "all"
-        ? prev.map((r) => (r.id === updated.id ? updated : r))
-        : prev.filter((r) =>
+        ? (prev ?? []).map((r) => (r.id === updated.id ? updated : r))
+        : (prev ?? []).filter((r) =>
             activeFilter === "published" ? updated.isPublished : !updated.isPublished,
           ),
     );
   };
 
   const handleDeleted = (id: string) => {
-    setReviews((prev) => prev.filter((r) => r.id !== id));
+    setReviews((prev) => (prev ?? []).filter((r) => r.id !== id));
   };
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <AdminNav />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-6 py-10 page-in">

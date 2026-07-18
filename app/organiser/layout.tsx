@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import OrganiserMobileNav from "@/components/organiser/MobileNav";
+import NavBar from "@/components/NavBar";
 import AmplifyProvider from "./AmplifyProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { SettingsProvider } from "@/context/SettingsContext";
@@ -25,8 +25,8 @@ export default function OrganiserLayout({ children }: { children: React.ReactNod
     <AmplifyProvider>
       <AuthProvider>
         <SettingsProvider>
+          <NavBar />
           {children}
-          <OrganiserMobileNav />
           <SettingsModal />
         </SettingsProvider>
       </AuthProvider>

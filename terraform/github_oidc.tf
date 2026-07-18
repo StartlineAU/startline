@@ -29,12 +29,16 @@ data "aws_iam_policy_document" "terraform_ci_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Allow any branch / PR in the repo to assume the role. Tighten the values
-    # list if you want to restrict (e.g. only refs/heads/master).
+    # Admin role is only assumable from protected branches (push/tag events).
+    # PRs use the separate read-only role below.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:*"]
+      values = [
+        "repo:${var.github_repository}:refs/heads/main",
+        "repo:${var.github_repository}:refs/heads/non-production",
+        "repo:${var.github_repository}:refs/heads/production",
+      ]
     }
   }
 }
@@ -44,9 +48,90 @@ resource "aws_iam_role" "terraform_ci" {
   assume_role_policy = data.aws_iam_policy_document.terraform_ci_assume.json
 }
 
-# Broad — terraform CI manages all infra. Swap for a least-privilege custom
-# policy later if desired; AdministratorAccess is the pragmatic default.
 resource "aws_iam_role_policy_attachment" "terraform_ci_admin" {
   role       = aws_iam_role.terraform_ci.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
+# ponytail: read-only role for PR workflows — terraform plan and CI checks.
+# Uses AWS managed ReadOnlyAccess instead of a custom list to avoid whack-a-mole.
+# Cognito admin is needed for e2e seeding.
+
+data "aws_iam_policy_document" "terraform_ci_readonly_assume" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    # Read-only role is safe from any branch — the IAM policy restricts its scope.
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${var.github_repository}:*"]
+    }
+  }
+}
+
+resource "aws_iam_role" "terraform_ci_readonly" {
+  name               = "${var.project_name}-terraform-ci-readonly"
+  assume_role_policy = data.aws_iam_policy_document.terraform_ci_readonly_assume.json
+}
+
+data "aws_iam_policy" "read_only" {
+  arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "readonly_base" {
+  role       = aws_iam_role.terraform_ci_readonly.name
+  policy_arn = data.aws_iam_policy.read_only.arn
+}
+
+resource "aws_iam_policy" "terraform_ci_readonly_extra" {
+  name        = "StartlineCIReadOnlyExtra"
+  description = "Extra permissions beyond ReadOnlyAccess needed by CI/plan workflows"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "SecretsManagerRead"
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/prod/*",
+        ]
+      },
+      {
+        Sid    = "CognitoSeed"
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:ListUsers",
+        ]
+        Resource = module.env["nonprod"].cognito_user_pool_arn
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_ci_readonly_extra" {
+  role       = aws_iam_role.terraform_ci_readonly.name
+  policy_arn = aws_iam_policy.terraform_ci_readonly_extra.arn
 }

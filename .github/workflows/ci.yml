@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/load-env
         with:
-          aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
+          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
           environment: nonprod
       - uses: gitleaks/gitleaks-action@v3
         env:
@@ -41,6 +41,23 @@ jobs:
       - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+
+  typecheck:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
+      - run: pnpm install --frozen-lockfile
+      - run: npx prisma generate
+      - run: pnpm typecheck
 
   test:
     continue-on-error: true
@@ -78,9 +95,18 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Check for sensitive file changes
+        shell: bash
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD \
+            -- prisma/seed.ts scripts/ 2>/dev/null || true)
+          if [ -n "$CHANGED" ]; then
+            echo "::warning::These files changed in this PR — review before merging:"
+            echo "$CHANGED"
+          fi
       - uses: ./.github/actions/load-env
         with:
-          aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
+          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
           environment: nonprod
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -100,7 +126,7 @@ jobs:
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
           CREDS=$(aws sts assume-role-with-web-identity \
             --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
+            --role-arn "${{ vars.AWS_ROLE_ARN_READONLY }}" \
             --role-session-name "gha-seed" \
             --web-identity-token "$JWT" \
             --duration-seconds 3600 \
@@ -119,7 +145,7 @@ jobs:
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
           CREDS=$(aws sts assume-role-with-web-identity \
             --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
+            --role-arn "${{ vars.AWS_ROLE_ARN_READONLY }}" \
             --role-session-name "gha-dev" \
             --web-identity-token "$JWT" \
             --duration-seconds 3600 \

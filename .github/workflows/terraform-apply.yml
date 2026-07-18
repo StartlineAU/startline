@@ -46,16 +46,11 @@ jobs:
           export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
           export AWS_DEFAULT_REGION=ap-southeast-2
 
-          # Fetch bootstrap + app secrets
+          # Export terraform input variables from bootstrap secret
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
-            --secret-id startline/tf-bootstrap \
+            --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
-          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
-
-          APP=$(aws secretsmanager get-secret-value \
-            --secret-id startline/nonprod/app \
-            --query SecretString --output text)
-          echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
 
           # Terraform
           terraform init -input=false

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, ChevronDown, Check, AtSign, ShieldAlert } from "lucide-react";
+import { X, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, ChevronDown, Check, AtSign, ShieldAlert } from "lucide-react";
 import { signIn, signUp, signOut, resetPassword, confirmResetPassword, confirmSignIn } from "aws-amplify/auth";
 import { useAuthContext } from "@/context/AuthContext";
 import { validateUsername } from "@/lib/username-validation";
@@ -191,8 +191,6 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
             }),
           });
           sessionStorage.removeItem("startline_pending_name");
-          sessionStorage.removeItem("startline_pending_dob");
-          sessionStorage.removeItem("startline_pending_phone");
           sessionStorage.removeItem("startline_pending_username");
         }
       } catch {}
@@ -313,6 +311,9 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setError("");
     if (password !== confirm) { setError("Passwords do not match."); return; }
     if (password.length < 8)  { setError("Password must be at least 8 characters."); return; }
+    if (!/[A-Z]/.test(password)) { setError("Password must contain at least one uppercase letter."); return; }
+    if (!/[a-z]/.test(password)) { setError("Password must contain at least one lowercase letter."); return; }
+    if (!/[0-9]/.test(password)) { setError("Password must contain at least one number."); return; }
     setFirstName(""); setLastName(""); setDobDay(""); setDobMonth(""); setDobYear(""); setPhone("");
     setAcceptedTerms(false); setShowTerms(false); setShowPrivacy(false);
     setView("onboarding");
@@ -940,6 +941,9 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
 
               <button onClick={handleContinueOnboarding} disabled={loading} className={btnCls}>
                 {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Saving…</> : <>Continue <ArrowRight className="w-4 h-4" /></>}
+              </button>
+              <button type="button" onClick={() => switchView("signup")} className="w-full font-headline text-[11px] uppercase tracking-widest text-muted hover:text-primary transition-colors py-1 mt-2 flex items-center justify-center gap-1.5">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to signup
               </button>
             </div>
           </>

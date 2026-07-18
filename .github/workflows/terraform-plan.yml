@@ -21,48 +21,69 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: ./.github/actions/load-env
+        with:
+          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
+          environment: nonprod
+
+      - name: Install Terraform
+        shell: bash
+        run: |
+          curl -sLo /tmp/terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
+          unzip -qo /tmp/terraform.zip -d /usr/local/bin
+          terraform version
+
+      - name: Install Infracost
+        shell: bash
+        run: |
+          curl -sL "https://github.com/infracost/infracost/releases/download/v0.10.45/infracost-linux-amd64.tar.gz" -o /tmp/infracost.tar.gz
+          tar -xzf /tmp/infracost.tar.gz -C /tmp
+          mv /tmp/infracost-linux-amd64 /usr/local/bin/infracost
+          infracost configure set api_key $INFRACOST_API_KEY
+
+      # --- Baseline on base branch ---
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Generate Infracost baseline
+        shell: bash
+        run: |
+          terraform init -input=false || true
+          terraform plan -out=/tmp/base.tfplan -no-color -lock=false -input=false || true
+          if [ -f /tmp/base.tfplan ]; then
+            terraform show -json /tmp/base.tfplan > /tmp/plan-base.json
+            infracost breakdown --path /tmp/plan-base.json --format json --out-file /tmp/infracost-base.json || true
+          fi
+
+      # --- PR branch ---
+      - uses: actions/checkout@v5
+
       - name: Terraform plan
         shell: bash
         run: |
-          # Install terraform
-          curl -sLo terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
-          unzip -q terraform.zip -d /tmp/terraform-bin
-          export PATH="/tmp/terraform-bin:$PATH"
-
-          # Auth via OIDC
-          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-
-          CREDS=$(aws sts assume-role-with-web-identity \
-            --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN }}" \
-            --role-session-name "gha-plan" \
-            --web-identity-token "$JWT" \
-            --duration-seconds 3600 \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-
-          AK=$(echo "$CREDS" | awk '{print $1}')
-          SK=$(echo "$CREDS" | awk '{print $2}')
-          ST=$(echo "$CREDS" | awk '{print $3}')
-
-          export AWS_ACCESS_KEY_ID=$AK
-          export AWS_SECRET_ACCESS_KEY=$SK
-          export AWS_SESSION_TOKEN=$ST
-          export AWS_DEFAULT_REGION=ap-southeast-2
-
-          # Fetch bootstrap secrets
-          BOOTSTRAP=$(aws secretsmanager get-secret-value \
-            --secret-id startline/tf-bootstrap \
-            --query SecretString --output text)
-          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
-
-          APP=$(aws secretsmanager get-secret-value \
-            --secret-id startline/nonprod/app \
-            --query SecretString --output text)
-          echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
-
-          # Terraform
           terraform init -input=false
           terraform validate -no-tests
-          terraform plan -no-color -lock=false -input=false
+          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false 2>&1 | tee /tmp/plan-output.txt || true
+
+      - name: Generate Infracost diff
+        shell: bash
+        run: |
+          if [ -f /tmp/pr.tfplan ]; then
+            terraform show -json /tmp/pr.tfplan > /tmp/plan-pr.json 2>&1 || true
+            infracost diff --path /tmp/plan-pr.json --compare-to /tmp/infracost-base.json --format json --out-file /tmp/infracost-diff.json 2>&1 || echo "infracost diff failed (non-blocking)"
+          else
+            echo "No plan file found, skipping Infracost diff" > /tmp/plan-output.txt
+          fi
+
+      - name: Post Infracost comment
+        shell: bash
+        run: |
+          if [ -s /tmp/infracost-diff.json ]; then
+            infracost comment github \
+              --repo ${{ github.repository }} \
+              --pull-request ${{ github.event.pull_request.number }} \
+              --path /tmp/infracost-diff.json \
+              --behavior delete-and-new \
+              --github-token ${{ secrets.GITHUB_TOKEN }} 2>/dev/null || true
+          fi

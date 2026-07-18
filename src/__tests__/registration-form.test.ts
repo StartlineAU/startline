@@ -38,9 +38,9 @@ describe("registration form validation", () => {
 
   it("requires participants to be at least 18", () => {
     const latestAllowed = maxDateOfBirthForMinAge();
-    const [year, month, day] = latestAllowed.split("-").map(Number);
-    const tooYoung = new Date(year, month - 1, day + 1);
-    const tooYoungIso = `${tooYoung.getFullYear()}-${String(tooYoung.getMonth() + 1).padStart(2, "0")}-${String(tooYoung.getDate()).padStart(2, "0")}`;
+    const d = new Date(latestAllowed + "T00:00:00");
+    d.setDate(d.getDate() + 1);
+    const tooYoungIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
     const errors = getRegistrationFormErrors({ ...valid, dateOfBirth: tooYoungIso });
     expect(errors.dateOfBirth).toMatch(/at least 18/i);

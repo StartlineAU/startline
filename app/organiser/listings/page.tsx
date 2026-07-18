@@ -9,7 +9,6 @@ import {
   MoreHorizontal, Pencil, LayoutDashboard,
   ArrowUp, ArrowDown, ArrowUpDown,
 } from "lucide-react";
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -139,8 +138,8 @@ function SortButton({
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function ListingsPage() {
   const router = useRouter();
-  const [events,     setEvents]     = useState<EventRow[]>([]);
-  const [loading,    setLoading]    = useState(true);
+  const [events,     setEvents]     = useState<EventRow[] | null>(null);
+  const loading = events === null;
   const [filter,     setFilter]     = useState<Filter>("all");
   const [confirmDel, setConfirmDel] = useState<EventRow | null>(null);
   const [deleting,   setDeleting]   = useState(false);
@@ -148,11 +147,9 @@ export default function ListingsPage() {
   const [sortDir,    setSortDir]    = useState<SortDir>("asc");
 
   const fetchEvents = useCallback(() => {
-    setLoading(true);
     fetch("/api/organiser/events")
       .then(r => r.ok ? r.json() : [])
-      .then(data => { setEvents(Array.isArray(data) ? data : []); })
-      .finally(() => setLoading(false));
+      .then(data => { setEvents(Array.isArray(data) ? data : []); });
   }, []);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
@@ -163,7 +160,7 @@ export default function ListingsPage() {
   };
 
   const filtered = useMemo(() => {
-    const list = events.filter(e => filter === "all" || e.status === filter);
+    const list = (events ?? []).filter(e => filter === "all" || e.status === filter);
     return [...list].sort((a, b) => {
       if (sortField === "date") {
         const diff = a.eventDate.localeCompare(b.eventDate);
@@ -182,8 +179,9 @@ export default function ListingsPage() {
   }, [events, filter, sortField, sortDir]);
 
   const counts = useMemo(() => {
-    const out: Record<string, number> = { all: events.length };
-    FILTERS.slice(1).forEach(({ k }) => { out[k] = events.filter(e => e.status === k).length; });
+    const list = events ?? [];
+    const out: Record<string, number> = { all: list.length };
+    FILTERS.slice(1).forEach(({ k }) => { out[k] = list.filter(e => e.status === k).length; });
     return out;
   }, [events]);
 
@@ -193,7 +191,7 @@ export default function ListingsPage() {
     try {
       const res = await fetch(`/api/organiser/events/${confirmDel.id}`, { method: "DELETE" });
       if (res.ok) {
-        setEvents(es => es.filter(e => e.id !== confirmDel.id));
+        setEvents(es => (es ?? []).filter(e => e.id !== confirmDel.id));
         setConfirmDel(null);
       }
     } finally {
@@ -211,7 +209,7 @@ export default function ListingsPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+
 
       <main className="pt-14">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 lg:pb-12 page-in">
@@ -226,7 +224,7 @@ export default function ListingsPage() {
                 Your race<br /><span className="text-primary">calendar.</span>
               </h1>
               <p className="text-muted mt-3 text-[14px]">
-                {events.length > 0
+                {events != null && events.length > 0
                   ? `${events.length} listing${events.length !== 1 ? "s" : ""} on the board.`
                   : "No listings yet. Create your first event to get started."}
               </p>
@@ -385,13 +383,13 @@ export default function ListingsPage() {
                 </div>
                 <div className="font-headline text-lg font-black italic text-white mb-1">Nothing here yet</div>
                 <div className="text-muted-dark text-sm">
-                  {events.length === 0 ? "Create your first listing to get started." : "Try clearing the filter."}
+                  {(events ?? []).length === 0 ? "Create your first listing to get started." : "Try clearing the filter."}
                 </div>
               </div>
             )}
           </Card>
 
-          {events.length > 0 && !loading && (
+          {events != null && events.length > 0 && !loading && (
             <Link href="/organiser/new-listing"
               className="group w-full mt-4 border border-dashed border-dark-lighter hover:border-primary bg-transparent rounded-xl p-5 flex items-center justify-center gap-3 text-muted-dark hover:text-primary hover:-translate-y-0.5 active:translate-y-0 transition-[transform,border-color,color] duration-200 ease-out">
               <Plus className="w-5 h-5" />

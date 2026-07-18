@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_secretsmanager_secret" "bootstrap" {
-  name = "startline/tf-bootstrap"
+  name = "startline/ci-bootstrap"
 }
 
 data "aws_secretsmanager_secret_version" "bootstrap" {
@@ -133,7 +133,7 @@ resource "aws_amplify_app" "this" {
         try(local.bootstrap.amplify_repository_access_token, null) != null &&
         try(local.bootstrap.amplify_repository_access_token, "") != ""
       )
-      error_message = "amplify_repository_access_token must be set in startline/tf-bootstrap secret."
+      error_message = "amplify_repository_access_token must be set in startline/ci-bootstrap secret."
     }
   }
 }
@@ -172,6 +172,9 @@ module "env" {
   site_url       = each.value.site_url
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
+
+  cdn_custom_domain = each.key == "prod" ? "cdn.startlineau.com" : null
+  cdn_cert_arn      = each.key == "prod" ? aws_acm_certificate.cdn.arn : null
 }
 
 # Custom apex domain attaches only to the prod branch. Route 53 records that

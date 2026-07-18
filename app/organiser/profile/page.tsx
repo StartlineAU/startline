@@ -8,7 +8,6 @@ import {
   Edit2, CalendarDays, Facebook,
 } from "lucide-react";
 
-import OrganiserTopBar from "@/components/organiser/TopBar";
 import PhotoCarousel from "@/components/organiser/PhotoCarousel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -180,7 +179,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
+
 
       <main className="pt-14 page-in pb-24 lg:pb-0">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10">

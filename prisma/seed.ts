@@ -6,9 +6,10 @@ import {
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
   AdminAddUserToGroupCommand,
-  ListUsersCommand,
+  AdminGetUserCommand,
   ListUsersInGroupCommand,
   UsernameExistsException,
+  UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 const prisma = new PrismaClient({
@@ -73,15 +74,22 @@ async function fetchCognitoSubs(): Promise<{
   subsByEmail: Record<string, string>;
   adminSubs: string[];
 }> {
-  const allUsers = await cognito.send(new ListUsersCommand({
-    UserPoolId: userPoolId,
-  }));
-
   const subsByEmail: Record<string, string> = {};
-  for (const user of allUsers.Users ?? []) {
-    const email = user.Attributes?.find(a => a.Name === "email")?.Value;
-    const sub   = user.Username;
-    if (email && sub) subsByEmail[email] = sub;
+  for (const user of SEED_USERS) {
+    try {
+      const result = await cognito.send(new AdminGetUserCommand({
+        UserPoolId: userPoolId,
+        Username: user.email,
+      }));
+      const email = result.UserAttributes?.find(a => a.Name === "email")?.Value;
+      if (email && result.Username) subsByEmail[email] = result.Username;
+    } catch (err) {
+      if ((err as { name?: string }).name === "UserNotFoundException") {
+        console.warn(`  WARN: Seed user ${user.email} not found in Cognito — skipping`);
+      } else {
+        throw err;
+      }
+    }
   }
 
   const adminResp = await cognito.send(new ListUsersInGroupCommand({
