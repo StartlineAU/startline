@@ -56,7 +56,7 @@ export async function GET(
     }
     const netPayout = Math.max(0, gross - fees);
 
-    const recentRegistrations = registrations.slice(0, 20).map((r: { id: string; athleteName: string | null; athleteEmail: string | null; category: string | null; waveLabel: string | null; gender: string | null; medicalNotes: string | null; amountCents: number; platformFeeCents: number }) => ({
+    const recentRegistrations = registrations.slice(0, 20).map((r: { id: string; athleteName: string | null; athleteEmail: string | null; category: string | null; waveLabel: string | null; gender: string | null; medicalNotes: string | null; amountCents: number; platformFeeCents: number; createdAt: Date }) => ({
       id:           r.id,
       name:         r.athleteName,
       email:        r.athleteEmail,
