@@ -21,39 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Auth & secrets
-        shell: bash
-        run: |
-          JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-
-          CREDS=$(aws sts assume-role-with-web-identity \
-            --region ap-southeast-2 \
-            --role-arn "${{ vars.AWS_ROLE_ARN_READONLY }}" \
-            --role-session-name "gha-plan" \
-            --web-identity-token "$JWT" \
-            --duration-seconds 3600 \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-
-          for var in \
-            "AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')" \
-            "AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')" \
-            "AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')" \
-            "AWS_DEFAULT_REGION=ap-southeast-2"; do
-            echo "$var" >> "$GITHUB_ENV"
-            export "$var"
-          done
-
-          BOOTSTRAP=$(aws secretsmanager get-secret-value \
-            --secret-id startline/ci-bootstrap \
-            --query SecretString --output text)
-          export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
-          INFRACOST_API_KEY=$(echo "$BOOTSTRAP" | jq -r '.INFRACOST_API_KEY')
-          echo "::add-mask::$TF_VAR_docs_droplet_ip"
-          echo "::add-mask::$INFRACOST_API_KEY"
-          echo "TF_VAR_docs_droplet_ip=$TF_VAR_docs_droplet_ip" >> "$GITHUB_ENV"
-          echo "INFRACOST_API_KEY=$INFRACOST_API_KEY" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/load-env
+        with:
+          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
+          environment: nonprod
 
       - name: Install Terraform
         shell: bash
