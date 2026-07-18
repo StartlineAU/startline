@@ -96,8 +96,13 @@ output "amplify_domain_dns_records" {
 }
 
 output "github_actions_role_arn" {
-  description = "Set as GitHub repo variable AWS_ROLE_ARN for the terraform workflows."
+  description = "Set as GitHub repo variable AWS_ROLE_ARN for the terraform apply workflow. Admin access, protected branches only."
   value       = aws_iam_role.terraform_ci.arn
+}
+
+output "github_actions_readonly_role_arn" {
+  description = "Set as GitHub repo variable AWS_ROLE_ARN_READONLY for PR workflows (terraform plan, CI checks)."
+  value       = aws_iam_role.terraform_ci_readonly.arn
 }
 
 output "uploads_bucket_ids" {
