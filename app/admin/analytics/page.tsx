@@ -75,8 +75,8 @@ async function getAnalytics(): Promise<AnalyticsData | null> {
       `,
     ]);
 
-    const statusMap          = Object.fromEntries(eventsByStatus.map((r)    => [r.status,  r._count.id]));
-    const organiserStatusMap = Object.fromEntries(organisersByStatus.map((r) => [r.status, r._count.id]));
+    const statusMap          = Object.fromEntries(eventsByStatus.map((r: { status: string; _count: { id: number } })    => [r.status,  r._count.id]));
+    const organiserStatusMap = Object.fromEntries(organisersByStatus.map((r: { status: string; _count: { id: number } }) => [r.status, r._count.id]));
 
     return {
       events: {
@@ -91,7 +91,7 @@ async function getAnalytics(): Promise<AnalyticsData | null> {
         revenueAud:     (revenueAgg._sum.amountCents       ?? 0) / 100,
         platformFeeAud: (platformFeeAgg._sum.platformFeeCents ?? 0) / 100,
       },
-      topEvents: topEvents.map((e) => ({
+      topEvents: topEvents.map((e: { id: string; title: string; city: string | null; state: string | null; eventDate: Date; _count: { registrations: number } }) => ({
         id: e.id, title: e.title, city: e.city, state: e.state,
         eventDate: e.eventDate, registrationCount: e._count.registrations,
       })),
@@ -100,7 +100,7 @@ async function getAnalytics(): Promise<AnalyticsData | null> {
         suspended: organiserStatusMap["SUSPENDED"] ?? 0,
       },
       users: { total: totalUsers },
-      registrationsByMonth: recentMonths.map((r) => ({ month: r.month, count: Number(r.count) })),
+      registrationsByMonth: recentMonths.map((r: { month: string; count: bigint }) => ({ month: r.month, count: Number(r.count) })),
     };
   } catch (err) {
     console.error("Analytics fetch error:", err);

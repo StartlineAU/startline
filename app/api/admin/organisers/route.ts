@@ -33,7 +33,7 @@ export async function GET() {
       },
     });
 
-    const rows = organisers.map(({ events, _count, ...o }) => ({
+    const rows = organisers.map(({ events, _count, ...o }: { events: { id: string }[]; _count: { events: number; reviews: number; registrations: number } }) => ({
       ...o,
       eventCount:        _count.events,
       liveEventCount:    events.length,

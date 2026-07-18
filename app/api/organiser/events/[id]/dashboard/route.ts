@@ -48,15 +48,15 @@ export async function GET(
     let gross: number;
     let fees: number;
     if (hasRealData) {
-      gross = registrations.reduce((sum, r) => sum + r.amountCents, 0) / 100;
-      fees  = registrations.reduce((sum, r) => sum + r.platformFeeCents, 0) / 100;
+      gross = registrations.reduce((sum: number, r: { amountCents: number; platformFeeCents: number }) => sum + r.amountCents, 0) / 100;
+      fees  = registrations.reduce((sum: number, r: { amountCents: number; platformFeeCents: number }) => sum + r.platformFeeCents, 0) / 100;
     } else {
       gross = lowestPrice * count;
       fees  = count > 0 ? (gross * PLATFORM_FEE_PERCENT) + (count * PLATFORM_FEE_FIXED_CENTS / 100) : 0;
     }
     const netPayout = Math.max(0, gross - fees);
 
-    const recentRegistrations = registrations.slice(0, 20).map(r => ({
+    const recentRegistrations = registrations.slice(0, 20).map((r: { id: string; athleteName: string | null; athleteEmail: string | null; category: string | null; waveLabel: string | null; gender: string | null; medicalNotes: string | null; amountCents: number; platformFeeCents: number }) => ({
       id:           r.id,
       name:         r.athleteName,
       email:        r.athleteEmail,
