@@ -29,17 +29,16 @@ data "aws_iam_policy_document" "terraform_ci_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Admin role is only assumable from protected branches (push/tag events).
-    # PRs use the separate read-only role below.
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:${var.github_repository}:*:refs/heads/main",
-        "repo:${var.github_repository}:*:refs/heads/prod",
-      ]
-    }
+  # Admin role is only assumable from protected branches (push/tag events).
+  # PRs use the separate read-only role below.
+  condition {
+    test     = "StringLike"
+    variable = "token.actions.githubusercontent.com:sub"
+    values = [
+      "repo:${var.github_repository}:*:refs/heads/main",
+    ]
   }
+}
 }
 
 resource "aws_iam_role" "terraform_ci" {
@@ -110,21 +109,8 @@ resource "aws_iam_policy" "terraform_ci_readonly_extra" {
         ]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/prod/*",
         ]
-      },
-      {
-        Sid    = "CognitoSeed"
-        Effect = "Allow"
-        Action = [
-          "cognito-idp:AdminGetUser",
-          "cognito-idp:AdminCreateUser",
-          "cognito-idp:AdminSetUserPassword",
-          "cognito-idp:AdminAddUserToGroup",
-          "cognito-idp:ListUsers",
-        ]
-        Resource = module.env["nonprod"].cognito_user_pool_arn
       },
     ]
   })

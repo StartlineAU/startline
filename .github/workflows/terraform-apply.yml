@@ -25,7 +25,7 @@ jobs:
       - uses: ./.github/actions/load-env
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
-          environment: nonprod
+          environment: prod
 
       - name: Install Terraform
         shell: bash

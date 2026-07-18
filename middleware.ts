@@ -103,17 +103,14 @@ export async function middleware(req: NextRequest) {
   }
 
   if (host === USER_DOMAIN || host === `www.${USER_DOMAIN}`) {
-    if (pathname.startsWith("/admin")) {
-      return NextResponse.redirect(
-        `https://${ORGANISER_DOMAIN}${pathname}${req.nextUrl.search}`
-      );
+    if (pathname === "/waitlist"
+        || pathname.startsWith("/api/waitlist")
+        || pathname.startsWith("/_next")
+        || pathname.startsWith("/images")
+        || pathname.startsWith("/favicon")) {
+      return NextResponse.next();
     }
-    if (pathname.startsWith("/organiser/") && !pathname.startsWith("/organiser-setup")) {
-      return NextResponse.redirect(
-        `https://${ORGANISER_DOMAIN}${pathname}${req.nextUrl.search}`
-      );
-    }
-    return NextResponse.next();
+    return NextResponse.rewrite(new URL("/waitlist", req.url));
   }
 
   if (pathname === "/organiser" || pathname === "/organiser-landing") {

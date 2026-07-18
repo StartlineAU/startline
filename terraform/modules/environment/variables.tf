@@ -13,12 +13,6 @@ variable "amplify_app_id" {
   type        = string
 }
 
-variable "create_amplify_branch" {
-  description = "Whether to create an Amplify branch for this environment."
-  type        = bool
-  default     = true
-}
-
 variable "branch_name" {
   description = "Git branch deployed to this environment (e.g. prod, nonprod)."
   type        = string

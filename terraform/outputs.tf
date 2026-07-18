@@ -9,7 +9,7 @@ output "amplify_app_arn" {
 }
 
 output "amplify_default_domain" {
-  description = "Default amplifyapp.com hostname for the app (branch hostnames use this domain)."
+  description = "Default amplifyapp.com hostname for the app."
   value       = aws_amplify_app.this.default_domain
 }
 
@@ -23,55 +23,44 @@ output "aws_account_id" {
   value       = data.aws_caller_identity.current.account_id
 }
 
-output "database_secret_arns" {
-  description = "Secrets Manager secret ARNs per environment."
-  value       = { for k, m in module.env : k => m.database_secret_arn }
+output "database_secret_arn" {
+  description = "Secrets Manager secret ARN for the database."
+  value       = module.env["prod"].database_secret_arn
 }
 
-output "database_hosts" {
-  description = "RDS hostnames per environment."
-  value       = { for k, m in module.env : k => m.database_host }
+output "database_host" {
+  description = "RDS hostname."
+  value       = module.env["prod"].database_host
 }
 
-output "database_urls" {
-  description = "Full Prisma-style PostgreSQL URLs per environment (sensitive). Prefer Secrets Manager in production."
-  value       = { for k, m in module.env : k => m.database_url }
-  sensitive   = true
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID."
+  value       = module.env["prod"].cognito_user_pool_id
 }
 
-output "route53_nameservers" {
-  description = "Paste these into GoDaddy → Domain → Nameservers (use 'I'll use my own nameservers') to delegate DNS to Route 53."
-  value       = aws_route53_zone.primary.name_servers
+output "cognito_user_pool_arn" {
+  description = "Cognito User Pool ARN."
+  value       = module.env["prod"].cognito_user_pool_arn
 }
 
-output "cognito_user_pool_ids" {
-  description = "Cognito User Pool IDs per environment."
-  value       = { for k, m in module.env : k => m.cognito_user_pool_id }
+output "cognito_issuer_url" {
+  description = "OIDC issuer URL."
+  value       = module.env["prod"].cognito_issuer_url
 }
 
-output "cognito_user_pool_arns" {
-  description = "Cognito User Pool ARNs per environment."
-  value       = { for k, m in module.env : k => m.cognito_user_pool_arn }
+output "cognito_app_client_id" {
+  description = "App Client ID."
+  value       = module.env["prod"].cognito_app_client_id
 }
 
-output "cognito_issuer_urls" {
-  description = "OIDC issuer URLs per environment."
-  value       = { for k, m in module.env : k => m.cognito_issuer_url }
-}
-
-output "cognito_app_client_ids" {
-  description = "App Client IDs per environment."
-  value       = { for k, m in module.env : k => m.cognito_app_client_id }
-}
-
-output "cognito_app_client_secrets" {
-  description = "App Client secrets per environment (sensitive)."
-  value       = { for k, m in module.env : k => m.cognito_app_client_secret }
+output "cognito_app_client_secret" {
+  description = "App Client secret (sensitive)."
+  value       = module.env["prod"].cognito_app_client_secret
   sensitive   = true
 }
 
 output "amplify_domain_dns_records" {
-  description = "DNS records for the apex domain (prod branch only)."
+  description = "DNS records for the apex domain."
   value = var.amplify_custom_domain == null ? [] : concat(
     [
       for s in aws_amplify_domain_association.this[0].sub_domain : {
@@ -91,37 +80,37 @@ output "amplify_domain_dns_records" {
 }
 
 output "github_actions_role_arn" {
-  description = "Set as GitHub repo variable AWS_ROLE_ARN for the terraform apply workflow. Admin access, protected branches only."
+  description = "Set as GitHub repo variable AWS_ROLE_ARN. Admin access, main branch only."
   value       = aws_iam_role.terraform_ci.arn
 }
 
 output "github_actions_readonly_role_arn" {
-  description = "Set as GitHub repo variable AWS_ROLE_ARN_READONLY for PR workflows (terraform plan, CI checks)."
+  description = "Set as GitHub repo variable AWS_ROLE_ARN_READONLY for PR workflows."
   value       = aws_iam_role.terraform_ci_readonly.arn
 }
 
-output "uploads_bucket_ids" {
-  description = "S3 upload bucket names per environment."
-  value       = { for k, m in module.env : k => m.uploads_bucket_id }
+output "uploads_bucket_id" {
+  description = "S3 upload bucket name."
+  value       = module.env["prod"].uploads_bucket_id
 }
 
-output "uploads_bucket_arns" {
-  description = "S3 upload bucket ARNs per environment."
-  value       = { for k, m in module.env : k => m.uploads_bucket_arn }
+output "uploads_bucket_arn" {
+  description = "S3 upload bucket ARN."
+  value       = module.env["prod"].uploads_bucket_arn
 }
 
-output "uploads_bucket_regional_domain_names" {
-  description = "S3 upload bucket regional domain names per environment."
-  value       = { for k, m in module.env : k => m.uploads_bucket_regional_domain_name }
+output "uploads_bucket_regional_domain_name" {
+  description = "S3 upload bucket regional domain name."
+  value       = module.env["prod"].uploads_bucket_regional_domain_name
 }
 
 output "startline_dev_access_key_id" {
-  description = "Access key ID for the startline-dev IAM user (human developers)."
+  description = "Access key ID for the startline-dev IAM user."
   value       = aws_iam_access_key.startline_dev.id
 }
 
 output "startline_dev_secret_access_key" {
-  description = "Secret access key for the startline-dev IAM user. Share with developers via 1Password."
+  description = "Secret access key for the startline-dev IAM user."
   value       = aws_iam_access_key.startline_dev.secret
   sensitive   = true
 }

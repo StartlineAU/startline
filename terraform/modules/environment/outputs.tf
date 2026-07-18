@@ -1,11 +1,11 @@
 output "branch_name" {
   description = "Amplify branch name attached to this environment."
-  value       = var.create_amplify_branch ? aws_amplify_branch.this[0].branch_name : ""
+  value       = aws_amplify_branch.this.branch_name
 }
 
 output "branch_arn" {
   description = "Amplify branch ARN."
-  value       = var.create_amplify_branch ? aws_amplify_branch.this[0].arn : ""
+  value       = aws_amplify_branch.this.arn
 }
 
 output "database_host" {

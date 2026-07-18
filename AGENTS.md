@@ -22,7 +22,7 @@ JWT verification in `middleware.ts` via `jose`. Tokens in Cognito-managed cookie
 
 Uses AWS Cognito with JWT verification in middleware via `jose`. Tokens in Cognito-managed cookies. Only `admins` group used — non-admin users have no special group assignment. Authorisation at the DB level (Prisma).
 
-Non-production pool `ap-southeast-2_KBqIYXOWT`. Users created by `prisma/seed.ts` via `AdminCreateUser` + `AdminSetUserPassword` per seed user, plus `AdminAddUserToGroup` for admin only.
+Production Cognito pool (managed via Terraform). Users created by `prisma/seed.ts` via `AdminCreateUser` + `AdminSetUserPassword` per seed user, plus `AdminAddUserToGroup` for admin only.
 
 ### Account model
 
@@ -56,8 +56,7 @@ All secrets in AWS Secrets Manager, loaded by `.envrc` + direnv. **No `.env` fil
 | Secret | Contents |
 |---|---|
 | `startline/ci-bootstrap` | CI/CD bootstrap (amplify PAT, cloudflare token, resend key, DO token, gitleaks license) |
-| `startline/nonprod/app` | All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.) |
-| `startline/prod/app` | Prod env vars (live values) |
+| `startline/prod/app` | Prod env vars (Cognito IDs, Stripe live keys, S3 creds, etc.) |
 
 `.envrc` at repo root fetches from SM and exports to shell. Hardcoded local constants (Docker Postgres URL, Mailpit SMTP).
 
@@ -79,7 +78,7 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 
 Infra in `terraform/`:
 - `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
-- App deploys via Amplify on branch push: `prod` → live. PR previews deploy automatically to temp URLs against the nonprod backend.
+- App deploys via Amplify on push to `main`. PR previews deploy automatically to temp URLs.
 - No app code CI (no lint/test/build checks)
 
 Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
