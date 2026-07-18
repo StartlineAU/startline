@@ -125,6 +125,16 @@ async function main() {
       console.warn("  Fetching Cognito subs skipped:", (e as Error).message?.split("\n")[0]);
     }
   }
+  // When Cognito isn't reachable, use mock subs so seed still populates the DB
+  if (Object.keys(subsByEmail).length === 0) {
+    console.warn("  Using mock Cognito subs (no real Cognito pool reachable)");
+    subsByEmail = {
+      "admin@startline.test":     "dev-bypass-admin",
+      "organiser@startline.test": "dev-bypass-organiser",
+      "user@startline.test":      "dev-bypass-user",
+    };
+    adminSubs = ["dev-bypass-admin"];
+  }
   console.log(`  Cognito users found: ${Object.keys(subsByEmail).length}`);
 
   await prisma.adminAuditLog.deleteMany();
@@ -205,12 +215,17 @@ async function main() {
   }
 
   if (!orgRecord) {
-    console.error("  Failed to create organiser record.");
-    process.exit(1);
+    console.warn("  Organiser record not created — skipping events that depend on it");
+  } else {
+    console.log("  Organiser: 1 (Apex Endurance Events)");
   }
-  console.log("  Organiser: 1 (Apex Endurance Events)");
 
   const org = orgRecord;
+  if (!org) {
+    console.log("  Events: 0 (no organiser)");
+    console.log("  Seed complete (DB-only, no auth)");
+    return;
+  }
 
   const platformFeeCents = (amountCents: number) =>
     Math.round(amountCents * 0.0395) + 145;
