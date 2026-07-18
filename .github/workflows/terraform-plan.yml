@@ -103,6 +103,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -x
           BODY="/tmp/pr-comment.md"
 
           echo "## Terraform Plan" > "$BODY"
@@ -127,7 +128,7 @@ jobs:
             echo "" >> "$BODY"
             echo "## Infracost" >> "$BODY"
             echo "" >> "$BODY"
-            infracost comment github --path /tmp/infracost-diff.json --dry-run 2>/dev/null | head -c 30000 >> "$BODY"
+            infracost comment github --path /tmp/infracost-diff.json --dry-run 2>&1 | head -c 30000 >> "$BODY"
           fi
 
           # Delete previous bot comment(s) then post new one
