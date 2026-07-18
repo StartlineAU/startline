@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  devIndicators: { buildActivity: false },
   serverExternalPackages: ["pg"],
   transpilePackages: ["maplibre-gl"],
   // A package-lock.json under C:\Users\<you>\ makes Next pick the wrong workspace
