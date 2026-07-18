@@ -63,13 +63,12 @@ locals {
           commands:
             - >
               corepack enable && pnpm install --frozen-lockfile
-              && yum install -y jq
               && SECRET="startline/nonprod/app"
               && [ "$AWS_BRANCH" = "prod" ] && SECRET="startline/prod/app"
               && aws secretsmanager get-secret-value
               --secret-id "$SECRET"
               --query SecretString --output text
-              | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env.production
+              | node -e "const s=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8').trim());for(const[k,v]of Object.entries(s))console.log(k+'='+v)" >> .env.production
               && ( [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production ; true )
               && ( [ -z "$AWS_PULL_REQUEST_ID" ] && npx prisma migrate deploy ; true )
         build:
