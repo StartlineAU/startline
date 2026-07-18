@@ -49,8 +49,11 @@ jobs:
             --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
           export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
+          INFRACOST_API_KEY=$(echo "$BOOTSTRAP" | jq -r '.INFRACOST_API_KEY')
+          echo "::add-mask::$TF_VAR_docs_droplet_ip"
+          echo "::add-mask::$INFRACOST_API_KEY"
           echo "TF_VAR_docs_droplet_ip=$TF_VAR_docs_droplet_ip" >> "$GITHUB_ENV"
-          echo "INFRACOST_API_KEY=$(echo "$BOOTSTRAP" | jq -r '.INFRACOST_API_KEY')" >> "$GITHUB_ENV"
+          echo "INFRACOST_API_KEY=$INFRACOST_API_KEY" >> "$GITHUB_ENV"
 
       - name: Install Terraform
         shell: bash
@@ -100,18 +103,31 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT="## Terraform Plan"
+          BODY="/tmp/pr-comment.md"
+
+          echo "## Terraform Plan" > "$BODY"
 
           PLAN=$(cat /tmp/plan-output.txt)
           MAX_LEN=50000
           if [ ${#PLAN} -gt $MAX_LEN ]; then
-            PLAN="${PLAN:0:$MAX_LEN}%0A... (truncated, see workflow logs for full output)"
+            PLAN="${PLAN:0:$MAX_LEN}"$'\n'"... (truncated, see workflow logs for full output)"
           fi
-          COMMENT="$COMMENT%0A<details><summary>Plan Output</summary>%0A%0A\`\`\`%0A$PLAN%0A\`\`\`%0A</details>"
+
+          {
+            echo ""
+            echo "<details><summary>Plan Output</summary>"
+            echo ""
+            echo '```'
+            echo "$PLAN"
+            echo '```'
+            echo "</details>"
+          } >> "$BODY"
 
           if [ -s /tmp/infracost-diff.json ]; then
-            SUMMARY=$(infracost comment github --path /tmp/infracost-diff.json --dry-run 2>/dev/null | head -c 30000)
-            COMMENT="$COMMENT%0A%0A## Infracost%0A%0A$SUMMARY"
+            echo "" >> "$BODY"
+            echo "## Infracost" >> "$BODY"
+            echo "" >> "$BODY"
+            infracost comment github --path /tmp/infracost-diff.json --dry-run 2>/dev/null | head -c 30000 >> "$BODY"
           fi
 
           # Delete previous bot comment(s) then post new one
@@ -121,4 +137,4 @@ jobs:
               gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" || true
             done
 
-          gh pr comment ${{ github.event.pull_request.number }} --body "$COMMENT" --repo ${{ github.repository }}
+          gh pr comment ${{ github.event.pull_request.number }} --body-file "$BODY" --repo ${{ github.repository }}
