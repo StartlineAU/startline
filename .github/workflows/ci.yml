@@ -95,6 +95,15 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - name: Check for sensitive file changes
+        shell: bash
+        run: |
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...HEAD \
+            -- prisma/seed.ts scripts/ 2>/dev/null || true)
+          if [ -n "$CHANGED" ]; then
+            echo "::warning::These files changed in this PR — review before merging:"
+            echo "$CHANGED"
+          fi
       - uses: ./.github/actions/load-env
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}

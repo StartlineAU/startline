@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 
 async function continueAsGuest(page: import("@playwright/test").Page) {
   const guestBtn = page.getByRole("button", { name: /continue as guest/i });
@@ -30,6 +31,12 @@ test.describe("checkout flow", () => {
 
     await expect(page.getByText(/how would you like to register/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /continue as guest/i })).toBeVisible();
+  });
+
+  test("register page visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001/register");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "register-page");
   });
 
   test("register page loads with registration mode step after guest continue", async ({ page }) => {
@@ -106,6 +113,12 @@ test.describe("checkout flow", () => {
 });
 
 test.describe("confirmation page", () => {
+  test("confirmation page visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001/register/confirmation");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "registration-confirmation");
+  });
+
   test("renders standalone with confirmation message and links", async ({ page }) => {
     await page.goto("/events/seed-event-001/register/confirmation");
     await page.waitForLoadState("networkidle");
