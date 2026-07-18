@@ -64,7 +64,26 @@ export async function getServerSession(): Promise<ServerSession | null> {
 
     const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
     const sub   = payload.sub as string;
-    const email = lastAuthUser;
+
+    // The email must come from the verified id-token `email` claim: access
+    // tokens carry no email, and for this pool `LastAuthUser` is the Cognito
+    // sub (a UUID), not an address. Fall back to LastAuthUser only if it is
+    // itself an email (pools where the username is the email).
+    let email = lastAuthUser.includes("@") ? lastAuthUser : "";
+    const idToken = (
+      cookieStore.get(`CognitoIdentityServiceProvider.${clientId}.${lastAuthUser}.idToken`)?.value ??
+      cookieStore.get(`CognitoIdentityServiceProvider.${clientId}.${encodeURIComponent(lastAuthUser)}.idToken`)?.value
+    );
+    if (idToken) {
+      try {
+        const idPayload = await verifyToken(idToken);
+        if (typeof idPayload.email === "string" && idPayload.email) {
+          email = idPayload.email;
+        }
+      } catch {
+        // Keep the fallback if the id token can't be verified.
+      }
+    }
 
     return { sub, email, groups };
   } catch {
@@ -77,10 +96,14 @@ export async function getUserSession(): Promise<UserSession | null> {
   if (!cognitoSession) return null;
 
   try {
+    // Only write the email when we actually resolved one, so a missing id-token
+    // email never clobbers a good stored address. When present it heals rows
+    // that earlier sign-ins had stamped with the Cognito sub.
+    const emailUpdate = cognitoSession.email ? { email: cognitoSession.email } : {};
     const user = await prisma.user.upsert({
       where:  { cognitoSub: cognitoSession.sub },
-      update: { email: cognitoSession.email },
-      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
+      update: emailUpdate,
+      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email || cognitoSession.sub },
       select: { id: true, email: true, name: true },
     });
     return { sub: user.id, email: user.email, name: user.name };
@@ -119,8 +142,8 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     const admin = await prisma.admin.upsert({
       where:  { cognitoSub: cognitoSession.sub },
-      update: { email: cognitoSession.email },
-      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
+      update: cognitoSession.email ? { email: cognitoSession.email } : {},
+      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email || cognitoSession.sub },
       select: { id: true, email: true, name: true },
     });
     return { sub: admin.id, email: admin.email, name: admin.name };

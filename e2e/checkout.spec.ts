@@ -1,107 +1,198 @@
 import { test, expect } from "@playwright/test";
 
-async function continueAsGuest(page: import("@playwright/test").Page) {
-  const guestBtn = page.getByRole("button", { name: /continue as guest/i });
-  await guestBtn.waitFor({ state: "visible", timeout: 5000 });
-  await guestBtn.click();
-  await page.waitForTimeout(1000);
+// The registration flow is a 3-step design: Select ticket → Your details →
+// Review & pay, with a sticky order-summary sidebar. Step 1 uses per-tier
+// quantity steppers (mixed-tier orders allowed); step 2 shows one form per
+// ticket, as an accordion when there is more than one ticket.
+// seed-event-001 has an open tier (Late Entry) plus closed tiers (Early Bird,
+// General) relative to the test clock.
+const REG = "/events/seed-event-001/register";
+
+/** Click the first open tier's "+" stepper `count` times. */
+async function addTickets(page: import("@playwright/test").Page, count = 1) {
+  const plus = page.getByRole("button", { name: /add one .* ticket/i }).first();
+  for (let i = 0; i < count; i++) await plus.click();
 }
 
-test.describe("checkout flow", () => {
-  test("event detail page shows Register button for startline events", async ({ page }) => {
-    await page.goto("/events");
+test.describe("registration flow", () => {
+  test("shows the 3-step rail and tier selection first", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
 
-    const eventLink = page.locator("a[href*='/events/']").first();
-    if (await eventLink.isVisible()) {
-      await eventLink.click();
-      await page.waitForLoadState("networkidle");
+    await expect(page.getByText(/select ticket/i).first()).toBeVisible();
+    await expect(page.getByText(/your details/i).first()).toBeVisible();
+    await expect(page.getByText(/review & pay/i).first()).toBeVisible();
+    await expect(page.getByText(/choose your tickets/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /secure your/i })).toBeVisible();
+  });
 
-      const registerBtn = page.getByRole("link", { name: /register/i });
-      const hasRegister = await registerBtn.isVisible().catch(() => false);
-      const hasExternal = await page.locator("a[target='_blank']").first().isVisible().catch(() => false);
-      expect(hasRegister || hasExternal).toBeTruthy();
+  test("shows back to event link", async ({ page }) => {
+    await page.goto(REG);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("link", { name: /back to event/i }).first()).toBeVisible();
+  });
+
+  test("Continue is disabled until at least one ticket is added", async ({ page }) => {
+    await page.goto(REG);
+    await page.waitForLoadState("networkidle");
+
+    const cont = page.getByRole("button", { name: /^Continue/ });
+    await expect(cont).toBeDisabled();
+    await addTickets(page, 1);
+    await expect(cont).toBeEnabled();
+  });
+
+  test("quantity stepper adds and removes tickets, updating the total", async ({ page }) => {
+    await page.goto(REG);
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText(/select a tier to see your total/i)).toBeVisible();
+    await addTickets(page, 2);
+    await expect(page.getByText(/order summary/i)).toBeVisible();
+    await expect(page.getByText(/^total$/i)).toBeVisible();
+    await expect(page.getByText(/2 ×/).first()).toBeVisible();
+
+    // Stepping back down to zero clears the summary again.
+    const minus = page.getByRole("button", { name: /remove one .* ticket/i }).first();
+    await minus.click();
+    await minus.click();
+    await expect(page.getByText(/select a tier to see your total/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Continue/ })).toBeDisabled();
+  });
+
+  test("closed ticket tiers show as closed with no quantity stepper", async ({ page }) => {
+    // Regression: closed waves used to be selectable and purchasable.
+    await page.goto(REG);
+    await page.waitForLoadState("networkidle");
+
+    const earlyBird = page.getByText("Early Bird", { exact: true });
+    if (await earlyBird.isVisible().catch(() => false)) {
+      await expect(page.getByText(/closed$/i).first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /add one early bird ticket/i })).toHaveCount(0);
     }
   });
 
-  test("register page shows sign in or guest options when not authenticated", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("details step shows Contact / Personal / Safety with gender + medical", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
+    await addTickets(page, 1);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await expect(page.getByText(/how would you like to register/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /continue as guest/i })).toBeVisible();
+    // Contact / Personal / Safety fields (anchored by id to avoid footer collisions).
+    await expect(page.locator("#p0-firstName")).toBeVisible();
+    await expect(page.locator("#p0-email")).toBeVisible();
+    await expect(page.locator("#p0-gender")).toBeVisible();
+    await expect(page.locator("#p0-ecName")).toBeVisible();
+    await expect(page.locator("#p0-medical")).toBeVisible();
   });
 
-  test("register page loads with registration mode step after guest continue", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("details Continue is gated until required fields are filled", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
+    await addTickets(page, 1);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await expect(page.getByText(/who are you registering/i)).toBeVisible();
+    await expect(page.locator("#p0-firstName")).toBeVisible();
+    const cont = page.getByRole("button", { name: /^Continue/ });
+    await expect(cont).toBeDisabled();
+
+    await page.locator("#p0-firstName").fill("Jordan");
+    await page.locator("#p0-lastName").fill("Clarke");
+    await page.locator("#p0-email").fill("jordan@example.com");
+    await page.locator("#p0-dob").fill("1994-03-20");
+    await page.locator("#p0-ecName").fill("Sam Clarke");
+    await page.locator("#p0-ecPhone").fill("0498 111 222");
+    await expect(cont).toBeEnabled();
   });
 
-  test("register page requires details before payment", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("multi-ticket order shows one accordion form per ticket", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
+    await addTickets(page, 2);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await page.getByRole("button", { name: /I am registering for myself/i }).click();
+    // Each ticket gets a clearly-labelled accordion card; ticket 1 opens first.
+    await expect(page.getByText(/ticket 1 of 2/i)).toBeVisible();
+    await expect(page.getByText(/ticket 2 of 2/i)).toBeVisible();
+    await expect(page.locator("#p0-firstName")).toBeVisible();
+    await expect(page.locator("#p1-firstName")).toHaveCount(0);
 
-    const ticketOption = page.locator("button", { hasText: /\$/ }).first();
-    if (await ticketOption.isVisible()) {
-      await ticketOption.click();
-    }
+    // Shared emergency contact is the default for multi-ticket orders.
+    await expect(page.getByText(/use one emergency contact for all tickets/i)).toBeVisible();
+    await expect(page.locator("#shared-ecName")).toBeVisible();
+    await expect(page.locator("#p0-ecName")).toHaveCount(0);
 
-    const continueBtn = page.getByRole("button", { name: /continue/i });
-    if (await continueBtn.isVisible()) {
-      await continueBtn.click();
-      await expect(page.getByText(/please fix the highlighted fields/i)).toBeVisible();
-    }
+    // Opening ticket 2 collapses ticket 1.
+    await page.getByText(/ticket 2 of 2/i).click();
+    await expect(page.locator("#p1-firstName")).toBeVisible();
+    await expect(page.locator("#p0-firstName")).toHaveCount(0);
   });
 
-  test("register page shows who are you registering options after guest continue", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("opting out of the shared emergency contact shows per-ticket fields", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
+    await addTickets(page, 2);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await expect(page.getByText(/who are you registering/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /I am registering for myself/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /I am registering for someone else/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /I am registering for multiple people/i })).toBeVisible();
-    await expect(page.getByText(/ticket selection/i)).not.toBeVisible();
+    await expect(page.locator("#shared-ecName")).toBeVisible();
+    await page.getByText(/use one emergency contact for all tickets/i).click();
+    await expect(page.locator("#shared-ecName")).toHaveCount(0);
+    // The open ticket form now carries its own emergency contact fields.
+    await expect(page.locator("#p0-ecName")).toBeVisible();
   });
 
-  test("register page shows ticket selection after registration mode chosen", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("ticket quantity is locked on the details step", async ({ page }) => {
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
+    await addTickets(page, 2);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await page.getByRole("button", { name: /I am registering for myself/i }).click();
-    await expect(page.getByText(/ticket selection/i)).toBeVisible();
-    await expect(page.getByRole("heading", { name: /your details/i })).toBeVisible();
+    await expect(page.getByText(/ticket 1 of 2/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /add another participant/i })).toHaveCount(0);
+
+    // Going Back preserves the selection for editing.
+    await page.getByRole("button", { name: /^Back$/i }).click();
+    await expect(page.getByText(/choose your tickets/i)).toBeVisible();
+    await expect(page.getByText(/2 ×/).first()).toBeVisible();
   });
 
-  test("register page shows back to event link", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("the 'Back to event' breadcrumb clears the fixed nav", async ({ page }) => {
+    // Regression: the register page lacked top padding for the fixed 56px nav,
+    // so the breadcrumb rendered underneath the header on every step.
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
 
-    await expect(page.getByRole("link", { name: /back to event/i })).toBeVisible();
+    const nav = await page.locator("nav").first().boundingBox();
+    const crumb = await page.getByRole("link", { name: /back to event/i }).first().boundingBox();
+    expect(nav).not.toBeNull();
+    expect(crumb).not.toBeNull();
+    // The breadcrumb's top must sit at or below the nav's bottom edge.
+    expect(crumb!.y).toBeGreaterThanOrEqual(nav!.y + nav!.height);
   });
 
-  test("register page shows fee breakdown when ticket selected", async ({ page }) => {
-    await page.goto("/events/seed-event-001/register");
+  test("guest email-verify step is never a dead end", async ({ page }) => {
+    // Regression: when the auto-send failed, the verify step showed an error
+    // with no code input and no Resend — stranding the buyer. The code entry
+    // and Resend must be present once a send has been attempted, pass or fail.
+    await page.goto(REG);
     await page.waitForLoadState("networkidle");
-    await continueAsGuest(page);
+    await addTickets(page, 1);
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    await page.getByRole("button", { name: /I am registering for myself/i }).click();
+    await expect(page.locator("#p0-firstName")).toBeVisible();
+    await page.locator("#p0-firstName").fill("Jordan");
+    await page.locator("#p0-lastName").fill("Clarke");
+    // Unique guest email (never the signed-in account) → forces the verify gate.
+    await page.locator("#p0-email").fill(`guest-${Date.now()}@example.com`);
+    await page.locator("#p0-dob").fill("1994-03-20");
+    await page.locator("#p0-ecName").fill("Sam Clarke");
+    await page.locator("#p0-ecPhone").fill("0498 111 222");
+    await page.getByRole("button", { name: /^Continue/ }).click();
 
-    const ticketOption = page.locator("button", { hasText: /\$/ }).first();
-    if (await ticketOption.isVisible()) {
-      await ticketOption.click();
-      await expect(page.getByText(/order summary/i)).toBeVisible();
-      await expect(page.getByText(/total/i)).toBeVisible();
-    }
+    // The verify gate should appear with a usable code entry and a Resend path.
+    await expect(page.getByText(/verify email addresses/i)).toBeVisible();
+    await expect(page.locator('input[inputmode="numeric"]').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: /^Resend$/i }).first()).toBeVisible();
   });
 });
 
@@ -110,8 +201,9 @@ test.describe("confirmation page", () => {
     await page.goto("/events/seed-event-001/register/confirmation");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText(/registration confirmed/i)).toBeVisible();
-    await expect(page.getByRole("link", { name: /view event/i })).toBeVisible();
+    await expect(page.getByText(/registration/i).first()).toBeVisible();
+    await expect(page.getByText(/confirmed/i).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /back to event/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /browse more events/i })).toBeVisible();
   });
 });

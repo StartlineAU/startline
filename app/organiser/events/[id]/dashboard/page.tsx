@@ -31,7 +31,20 @@ interface DashboardData {
     grossRevenue: number; platformFees: number;
     estimatedPayout: number; feeStructure: string; note: string;
   };
+  recentRegistrations: Registration[];
   announcements: Announcement[];
+}
+
+interface Registration {
+  id: string;
+  name: string;
+  email: string;
+  category: string | null;
+  wave: string | null;
+  gender: string | null;
+  medicalNotes: string | null;
+  amount: number;
+  createdAt: string;
 }
 
 interface Announcement {
@@ -161,7 +174,7 @@ export default function EventDashboardPage({
     );
   }
 
-  const { event, payout, announcements } = data;
+  const { event, payout, announcements, recentRegistrations } = data;
   const capacityPct = event.cap ? Math.min(100, Math.round((event.registrationCount / event.cap) * 100)) : null;
 
   return (
@@ -290,7 +303,7 @@ export default function EventDashboardPage({
 
                 <div className="mt-4 pt-3 border-t border-white/5">
                   <p className="text-[11px] text-muted-dark">
-                    Per-tier sales tracking will be available once the registration system is live.
+                    A per-tier breakdown of sales is coming soon. See the Registrations list below for each athlete&apos;s wave.
                   </p>
                 </div>
               </CardContent>
@@ -309,15 +322,51 @@ export default function EventDashboardPage({
                 </Badge>
               </div>
 
-              {event.registrationCount > 0 ? (
-                <div className="text-center py-8">
-                  <Users className="w-8 h-8 mx-auto mb-3 text-muted-dark" />
-                  <div className="font-headline text-sm font-bold uppercase tracking-widest text-muted mb-1">
-                    {event.registrationCount} athlete{event.registrationCount !== 1 ? "s" : ""} registered
-                  </div>
-                  <div className="text-[13px] text-muted-dark">
-                    Individual registration records will appear here in a future update.
-                  </div>
+              {recentRegistrations.length > 0 ? (
+                <div className="overflow-x-auto -mx-2">
+                  <table className="w-full min-w-[560px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5">
+                        {["Athlete", "Wave", "Registered", "Paid"].map((h) => (
+                          <th key={h} className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted-dark text-left px-2 py-2 last:text-right">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentRegistrations.map((r) => (
+                        <tr key={r.id} className="border-b border-white/5 last:border-0">
+                          <td className="px-2 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-headline text-[14px] font-bold text-white/90 truncate max-w-[200px]">{r.name}</span>
+                              {r.medicalNotes && (
+                                <span
+                                  title={`Medical: ${r.medicalNotes}`}
+                                  className="shrink-0 inline-flex items-center gap-1 font-headline text-[9px] font-bold uppercase tracking-widest text-amber-300 bg-amber-400/10 border border-amber-400/20 rounded px-1.5 py-0.5"
+                                >
+                                  <AlertCircle className="w-2.5 h-2.5" /> Medical
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[12px] text-muted-dark truncate max-w-[220px]">{r.email}</div>
+                          </td>
+                          <td className="px-2 py-3">
+                            {r.wave
+                              ? <span className="font-headline text-[12px] text-muted-light">{r.wave}</span>
+                              : <span className="text-[12px] text-muted-dark">—</span>}
+                          </td>
+                          <td className="px-2 py-3 text-[12px] text-muted-light whitespace-nowrap">{timeAgo(r.createdAt)}</td>
+                          <td className="px-2 py-3 font-headline text-[13px] font-black italic text-white text-right whitespace-nowrap">{fmt(r.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {event.registrationCount > recentRegistrations.length && (
+                    <p className="text-[11px] text-muted-dark mt-3 px-2">
+                      Showing the {recentRegistrations.length} most recent of {event.registrationCount.toLocaleString()} registrations.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">

@@ -35,7 +35,8 @@ export async function GET(
         orderBy: { createdAt: "desc" },
         select: {
           id: true, athleteName: true, athleteEmail: true, category: true,
-          waveLabel: true, amountCents: true, platformFeeCents: true, createdAt: true,
+          waveLabel: true, gender: true, medicalNotes: true,
+          amountCents: true, platformFeeCents: true, createdAt: true,
         },
       }),
       prisma.registration.count({ where: { eventId: id, status: "CONFIRMED" } }),
@@ -56,13 +57,15 @@ export async function GET(
     const netPayout = Math.max(0, gross - fees);
 
     const recentRegistrations = registrations.slice(0, 20).map(r => ({
-      id:         r.id,
-      name:       r.athleteName,
-      email:      r.athleteEmail,
-      category:   r.category,
-      wave:       r.waveLabel,
-      amount:     r.amountCents / 100,
-      createdAt:  r.createdAt,
+      id:           r.id,
+      name:         r.athleteName,
+      email:        r.athleteEmail,
+      category:     r.category,
+      wave:         r.waveLabel,
+      gender:       r.gender,
+      medicalNotes: r.medicalNotes,
+      amount:       r.amountCents / 100,
+      createdAt:    r.createdAt,
     }));
 
     const announcements = await prisma.announcement.findMany({

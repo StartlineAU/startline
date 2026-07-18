@@ -2,38 +2,41 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 
 export default function ConfirmationPage() {
   const params = useParams();
   const eventId = params.id as string;
 
   return (
-    <div className="min-h-screen bg-dark-darker flex items-center justify-center">
-      <div className="max-w-[420px] mx-auto px-6 py-16 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-8 h-8 text-primary" />
+    <div className="min-h-screen bg-dark-darker">
+      <div className="max-w-[520px] mx-auto px-5 py-[60px] text-center">
+        <div className="w-[68px] h-[68px] rounded-full bg-primary/10 border-2 border-primary/40 inline-flex items-center justify-center mb-[22px]">
+          <Check className="w-[30px] h-[30px] text-primary" strokeWidth={2.5} />
         </div>
 
-        <h1 className="font-headline text-[28px] font-black italic tracking-tighter text-light mb-3">
-          Registration confirmed
+        <div className="font-headline text-[10px] font-bold uppercase tracking-[0.25em] text-primary mb-2.5">
+          You&apos;re in.
+        </div>
+        <h1 className="font-headline text-[clamp(30px,4vw,46px)] font-bold italic tracking-[-0.04em] text-light leading-[.95] mb-3.5">
+          Registration<br /><span className="text-primary">confirmed.</span>
         </h1>
 
-        <p className="text-[13px] text-muted leading-relaxed mb-8">
-          Your payment has been processed and your spot is secured. You&apos;ll receive a confirmation email shortly with all the event details.
+        <p className="text-[14px] text-muted max-w-[360px] mx-auto mb-8 leading-relaxed">
+          Your payment has been processed and your spot is secured. You&apos;ll receive a
+          confirmation email shortly with all the event details.
         </p>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col items-center gap-3">
           <Link
             href={`/events/${eventId}`}
-            className="inline-flex items-center justify-center gap-2 font-headline text-[13px] font-bold uppercase tracking-widest bg-primary text-dark px-6 py-3 rounded-md hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-machined text-dark font-headline text-[12px] font-bold uppercase tracking-[0.13em] shadow-machined hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all"
           >
-            View event <ArrowRight className="w-3 h-3" />
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to event
           </Link>
-
           <Link
             href="/events"
-            className="font-headline text-[12px] font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors"
+            className="font-headline text-[12px] font-bold uppercase tracking-[0.12em] text-muted hover:text-primary transition-colors"
           >
             Browse more events
           </Link>

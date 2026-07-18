@@ -2,10 +2,12 @@ export interface RegistrationFormData {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
+  gender: string;
   email: string;
   mobile: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
+  medicalNotes: string;
   waiverAccepted: boolean;
 }
 
@@ -27,19 +29,34 @@ export interface EmergencyContact {
 export interface ValidateParticipantsOptions {
   groupRegistration?: boolean;
   sharedEmergencyContact?: EmergencyContact;
+  includeWaiver?: boolean;
 }
 
 export const MAX_REGISTRATION_PARTICIPANTS = 10;
 export const MIN_REGISTRATION_AGE = 18;
+// Each participant is round-tripped through a single Stripe PaymentIntent
+// metadata value (500-char hard limit). Cap the free-text medical note so the
+// serialised participant always fits alongside the other fields.
+export const MAX_MEDICAL_NOTES_LENGTH = 200;
 
 export interface CompactParticipant {
   fn: string;
   ln: string;
   dob: string;
+  gen?: string;
   em: string;
   mob: string;
   ecn: string;
   ecp: string;
+  med?: string;
+  /** Ticket tier (wave label) this participant's ticket belongs to. */
+  wav?: string;
+}
+
+/** One line of a mixed-tier ticket selection: how many tickets of each tier. */
+export interface TicketSelection {
+  waveLabel: string;
+  quantity: number;
 }
 
 export function splitFullName(name: string | null | undefined): { firstName: string; lastName: string } {
@@ -82,7 +99,11 @@ export function calcAgeFromIsoDate(dateOfBirth: string): number {
 export function maxDateOfBirthForMinAge(minAge: number = MIN_REGISTRATION_AGE): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - minAge);
-  return d.toISOString().slice(0, 10);
+  // Build from local date parts to match calcAgeFromIsoDate (which parses the
+  // DOB at local midnight). Using toISOString() here would shift the boundary
+  // by a day in timezones ahead of UTC, mis-gating people born exactly minAge
+  // years ago.
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function isValidIsoDate(dateOfBirth: string): boolean {
@@ -91,10 +112,13 @@ function isValidIsoDate(dateOfBirth: string): boolean {
 
 export function getRegistrationFormErrors(
   data: RegistrationFormData,
-  options?: { includeEmergencyContact?: boolean }
+  options?: { includeEmergencyContact?: boolean; includeWaiver?: boolean }
 ): RegistrationFormErrors {
   const errors: RegistrationFormErrors = {};
   const includeEmergencyContact = options?.includeEmergencyContact !== false;
+  // Waiver/terms acceptance is a single gate on the review step, so step-1
+  // detail validation opts out of it.
+  const includeWaiver = options?.includeWaiver !== false;
 
   if (!data.firstName.trim()) errors.firstName = "First name is required.";
   if (!data.lastName.trim()) errors.lastName = "Last name is required.";
@@ -113,7 +137,7 @@ export function getRegistrationFormErrors(
     errors.email = "Enter a valid email address.";
   }
 
-  if (!data.mobile.trim()) errors.mobile = "Mobile number is required.";
+  // Phone is optional per the registration form design.
 
   if (includeEmergencyContact) {
     if (!data.emergencyContactName.trim()) {
@@ -124,7 +148,7 @@ export function getRegistrationFormErrors(
     }
   }
 
-  if (!data.waiverAccepted) {
+  if (includeWaiver && !data.waiverAccepted) {
     errors.waiverAccepted = "You must accept the event waiver to continue.";
   }
 
@@ -196,10 +220,12 @@ export function createEmptyParticipant(): RegistrationFormData {
     firstName: "",
     lastName: "",
     dateOfBirth: "",
+    gender: "",
     email: "",
     mobile: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    medicalNotes: "",
     waiverAccepted: false,
   };
 }
@@ -209,10 +235,12 @@ export function compactParticipant(data: RegistrationFormData): CompactParticipa
     fn: data.firstName.trim(),
     ln: data.lastName.trim(),
     dob: data.dateOfBirth,
+    ...(data.gender.trim() ? { gen: data.gender.trim() } : {}),
     em: data.email.trim().toLowerCase(),
     mob: data.mobile.trim(),
     ecn: data.emergencyContactName.trim(),
     ecp: data.emergencyContactPhone.trim(),
+    ...(data.medicalNotes.trim() ? { med: data.medicalNotes.trim().slice(0, MAX_MEDICAL_NOTES_LENGTH) } : {}),
   };
 }
 
@@ -221,10 +249,12 @@ export function expandCompactParticipant(compact: CompactParticipant): Registrat
     firstName: compact.fn,
     lastName: compact.ln,
     dateOfBirth: compact.dob,
+    gender: compact.gen ?? "",
     email: compact.em,
     mobile: compact.mob,
     emergencyContactName: compact.ecn,
     emergencyContactPhone: compact.ecp,
+    medicalNotes: compact.med ?? "",
     waiverAccepted: true,
   };
 }
@@ -250,6 +280,7 @@ export function validateParticipants(
   participants.forEach((participant, index) => {
     const fieldErrors = getRegistrationFormErrors(participant, {
       includeEmergencyContact: !groupRegistration,
+      includeWaiver: options?.includeWaiver,
     });
     if (Object.keys(fieldErrors).length === 0) return;
 

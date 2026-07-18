@@ -1,16 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { RegisterField } from "@/components/registration/RegisterField";
+import { RegisterField, registerInputCls } from "@/components/registration/RegisterField";
 import type { EmergencyContactErrors } from "@/lib/registration-form";
-
-const inputCls = (hasError?: boolean) =>
-  cn(
-    "w-full bg-dark-light border rounded-md px-4 py-3 text-[15px] text-light placeholder:text-muted focus:outline-none transition-colors",
-    hasError
-      ? "border-red-500/70 focus:border-red-500"
-      : "border-dark-border focus:border-primary"
-  );
 
 interface SharedEmergencyContactSectionProps {
   name: string;
@@ -26,43 +17,36 @@ export default function SharedEmergencyContactSection({
   onChange,
 }: SharedEmergencyContactSectionProps) {
   return (
-    <div className="bg-dark rounded-xl p-5 space-y-4">
-      <div>
-        <h2 className="font-headline text-xs font-medium uppercase tracking-widest text-primary">
-          Emergency contact
-        </h2>
-        <p className="mt-2 text-[12px] text-muted leading-relaxed">
-          One emergency contact for the whole group. This must be someone other than any participant.
-        </p>
+    <div className="bg-dark border border-dark-lighter rounded-[14px] p-6">
+      <div className="font-headline text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted-dark pb-2.5 border-b border-dark-lighter mb-4">
+        Shared emergency contact
       </div>
+      <p className="text-[12px] text-muted leading-relaxed mb-4">
+        One emergency contact for the whole group. This must be someone other than any participant.
+      </p>
 
-      <RegisterField
-        label="Contact name *"
-        error={errors.emergencyContactName}
-        fieldKey="shared-emergencyContactName"
-      >
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => onChange("name", e.target.value)}
-          placeholder="Jamie Rossi"
-          className={inputCls(!!errors.emergencyContactName)}
-        />
-      </RegisterField>
-
-      <RegisterField
-        label="Contact number *"
-        error={errors.emergencyContactPhone}
-        fieldKey="shared-emergencyContactPhone"
-      >
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => onChange("phone", e.target.value)}
-          placeholder="0400 000 001"
-          className={inputCls(!!errors.emergencyContactPhone)}
-        />
-      </RegisterField>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+        <RegisterField label="Contact name" required error={errors.emergencyContactName} fieldKey="shared-emergencyContactName" htmlFor="shared-ecName">
+          <input
+            id="shared-ecName"
+            type="text"
+            value={name}
+            onChange={(e) => onChange("name", e.target.value)}
+            placeholder="Full name"
+            className={registerInputCls(!!errors.emergencyContactName)}
+          />
+        </RegisterField>
+        <RegisterField label="Contact phone" required error={errors.emergencyContactPhone} fieldKey="shared-emergencyContactPhone" htmlFor="shared-ecPhone">
+          <input
+            id="shared-ecPhone"
+            type="tel"
+            value={phone}
+            onChange={(e) => onChange("phone", e.target.value)}
+            placeholder="e.g. 0412 000 111"
+            className={registerInputCls(!!errors.emergencyContactPhone)}
+          />
+        </RegisterField>
+      </div>
     </div>
   );
 }

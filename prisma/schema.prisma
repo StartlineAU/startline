@@ -246,9 +246,11 @@ model Registration {
   firstName    String?
   lastName     String?
   dateOfBirth  String? // ISO yyyy-mm-dd
+  gender       String?
   mobile       String?
   emergencyContactName  String?
   emergencyContactPhone String?
+  medicalNotes          String?
   waiverAccepted        Boolean @default(false)
   category     String?
   waveLabel    String?

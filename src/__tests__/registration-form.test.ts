@@ -15,10 +15,12 @@ describe("registration form validation", () => {
     firstName: "Alex",
     lastName: "Rossi",
     dateOfBirth: "1995-06-15",
+    gender: "",
     email: "alex@example.com",
     mobile: "0400000000",
     emergencyContactName: "Jamie Rossi",
     emergencyContactPhone: "0400000001",
+    medicalNotes: "",
     waiverAccepted: true,
   };
 
@@ -50,10 +52,12 @@ describe("registration form validation", () => {
       firstName: "",
       lastName: "",
       dateOfBirth: "",
+      gender: "",
       email: "",
       mobile: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
+      medicalNotes: "",
       waiverAccepted: false,
     });
 
@@ -61,7 +65,8 @@ describe("registration form validation", () => {
     expect(errors.lastName).toBeTruthy();
     expect(errors.dateOfBirth).toBeTruthy();
     expect(errors.email).toBeTruthy();
-    expect(errors.mobile).toBeTruthy();
+    // Phone is optional in the registration form design.
+    expect(errors.mobile).toBeUndefined();
     expect(errors.emergencyContactName).toBeTruthy();
     expect(errors.emergencyContactPhone).toBeTruthy();
     expect(errors.waiverAccepted).toBeTruthy();

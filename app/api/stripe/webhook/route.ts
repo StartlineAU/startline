@@ -45,6 +45,16 @@ function parseParticipantsFromMetadata(meta: Stripe.Metadata): CompactParticipan
   return [];
 }
 
+/** Per-tier pricing map written by checkout: { [waveLabel]: { p: priceCents, f: feeCents } }. */
+function parseWavePricing(meta: Stripe.Metadata): Record<string, { p: number; f: number }> {
+  if (!meta.wavePricing) return {};
+  try {
+    return JSON.parse(meta.wavePricing) as Record<string, { p: number; f: number }>;
+  } catch {
+    return {};
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
@@ -133,6 +143,19 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     10
   );
 
+  // Mixed-tier orders: each participant carries its own wave label, priced via
+  // the wavePricing map. Legacy intents fall back to the order-level fields.
+  const wavePricing = parseWavePricing(meta);
+  const waveOf = (participant: CompactParticipant) => participant.wav || meta.waveLabel || null;
+  const priceOf = (participant: CompactParticipant) => {
+    const wav = waveOf(participant);
+    return (wav && wavePricing[wav]?.p) || ticketPriceCents;
+  };
+  const feeOf = (participant: CompactParticipant) => {
+    const wav = waveOf(participant);
+    return (wav && wavePricing[wav]?.f) || platformFeePerTicket;
+  };
+
   // For guest participants (no userId in metadata), create Cognito accounts + Prisma Users
   const existingUserId = meta.userId || "";
   const userIdByEmail: Record<string, string> = {};
@@ -160,13 +183,15 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
         firstName: expanded.firstName,
         lastName: expanded.lastName,
         dateOfBirth: expanded.dateOfBirth,
+        gender: expanded.gender || null,
         mobile: expanded.mobile,
         emergencyContactName: expanded.emergencyContactName,
         emergencyContactPhone: expanded.emergencyContactPhone,
+        medicalNotes: expanded.medicalNotes || null,
         waiverAccepted: true,
-        waveLabel: meta.waveLabel || null,
-        amountCents: ticketPriceCents,
-        platformFeeCents: platformFeePerTicket,
+        waveLabel: waveOf(participant),
+        amountCents: priceOf(participant),
+        platformFeeCents: feeOf(participant),
         feeStructure: meta.feeStructure ?? "athlete",
         status: "CONFIRMED" as const,
         stripePaymentIntentId: paymentIntent.id,
@@ -195,19 +220,24 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   }).catch(err => console.error("Failed to create notification:", err));
 
   if (dbEvent) {
+    // When the athlete absorbs the platform fee, the amount charged is
+    // price + fee — the email total must reflect that, not just the ticket
+    // price. When the organiser absorbs it, the athlete pays the ticket price
+    // only and the service fee shown to them is $0.
+    const athletePaysFee = (meta.feeStructure ?? "athlete") === "athlete";
     for (const participant of participants) {
       if (!participant.em) continue;
-      const name = athleteNameFromParticipant(participant);
-      const amt = formatCents(ticketPriceCents);
+      const ticketCents = priceOf(participant);
+      const feeCents = athletePaysFee ? feeOf(participant) : 0;
       sendRegistrationConfirmationEmail(participant.em, {
         eventName:        dbEvent.title,
         eventDate:        dbEvent.eventDate,
         startTime:        dbEvent.startTime,
-        category:         meta.category || "General",
+        category:         waveOf(participant) || meta.category || "General",
         location:         `${dbEvent.venue}, ${dbEvent.city} ${dbEvent.state}`,
-        registrationFee:  amt,
-        serviceFee:       "$0.00",
-        total:            amt,
+        registrationFee:  formatCents(ticketCents),
+        serviceFee:       formatCents(feeCents),
+        total:            formatCents(ticketCents + feeCents),
         userEmail:        participant.em,
       }).catch((err) => console.error("Failed to send registration confirmation email:", err));
     }
