@@ -28,6 +28,60 @@ test.describe("new listing wizard", () => {
     await argosScreenshot(page, "new-listing-step1");
   });
 
+  test("new listing step 2 visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("E2E Visual Test Event");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await argosScreenshot(page, "new-listing-step2");
+  });
+
+  test("new listing step 3 visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("E2E Visual Test Event");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await page.getByText("Pick start date").click();
+    await page.getByRole("button", { name: /today/i }).click();
+    await page.getByRole("button", { name: /\d{4}/i }).first().click();
+    const timeInputs3 = page.locator('input[type="time"]');
+    await timeInputs3.first().fill("09:00");
+    const addrInput3 = page.getByPlaceholder(/start typing an address/i);
+    await addrInput3.fill("1 Test St, Sydney NSW 2000");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await argosScreenshot(page, "new-listing-step3");
+  });
+
+  test("new listing step 4 visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("E2E Visual Test Event");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await page.getByText("Pick start date").click();
+    await page.getByRole("button", { name: /today/i }).click();
+    await page.getByRole("button", { name: /\d{4}/i }).first().click();
+    const timeInputs4 = page.locator('input[type="time"]');
+    await timeInputs4.first().fill("09:00");
+    const addrInput4 = page.getByPlaceholder(/start typing an address/i);
+    await addrInput4.fill("1 Test St, Sydney NSW 2000");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: /startline/i }).first().click();
+    const price4 = page.locator('input[placeholder="129"]');
+    if (await price4.isVisible()) await price4.fill("50");
+    await page.getByRole("button", { name: /no refunds/i }).click();
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+    await argosScreenshot(page, "new-listing-step4");
+  });
+
   test("new listing final review visual snapshot", async ({ page }) => {
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
@@ -82,5 +136,48 @@ test.describe("organiser dashboard", () => {
     await organiserLogin(page);
 
     await expect(page.getByRole("link", { name: /view my events/i })).toBeVisible();
+  });
+});
+
+test.describe("organiser pages", () => {
+  test("organiser landing page visual snapshot", async ({ page }) => {
+    await page.goto("/organiser");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-landing");
+  });
+
+  test("organiser listings page visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/listings");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-listings");
+  });
+
+  test("organiser event dashboard visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/events/seed-event-001/dashboard");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-event-dashboard");
+  });
+
+  test("organiser payments page visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/payments");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-payments");
+  });
+
+  test("organiser how it works page visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/how-it-works");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-how-it-works");
+  });
+
+  test("organiser profile page visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/profile");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "organiser-profile");
   });
 });

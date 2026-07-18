@@ -44,4 +44,10 @@ test.describe("static pages", () => {
     await page.waitForLoadState("networkidle");
     await expect(page.locator("body")).not.toBeEmpty();
   });
+
+  test("contact page visual snapshot", async ({ page }) => {
+    await page.goto("/contact");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "contact-page");
+  });
 });

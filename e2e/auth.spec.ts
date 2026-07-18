@@ -136,4 +136,10 @@ test.describe("forgot-password route", () => {
     await expect(page.getByText("This page could not be found.")).not.toBeVisible();
     await expect(page.getByRole("button", { name: /send reset code/i })).toBeVisible();
   });
+
+  test("forgot-password page visual snapshot", async ({ page }) => {
+    await page.goto("/auth/forgot-password");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "forgot-password");
+  });
 });

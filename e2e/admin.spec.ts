@@ -100,6 +100,20 @@ test.describe("admin events page", () => {
     await expect(page.getByRole("button", { name: "Rejected" })).toBeVisible();
   });
 
+  test("admin approved events visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/events?status=APPROVED");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-events-approved");
+  });
+
+  test("admin rejected events visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/events?status=REJECTED");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-events-rejected");
+  });
+
   test("pending tab shows pending events after seed", async ({ page }) => {
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
@@ -192,5 +206,57 @@ test.describe("admin organisers page", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByText("Apex Endurance Events", { exact: false })).toBeVisible({ timeout: 10000 });
+  });
+
+  test("organisers page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/organisers");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-organisers");
+  });
+});
+
+test.describe("admin registrations page", () => {
+  test("registrations page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/registrations");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-registrations");
+  });
+});
+
+test.describe("admin reviews page", () => {
+  test("reviews page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/reviews");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-reviews");
+  });
+});
+
+test.describe("admin users page", () => {
+  test("users page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/users");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-users");
+  });
+});
+
+test.describe("admin analytics page", () => {
+  test("analytics page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/analytics");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-analytics");
+  });
+});
+
+test.describe("admin audit log page", () => {
+  test("audit log page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/audit");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-audit");
   });
 });
