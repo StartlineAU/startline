@@ -48,8 +48,16 @@ jobs:
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
-          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
-          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
+          echo "TF_VAR_docs_droplet_ip=$TF_VAR_docs_droplet_ip" >> "$GITHUB_ENV"
+          echo "INFRACOST_API_KEY=$(echo "$BOOTSTRAP" | jq -r '.INFRACOST_API_KEY')" >> "$GITHUB_ENV"
+
+      - name: Install Terraform
+        shell: bash
+        run: |
+          curl -sLo /tmp/terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
+          unzip -q /tmp/terraform.zip -d /usr/local/bin
+          terraform version
 
       - name: Install Infracost
         shell: bash
