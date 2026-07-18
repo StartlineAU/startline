@@ -91,7 +91,7 @@ async function getAnalytics(): Promise<AnalyticsData | null> {
         revenueAud:     (revenueAgg._sum.amountCents       ?? 0) / 100,
         platformFeeAud: (platformFeeAgg._sum.platformFeeCents ?? 0) / 100,
       },
-      topEvents: topEvents.map((e: { id: string; title: string; city: string | null; state: string | null; eventDate: Date; _count: { registrations: number } }) => ({
+      topEvents: topEvents.map((e: any) => ({
         id: e.id, title: e.title, city: e.city, state: e.state,
         eventDate: e.eventDate, registrationCount: e._count.registrations,
       })),
