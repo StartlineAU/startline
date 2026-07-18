@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
@@ -21,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     await prisma.waitlistSubscriber.create({ data: { email } });
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+    if ((e as Record<string, unknown>).code === "P2002") {
       return NextResponse.json({ error: "You're already on the waitlist!" }, { status: 409 });
     }
     console.error("DB error:", e);
