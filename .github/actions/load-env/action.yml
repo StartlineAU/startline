@@ -5,8 +5,8 @@ inputs:
     description: "ARN of the IAM role to assume"
     required: true
   environment:
-    description: "nonprod or prod"
-    default: "nonprod"
+    description: "environment name (prod, etc.)"
+    default: "prod"
 
 runs:
   using: "composite"

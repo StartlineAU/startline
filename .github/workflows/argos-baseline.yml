@@ -31,7 +31,7 @@ jobs:
       - uses: ./.github/actions/load-env
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
-          environment: nonprod
+          environment: prod
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:

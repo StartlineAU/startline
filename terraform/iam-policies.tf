@@ -113,17 +113,16 @@ resource "aws_iam_policy" "mcp_server" {
         ]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
         ]
       },
     ]
   })
 }
 
-# Minimal policy for human developers — read nonprod secrets only.
+# Minimal policy for human developers — read secrets only.
 resource "aws_iam_policy" "startline_dev" {
   name        = "StartlineDevAccess"
-  description = "Minimal permissions for local dev — read nonprod secrets only"
+  description = "Minimal permissions for local dev"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -134,7 +133,6 @@ resource "aws_iam_policy" "startline_dev" {
       ]
       Resource = [
         "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
-        "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
       ]
     }]
   })
