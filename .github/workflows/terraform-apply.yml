@@ -59,20 +59,36 @@ jobs:
 
       - name: Start deployment
         id: tf-deployment
-        uses: bobheadxi/deployments@v1
+        uses: actions/github-script@v9
         with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: non-production
-          ref: ${{ github.sha }}
-          desc: "Terraform apply (${{ github.sha }})"
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'non-production',
+              description: 'Terraform apply (${{ github.sha }})',
+              auto_merge: false,
+            })
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+            })
+            core.setOutput('deployment_id', deployment.data.id)
+            core.setOutput('env', deployment.data.environment)
 
       - name: Finish deployment
-        if: always()
-        uses: bobheadxi/deployments@v1
+        if: always() && steps.tf-deployment.outputs.deployment_id != ''
+        uses: actions/github-script@v9
         with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          env: ${{ steps.tf-deployment.outputs.env }}
-          deployment_id: ${{ steps.tf-deployment.outputs.deployment_id }}
+          script: |
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure'
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: parseInt('${{ steps.tf-deployment.outputs.deployment_id }}'),
+              state: state,
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            })
