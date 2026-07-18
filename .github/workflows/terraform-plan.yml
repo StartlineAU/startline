@@ -69,7 +69,6 @@ jobs:
           tar -xzf /tmp/infracost.tar.gz -C /tmp
           mv /tmp/infracost-linux-amd64 /usr/local/bin/infracost
           infracost configure set api_key $INFRACOST_API_KEY
-          infracost version
 
       # --- Baseline on base branch ---
       - uses: actions/checkout@v5
