@@ -63,6 +63,9 @@ jobs:
             --query SecretString --output text)
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
+          # Source GITHUB_ENV so vars are available in this step, not just subsequent ones
+          source "$GITHUB_ENV"
+
           # Terraform
           terraform init -input=false
           terraform validate -no-tests
