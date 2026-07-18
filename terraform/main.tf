@@ -63,6 +63,7 @@ locals {
           commands:
             - >
               corepack enable && pnpm install --frozen-lockfile
+              && npx prisma generate
               && SECRET="startline/nonprod/app"
               && [ "$AWS_BRANCH" = "prod" ] && SECRET="startline/prod/app"
               && aws secretsmanager get-secret-value
