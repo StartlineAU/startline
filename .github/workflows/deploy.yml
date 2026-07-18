@@ -29,13 +29,27 @@ jobs:
 
       - name: Start deployment
         id: deployment
-        uses: bobheadxi/deployments@v1
+        uses: actions/github-script@v9
         with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: ${{ github.ref_name == 'production' && 'production' || 'non-production' }}
-          ref: ${{ github.sha }}
-          desc: ${{ github.event.head_commit.message }}
+          script: |
+            const env = '${{ github.ref_name == 'production' && 'production' || 'non-production' }}'
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: env,
+              description: context.payload.head_commit?.message || '',
+              auto_merge: false,
+              transient_environment: env !== 'production',
+            })
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+            })
+            core.setOutput('deployment_id', deployment.data.id)
+            core.setOutput('env', deployment.data.environment)
 
       - name: Trigger Amplify build
         id: amplify
@@ -69,12 +83,17 @@ jobs:
           exit 1
 
       - name: Finish deployment
-        if: always()
-        uses: bobheadxi/deployments@v1
+        if: always() && steps.deployment.outputs.deployment_id != ''
+        uses: actions/github-script@v9
         with:
-          step: finish
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: https://${{ github.ref_name == 'production' && 'startlineau.com' || 'nonprod.startlineau.com' }}
+          script: |
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure'
+            const envUrl = '${{ github.ref_name == 'production' && 'https://startlineau.com' || 'https://nonprod.startlineau.com' }}'
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: parseInt('${{ steps.deployment.outputs.deployment_id }}'),
+              state: state,
+              environment_url: envUrl,
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            })
