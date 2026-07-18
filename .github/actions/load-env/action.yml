@@ -11,38 +11,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ap-southeast-2
+        role-session-name: gha-load-env
+
     - shell: bash
       run: |
-        # Assume role via OIDC
-        JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-
-        CREDS=$(aws sts assume-role-with-web-identity \
-          --region ap-southeast-2 \
-          --role-arn "${{ inputs.aws-role-arn }}" \
-          --role-session-name "gha-load-env" \
-          --web-identity-token "$JWT" \
-          --duration-seconds 3600 \
-          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-          --output text)
-
-        AK=$(echo "$CREDS" | awk '{print $1}')
-        SK=$(echo "$CREDS" | awk '{print $2}')
-        ST=$(echo "$CREDS" | awk '{print $3}')
-
-        # Export to GITHUB_ENV for all subsequent steps
-        echo "AWS_ACCESS_KEY_ID=$AK" >> "$GITHUB_ENV"
-        echo "AWS_SECRET_ACCESS_KEY=$SK" >> "$GITHUB_ENV"
-        echo "AWS_SESSION_TOKEN=$ST" >> "$GITHUB_ENV"
-        echo "AWS_DEFAULT_REGION=ap-southeast-2" >> "$GITHUB_ENV"
-        echo "AWS_REGION=ap-southeast-2" >> "$GITHUB_ENV"
-
-        # Also set for current shell (so SM fetch works now)
-        export AWS_ACCESS_KEY_ID=$AK
-        export AWS_SECRET_ACCESS_KEY=$SK
-        export AWS_SESSION_TOKEN=$ST
-        export AWS_DEFAULT_REGION=ap-southeast-2
-
         # Verify
         aws sts get-caller-identity --output text
 
