@@ -136,11 +136,16 @@ jobs:
             infracost comment github --path /tmp/infracost-diff.json --dry-run 2>&1 | head -c 30000 >> "$BODY"
           fi
 
-          # Delete previous bot comment(s) then post new one
+          # Build JSON payload and write to file (avoids shell quoting issues)
+          jq -Rs '{body: .}' < "$BODY" > /tmp/comment-payload.json
+
+          # Delete previous bot comment(s)
           gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            --jq '.[] | select(.user.login == "github-actions[bot]") | .id' | \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | .id' 2>/dev/null | \
             while read id; do
-              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" || true
+              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" --silent || true
             done
 
-          jq -Rs '{body: .}' < "$BODY" | gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" --input -
+          # Post new comment
+          gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --input /tmp/comment-payload.json 2>&1 || echo "Failed to post comment"
