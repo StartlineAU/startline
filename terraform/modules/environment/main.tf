@@ -382,6 +382,11 @@ resource "aws_amplify_branch" "this" {
     },
     var.extra_branch_environment_variables,
   )
+
+  tags = {
+    Environment = var.name == "prod" ? "Prod" : "Stage"
+    Service     = var.project_name
+  }
 }
 
 # ===== S3 upload bucket =====
