@@ -55,16 +55,16 @@ jobs:
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
+          eval "$(echo "$BOOTSTRAP" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"')"
+          eval "$(echo "$BOOTSTRAP" | jq -r 'to_entries[] | "export TF_VAR_\(.key)=\(.value | @sh)"')"
           echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
           echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
           APP=$(aws secretsmanager get-secret-value \
             --secret-id startline/nonprod/app \
             --query SecretString --output text)
+          eval "$(echo "$APP" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"')"
           echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
-
-          # Source GITHUB_ENV so vars are available in this step, not just subsequent ones
-          source "$GITHUB_ENV"
 
           # Terraform
           terraform init -input=false
