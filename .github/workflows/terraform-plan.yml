@@ -103,7 +103,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -x
           BODY="/tmp/pr-comment.md"
 
           echo "## Terraform Plan" > "$BODY"
@@ -138,4 +137,4 @@ jobs:
               gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" || true
             done
 
-          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat "$BODY")" --repo ${{ github.repository }} 2>&1 || echo "gh comment failed with exit $?"
+          jq -Rs '{body: .}' < "$BODY" | gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" --input -
