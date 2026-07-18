@@ -88,6 +88,7 @@ locals {
     prod = {
       branch_name                  = "production"
       amplify_stage                = "PRODUCTION"
+      auto_build_enabled           = false
       vpc_cidr                     = "10.20.0.0/16"
       database_name                = "${var.project_name}_prod"
       database_skip_final_snapshot = false
@@ -99,6 +100,7 @@ locals {
     nonprod = {
       branch_name                  = "non-production"
       amplify_stage                = "DEVELOPMENT"
+      auto_build_enabled           = false
       vpc_cidr                     = "10.21.0.0/16"
       database_name                = "${var.project_name}_nonprod"
       database_skip_final_snapshot = true
@@ -148,7 +150,7 @@ module "env" {
 
   branch_name        = each.value.branch_name
   amplify_stage      = each.value.amplify_stage
-  auto_build_enabled = local.connect_repository
+  auto_build_enabled = each.value.auto_build_enabled
 
   vpc_cidr      = each.value.vpc_cidr
   database_name = each.value.database_name

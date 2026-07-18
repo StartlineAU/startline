@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - non-production
+      - production
+
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'production' && 'production' || 'non-production' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/load-env
+        with:
+          aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
+          environment: ${{ github.ref_name == 'production' && 'prod' || 'nonprod' }}
+
+      - name: Start deployment
+        id: deployment
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: ${{ github.ref_name == 'production' && 'production' || 'non-production' }}
+          ref: ${{ github.sha }}
+          desc: ${{ github.event.head_commit.message }}
+
+      - name: Trigger Amplify build
+        id: amplify
+        shell: bash
+        run: |
+          JOB_ID=$(aws amplify start-job \
+            --app-id ${{ vars.AMPLIFY_APP_ID }} \
+            --branch-name ${{ github.ref_name }} \
+            --job-type RELEASE \
+            --commit-id ${{ github.sha }} \
+            --commit-message "${{ github.event.head_commit.message }}" \
+            --query 'jobSummary.jobId' --output text)
+          echo "amplify_job_id=$JOB_ID" >> $GITHUB_OUTPUT
+
+          echo "Polling Amplify build $JOB_ID on ${{ github.ref_name }}..."
+          for i in $(seq 1 60); do
+            STATUS=$(aws amplify get-job \
+              --app-id ${{ vars.AMPLIFY_APP_ID }} \
+              --branch-name ${{ github.ref_name }} \
+              --job-id "$JOB_ID" \
+              --query 'job.summary.status' --output text)
+            echo "[$i/60] $STATUS"
+            case "$STATUS" in
+              SUCCEED)   echo "Build succeeded"; exit 0 ;;
+              FAILED)    echo "Build failed"; exit 1 ;;
+              CANCELLED) echo "Build cancelled"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "Build timed out after 30 minutes"
+          exit 1
+
+      - name: Finish deployment
+        if: always()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: https://${{ github.ref_name == 'production' && 'startlineau.com' || 'nonprod.startlineau.com' }}
