@@ -48,6 +48,7 @@ jobs:
               environment: env,
               description: context.payload.head_commit?.message || '',
               auto_merge: false,
+              required_contexts: [],
               transient_environment: env !== 'production',
             })
             await github.rest.repos.createDeploymentStatus({
