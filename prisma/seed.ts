@@ -105,13 +105,26 @@ async function main() {
   console.log("🌱 Seeding database…\n");
 
   if (!userPoolId) {
-    console.error("  NEXT_PUBLIC_COGNITO_USER_POOL_ID not set in environment");
-    process.exit(1);
+    console.warn("  NEXT_PUBLIC_COGNITO_USER_POOL_ID not set — skipping Cognito seeding");
+  } else {
+    try {
+      await ensureCognitoUsers();
+    } catch (e) {
+      console.warn("  Cognito seeding skipped — insufficient permissions or pool unavailable:", (e as Error).message?.split("\n")[0]);
+    }
   }
 
-  await ensureCognitoUsers();
-
-  const { subsByEmail, adminSubs } = await fetchCognitoSubs();
+  let subsByEmail: Record<string, string> = {};
+  let adminSubs: string[] = [];
+  if (userPoolId) {
+    try {
+      const result = await fetchCognitoSubs();
+      subsByEmail = result.subsByEmail;
+      adminSubs = result.adminSubs;
+    } catch (e) {
+      console.warn("  Fetching Cognito subs skipped:", (e as Error).message?.split("\n")[0]);
+    }
+  }
   console.log(`  Cognito users found: ${Object.keys(subsByEmail).length}`);
 
   await prisma.adminAuditLog.deleteMany();
