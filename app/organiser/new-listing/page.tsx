@@ -1501,7 +1501,7 @@ export default function NewListingPage() {
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("id");
-    if (!id) { setLoadingEvent(false); return; }
+    if (!id) return;
     fetch(`/api/organiser/events/${id}`)
       .then(r => r.json())
       .then(e => {
