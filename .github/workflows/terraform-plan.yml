@@ -111,7 +111,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BODY="/tmp/pr-comment.md"
-
           echo "## Terraform Plan" > "$BODY"
 
           PLAN=$(cat /tmp/plan-output.txt 2>/dev/null || echo "No plan output available")
@@ -137,16 +136,11 @@ jobs:
             infracost comment github --path /tmp/infracost-diff.json --dry-run 2>&1 | head -c 30000 >> "$BODY"
           fi
 
-          # Build JSON payload and write to file (avoids shell quoting issues)
-          jq -Rs '{body: .}' < "$BODY" > /tmp/comment-payload.json
-
-          # Delete previous bot comment(s)
+          jq -Rs '{body: .}' < "$BODY" > /tmp/comment-payload.json 2>/dev/null
           gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
             --jq '.[] | select(.user.login == "github-actions[bot]") | .id' 2>/dev/null | \
             while read id; do
-              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" --silent || true
+              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" --silent 2>/dev/null || true
             done
-
-          # Post new comment
           gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            --input /tmp/comment-payload.json 2>&1 || echo "Failed to post comment"
+            --input /tmp/comment-payload.json 2>/dev/null || true
