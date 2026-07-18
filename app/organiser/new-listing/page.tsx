@@ -1734,10 +1734,10 @@ export default function NewListingPage() {
                   <div className="font-headline text-[11px] font-bold uppercase tracking-[0.25em] text-primary mb-2">
                     STEP {STEPS[step].n} / {STEPS[STEPS.length - 1].n}
                   </div>
-                  <h1 className="font-headline text-[28px] sm:text-[38px] font-black italic tracking-tighter leading-none text-light">
+                  <h1 className="font-headline text-[28px] sm:text-[38px] font-black italic tracking-tighter leading-tight text-light">
                     {STEP_HEADINGS[step].h}
                   </h1>
-                  <p className="font-headline text-muted mt-2 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
+                  <p className="font-headline text-muted mt-3 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
                 </div>
 
                 {step === 0 && <BasicsStep  form={form} update={update} />}
