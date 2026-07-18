@@ -60,7 +60,12 @@ function isAdmin(payload: JWTPayload): boolean {
   return groups.includes("admins");
 }
 
+const isBypass = process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_AUTH_BYPASS === "true";
+
 export async function middleware(req: NextRequest) {
+  if (isBypass) return NextResponse.next();
+
   const { pathname } = req.nextUrl;
   const host = req.headers.get("host") ?? "";
 

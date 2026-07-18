@@ -367,6 +367,7 @@ resource "aws_cognito_user_group" "this" {
 # ===== Amplify branch =====
 
 resource "aws_amplify_branch" "this" {
+  count       = var.create_amplify_branch ? 1 : 0
   app_id      = var.amplify_app_id
   branch_name = var.branch_name
   stage       = var.amplify_stage

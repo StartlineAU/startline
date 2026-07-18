@@ -69,7 +69,8 @@ locals {
               --secret-id "$SECRET"
               --query SecretString --output text
               | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> .env.production
-            - npx prisma migrate deploy
+            - [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production
+            - [ -z "$AWS_PULL_REQUEST_ID" ] && npx prisma migrate deploy
         build:
           commands:
             - pnpm run build
@@ -86,6 +87,7 @@ locals {
   # captures only the things that diverge between prod and nonprod.
   environments = {
     prod = {
+      create_amplify_branch        = true
       branch_name                  = "prod"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
@@ -98,6 +100,7 @@ locals {
       site_url                     = "https://startlineau.com"
     }
     nonprod = {
+      create_amplify_branch        = false
       branch_name                  = "nonprod"
       amplify_stage                = "DEVELOPMENT"
       auto_build_enabled           = false
@@ -112,7 +115,7 @@ locals {
   }
 }
 
-# Singleton Amplify app. Branches (prod, nonprod) attach via the env module.
+# Singleton Amplify app. Branch (prod) attaches via the env module.
 resource "aws_amplify_app" "this" {
   name       = var.project_name
   platform   = "WEB_COMPUTE"
@@ -124,10 +127,20 @@ resource "aws_amplify_app" "this" {
   repository   = local.connect_repository ? var.amplify_repository_url : null
   access_token = local.connect_repository ? local.bootstrap.amplify_repository_access_token : null
 
-  # App-level env vars apply to BOTH branches. Secrets are fetched from
-  # Secrets Manager at build time via the build spec. Branch-level env vars
-  # (DATABASE_URL, bucket names) are set by the env module.
+  # App-level env vars apply to both the prod branch and PR previews. Secrets
+  # are fetched from Secrets Manager at build time via the build spec.
+  # Branch-level env vars (DATABASE_URL, bucket names) are set by the env module.
   environment_variables = var.amplify_environment_variables
+
+  enable_auto_branch_creation = true
+
+  auto_branch_creation_patterns = ["main"]
+
+  auto_branch_creation_config {
+    enable_pull_request_preview = true
+    enable_auto_build           = false
+    stage                       = "DEVELOPMENT"
+  }
 
   lifecycle {
     precondition {
@@ -148,9 +161,10 @@ module "env" {
   project_name   = var.project_name
   amplify_app_id = aws_amplify_app.this.id
 
-  branch_name        = each.value.branch_name
-  amplify_stage      = each.value.amplify_stage
-  auto_build_enabled = each.value.auto_build_enabled
+  create_amplify_branch = each.value.create_amplify_branch
+  branch_name           = each.value.branch_name
+  amplify_stage         = each.value.amplify_stage
+  auto_build_enabled    = each.value.auto_build_enabled
 
   vpc_cidr      = each.value.vpc_cidr
   database_name = each.value.database_name

@@ -18,11 +18,6 @@ output "amplify_production_branch" {
   value       = module.env["prod"].branch_name
 }
 
-output "amplify_nonprod_branch" {
-  description = "Nonprod branch name in Amplify."
-  value       = module.env["nonprod"].branch_name
-}
-
 output "aws_account_id" {
   description = "AWS account ID resources were created in."
   value       = data.aws_caller_identity.current.account_id
