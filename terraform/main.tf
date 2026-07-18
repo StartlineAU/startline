@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_secretsmanager_secret" "bootstrap" {
-  name = "startline/tf-bootstrap"
+  name = "startline/ci-bootstrap"
 }
 
 data "aws_secretsmanager_secret_version" "bootstrap" {
@@ -133,7 +133,7 @@ resource "aws_amplify_app" "this" {
         try(local.bootstrap.amplify_repository_access_token, null) != null &&
         try(local.bootstrap.amplify_repository_access_token, "") != ""
       )
-      error_message = "amplify_repository_access_token must be set in startline/tf-bootstrap secret."
+      error_message = "amplify_repository_access_token must be set in startline/ci-bootstrap secret."
     }
   }
 }

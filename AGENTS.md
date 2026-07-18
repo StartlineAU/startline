@@ -55,7 +55,7 @@ All secrets in AWS Secrets Manager, loaded by `.envrc` + direnv. **No `.env` fil
 
 | Secret | Contents |
 |---|---|
-| `startline/tf-bootstrap` | Terraform inputs (amplify PAT, cloudflare token, resend key) |
+| `startline/ci-bootstrap` | CI/CD bootstrap (amplify PAT, cloudflare token, resend key, DO token, gitleaks license) |
 | `startline/nonprod/app` | All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.) |
 | `startline/prod/app` | Prod env vars (live values) |
 
