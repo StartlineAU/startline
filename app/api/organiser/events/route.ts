@@ -20,7 +20,7 @@ export async function GET() {
       },
     });
     return NextResponse.json(
-      events.map(({ _count, ...rest }) => ({ ...rest, registrationCount: _count.registrations }))
+      events.map(({ _count, ...rest }: { _count: { registrations: number } }) => ({ ...rest, registrationCount: _count.registrations }))
     );
   } catch {
     return NextResponse.json([]);

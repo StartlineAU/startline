@@ -15,7 +15,7 @@ export async function GET() {
       select:  { id: true, type: true, title: true, body: true, eventId: true, read: true, createdAt: true },
     });
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const unreadCount = notifications.filter((n: { read: boolean }) => !n.read).length;
 
     return NextResponse.json({ notifications, unreadCount });
   } catch {

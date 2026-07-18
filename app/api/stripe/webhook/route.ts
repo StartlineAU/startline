@@ -217,7 +217,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       title: participants.length === 1 ? "New registration" : "New group registration",
       body: notificationBody,
     },
-  }).catch(err => console.error("Failed to create notification:", err));
+  }).catch((err: unknown) => console.error("Failed to create notification:", err));
 
   if (dbEvent) {
     // When the athlete absorbs the platform fee, the amount charged is

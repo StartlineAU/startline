@@ -122,7 +122,7 @@ export async function assertGuestEmailsVerifiedForCheckout(
     select: { email: true, verifiedAt: true },
   });
   const cutoff = Date.now() - GUEST_EMAIL_VERIFICATION_VALID_MS;
-  const verified = new Set(records.filter(r => r.verifiedAt!.getTime() > cutoff).map(r => r.email));
+  const verified = new Set(records.filter((r: { email: string; verifiedAt: Date | null }) => r.verifiedAt!.getTime() > cutoff).map((r: { email: string }) => r.email));
   for (const email of norm) {
     if (!verified.has(email)) return `Email ${email} has not been verified.`;
   }
