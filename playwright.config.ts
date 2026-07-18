@@ -9,7 +9,7 @@ export default defineConfig({
   retries: 1,
   workers: process.env.CI ? 2 : 4,
   reporter: [
-    ["list"],
+    ["dot"],
     ["@argos-ci/playwright/reporter", {}],
   ],
   use: {
@@ -25,7 +25,7 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: "pnpm dev -p 3000",
+        command: "CI=true pnpm dev -p 3000",
         url: "http://localhost:3000/admin/login",
         reuseExistingServer: true,
         timeout: 90000,

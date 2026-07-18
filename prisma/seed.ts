@@ -114,6 +114,7 @@ async function main() {
   const { subsByEmail, adminSubs } = await fetchCognitoSubs();
   console.log(`  Cognito users found: ${Object.keys(subsByEmail).length}`);
 
+  await prisma.adminAuditLog.deleteMany();
   await prisma.registration.deleteMany();
   await prisma.review.deleteMany();
   await prisma.announcement.deleteMany();
@@ -540,6 +541,26 @@ async function main() {
     });
   }
   console.log(`  Waitlist subscribers: ${waitlistEmails.length}`);
+
+  // ── Admin Audit Log ────────────────────────────────────────────────────
+
+  const adminId = adminRecords[0].id;
+  const auditEntries = [
+    { action: "VERIFY_ORGANISER",  targetType: "organiser", targetId: org.id, meta: { orgName: org.orgName } },
+    { action: "APPROVE_EVENT",     targetType: "event",     targetId: event1.id, meta: { eventTitle: event1.title } },
+    { action: "APPROVE_EVENT",     targetType: "event",     targetId: "seed-event-005", meta: { eventTitle: "Sydney Harbour 10K" }, createdAt: new Date("2026-07-01T10:00:00Z") },
+    { action: "REJECT_EVENT",      targetType: "event",     targetId: event4.id, meta: { eventTitle: event4.title, reason: event4.rejectionReason } },
+    { action: "APPROVE_EVENT",     targetType: "event",     targetId: "seed-event-006", meta: { eventTitle: "Gold Coast Marathon Weekend" }, createdAt: new Date("2026-07-15T14:30:00Z") },
+    { action: "HIDE_REVIEW",       targetType: "review",    targetId: "seed-review-001", meta: { reviewerName: "Sarah K." } },
+    { action: "SHOW_REVIEW",       targetType: "review",    targetId: "seed-review-001", meta: { reviewerName: "Sarah K." } },
+  ];
+
+  for (const entry of auditEntries) {
+    await prisma.adminAuditLog.create({
+      data: { adminId, action: entry.action, targetType: entry.targetType, targetId: entry.targetId, meta: entry.meta, createdAt: entry.createdAt } as any,
+    });
+  }
+  console.log(`  Admin audit log entries: ${auditEntries.length}`);
 
   console.log("\n✅ Database seeding complete!");
   console.log(`   Password for all users: ${PASSWORD}`);

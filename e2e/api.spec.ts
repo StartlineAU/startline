@@ -31,6 +31,30 @@ test.describe("checkout API", () => {
   });
 });
 
+test.describe("availability API", () => {
+  test("GET /api/events/[id]/availability returns cap + per-tier confirmed counts", async ({ request }) => {
+    const res = await request.get("/api/events/seed-event-001/availability");
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    // cap is a number or null; confirmed is a count; waves carry qty + confirmed.
+    expect(body).toHaveProperty("confirmed");
+    expect(typeof body.confirmed).toBe("number");
+    expect(Array.isArray(body.waves)).toBe(true);
+    if (body.waves.length > 0) {
+      const w = body.waves[0];
+      expect(w).toHaveProperty("label");
+      expect(w).toHaveProperty("qty");
+      expect(w).toHaveProperty("confirmed");
+      expect(typeof w.confirmed).toBe("number");
+    }
+  });
+
+  test("GET /api/events/[id]/availability returns 404 for a non-existent event", async ({ request }) => {
+    const res = await request.get("/api/events/non-existent-id/availability");
+    expect(res.status()).toBe(404);
+  });
+});
+
 test.describe("stripe webhook", () => {
   // Stripe webhook secret differs in CI — test locally only
   const stripeWebhookTest = process.env.CI ? test.skip : test;

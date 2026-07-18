@@ -143,9 +143,11 @@ Use `gh` CLI — the MCP `server-github` fails for this private org repo.
 
 ### Pre-commit gate
 
-Before staging/committing:
+Before staging/committing — run ALL CI checks locally:
 ```bash
+npx prisma generate          # required before typecheck
 pnpm lint        # 0 errors, 0 warnings
+pnpm typecheck   # 0 errors
 pnpm test        # all tests pass
 pnpm test:e2e    # all pass (needs Docker PostgreSQL running)
 ```

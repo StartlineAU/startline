@@ -17,20 +17,30 @@ import {
 import {
   assertGuestEmailsVerifiedForCheckout,
 } from "@/lib/guest-email-verification";
+import { getCapacityError, hasCappedWave } from "@/lib/registration-capacity";
 
-function normalizeParticipants(body: Record<string, unknown>): RegistrationFormData[] {
+type CheckoutParticipant = RegistrationFormData & { waveLabel?: string };
+
+function todayIso(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function normalizeParticipants(body: Record<string, unknown>): CheckoutParticipant[] {
   if (Array.isArray(body.participants) && body.participants.length > 0) {
-    return body.participants as RegistrationFormData[];
+    return body.participants as CheckoutParticipant[];
   }
 
   return [{
     firstName: String(body.firstName ?? ""),
     lastName: String(body.lastName ?? ""),
     dateOfBirth: String(body.dateOfBirth ?? ""),
+    gender: String(body.gender ?? ""),
     email: String(body.email ?? ""),
     mobile: String(body.mobile ?? ""),
     emergencyContactName: String(body.emergencyContactName ?? ""),
     emergencyContactPhone: String(body.emergencyContactPhone ?? ""),
+    medicalNotes: String(body.medicalNotes ?? ""),
     waiverAccepted: body.waiverAccepted === true,
   }];
 }
@@ -71,12 +81,19 @@ export async function POST(req: NextRequest) {
     const { firstMessage } = validateParticipants(participants, {
       groupRegistration,
       sharedEmergencyContact,
+      // Waiver/terms acceptance is gated client-side by the terms checkbox on the
+      // review step (which precedes the actual charge), so the PaymentIntent is
+      // created without requiring it here.
+      includeWaiver: false,
     });
     if (firstMessage) {
       return NextResponse.json({ error: firstMessage }, { status: 400 });
     }
 
-    if (!eventId || !waveLabel) {
+    // Every ticket resolves to a tier: its own waveLabel (mixed-tier orders) or
+    // the order-level waveLabel (legacy single-tier payloads).
+    const resolvedWaveLabels = participants.map((p) => p.waveLabel || waveLabel || "");
+    if (!eventId || resolvedWaveLabels.some((label) => !label)) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -84,7 +101,7 @@ export async function POST(req: NextRequest) {
       where: { id: eventId },
       select: {
         id: true, title: true, status: true, feeStructure: true, registrationType: true,
-        waves: true,
+        waves: true, cap: true,
         organiser: { select: { id: true, stripeAccountId: true, stripeOnboardingComplete: true } },
       },
     });
@@ -99,14 +116,66 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const waves = event.waves as { label: string; price: string; qty?: number }[] | null;
+    const waves = event.waves as { label: string; price: string; qty?: number; closes?: string; date?: string }[] | null;
     if (!Array.isArray(waves)) return NextResponse.json({ error: "No ticket tiers configured." }, { status: 400 });
 
-    const wave = waves.find((w) => w.label === waveLabel);
-    if (!wave) return NextResponse.json({ error: "Selected ticket tier not found." }, { status: 400 });
+    // Validate and price each tier used by the order.
+    const usedLabels = [...new Set(resolvedWaveLabels)];
+    const wavePricing: Record<string, { p: number; f: number }> = {};
+    for (const label of usedLabels) {
+      const wave = waves.find((w) => w.label === label);
+      if (!wave) return NextResponse.json({ error: "Selected ticket tier not found." }, { status: 400 });
 
-    const ticketPriceCents = Math.round(parseFloat(wave.price || "0") * 100);
-    if (ticketPriceCents <= 0) return NextResponse.json({ error: "Invalid ticket price." }, { status: 400 });
+      // Reject tiers whose sales window has closed (legacy waves store the close
+      // date in `date`). Guards against a stale client or a hand-crafted request.
+      const waveCloses = wave.closes || wave.date;
+      if (waveCloses && waveCloses < todayIso()) {
+        return NextResponse.json({ error: `Ticket tier "${label}" has closed.` }, { status: 409 });
+      }
+
+      const priceCents = Math.round(parseFloat(wave.price || "0") * 100);
+      if (priceCents <= 0) return NextResponse.json({ error: "Invalid ticket price." }, { status: 400 });
+
+      const pricing = calculateTotalWithFee(priceCents, event.feeStructure);
+      wavePricing[label] = { p: priceCents, f: pricing.platformFeeCents };
+    }
+
+    // Capacity guard — never sell past the event cap or a tier's quantity.
+    const requestedByWave = resolvedWaveLabels.reduce<Record<string, number>>((acc, label) => {
+      acc[label] = (acc[label] ?? 0) + 1;
+      return acc;
+    }, {});
+    const needsCapCheck = event.cap != null;
+    const needsWaveCheck = hasCappedWave(waves, usedLabels);
+    if (needsCapCheck || needsWaveCheck) {
+      const confirmedWhere = { eventId, status: "CONFIRMED" as const };
+      const confirmedTotal = needsCapCheck
+        ? await prisma.registration.count({ where: confirmedWhere })
+        : 0;
+      const confirmedByWave: Record<string, number> = {};
+      if (needsWaveCheck) {
+        const grouped = await prisma.registration.groupBy({
+          by: ["waveLabel"],
+          where: confirmedWhere,
+          _count: { _all: true },
+        });
+        for (const row of grouped) {
+          if (row.waveLabel) confirmedByWave[row.waveLabel] = row._count._all;
+        }
+      }
+      const capacityError = getCapacityError({
+        cap: event.cap,
+        confirmedTotal,
+        requestedTotal: participants.length,
+        waves,
+        usedLabels,
+        confirmedByWave,
+        requestedByWave,
+      });
+      if (capacityError) {
+        return NextResponse.json({ error: capacityError }, { status: 409 });
+      }
+    }
 
     const userSession = await getUserSession();
     const emailsToVerify = getEmailsRequiringVerification(
@@ -118,10 +187,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: verificationError }, { status: 400 });
     }
 
-    const perTicket = calculateTotalWithFee(ticketPriceCents, event.feeStructure);
     const participantCount = participants.length;
-    const totalCents = perTicket.totalCents * participantCount;
-    const platformFeeCents = perTicket.platformFeeCents * participantCount;
+    let totalCents = 0;
+    let platformFeeCents = 0;
+    for (const label of resolvedWaveLabels) {
+      const { p, f } = wavePricing[label];
+      totalCents += event.feeStructure === "athlete" ? p + f : p;
+      platformFeeCents += f;
+    }
 
     const participantsForPayment =
       groupRegistration && sharedEmergencyContact
@@ -138,26 +211,44 @@ export async function POST(req: NextRequest) {
       participantCount: String(participantCount),
     };
     participantsForPayment.forEach((participant, index) => {
-      participantMetadata[`participant${index}`] = JSON.stringify(compactParticipant(participant));
+      participantMetadata[`participant${index}`] = JSON.stringify({
+        ...compactParticipant(participant),
+        wav: resolvedWaveLabels[index],
+      });
     });
 
+    const primaryWave = wavePricing[resolvedWaveLabels[0]];
+
+    // Stripe only permits application_fee_amount alongside a connected account
+    // (transfer_data.destination). In dev direct-charge mode there is no
+    // connected account, so the charge lands on the platform account with no
+    // application fee.
+    const useConnect = Boolean(event.organiser.stripeAccountId) && !isDirectCharge;
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalCents,
       currency: "aud",
-      application_fee_amount: platformFeeCents,
-      ...(event.organiser.stripeAccountId && !isDirectCharge
-        ? { transfer_data: { destination: event.organiser.stripeAccountId } }
+      // Card-only checkout to match the registration payment design (plain
+      // card number / expiry / CVC, no multi-method accordion).
+      payment_method_types: ["card"],
+      ...(useConnect
+        ? {
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination: event.organiser.stripeAccountId as string },
+          }
         : {}),
       metadata: {
         eventId,
-        waveLabel,
+        // Legacy single-tier fields (first ticket's tier); per-ticket truth
+        // lives in participantN.wav + wavePricing.
+        waveLabel: resolvedWaveLabels[0],
+        wavePricing: JSON.stringify(wavePricing),
         userName: athleteName,
         userEmail: athleteEmail,
         organiserId: event.organiser.id,
         userId: userSession?.sub ?? "",
-        ticketPriceCents: String(ticketPriceCents),
+        ticketPriceCents: String(primaryWave.p),
         platformFeeCents: String(platformFeeCents),
-        platformFeeCentsPerTicket: String(perTicket.platformFeeCents),
+        platformFeeCentsPerTicket: String(primaryWave.f),
         feeStructure: event.feeStructure,
         groupRegistration: groupRegistration ? "true" : "false",
         ...participantMetadata,

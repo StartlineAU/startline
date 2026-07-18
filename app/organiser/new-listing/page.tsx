@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, startTransition } from "react";
+import { useState, useRef, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
@@ -140,7 +140,7 @@ function DatePickerPopover({
     return () => document.removeEventListener("mousedown", h);
   }, []);
   useEffect(() => {
-    if (value) { const [y, m] = value.split("-").map(Number); startTransition(() => { setViewYear(y); setViewMonth(m - 1); }); }
+    if (value) { startTransition(() => { const [y, m] = value.split("-").map(Number); setViewYear(y); setViewMonth(m - 1); }); }
   }, [value]);
 
   const toIso = (d: number) => `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -198,8 +198,7 @@ function DatePickerPopover({
       </button>
 
       {open && (
-        <div tabIndex={-1} onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
-          className="absolute top-full left-0 mt-2 z-50 bg-dark border border-dark-lighter rounded-xl shadow-xl p-4 w-full sm:w-72 modal-in">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-dark border border-dark-lighter rounded-xl shadow-xl p-4 w-full sm:w-72 modal-in">
           {isRange && (
             <div className="mb-3 flex items-center justify-between">
               <span className={`font-headline text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-md ${picking === "start" ? "bg-primary/10 text-primary" : "text-muted-dark"}`}>
@@ -927,8 +926,12 @@ function GalleryThumb({ src, onRemove }: { src: string; onRemove: () => void }) 
 }
 
 function GalleryFileThumb({ file, onRemove }: { file: File; onRemove: () => void }) {
-  const src = useMemo(() => URL.createObjectURL(file), [file]);
-  useEffect(() => () => URL.revokeObjectURL(src), [src]);
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    startTransition(() => setSrc(url));
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
   return src ? <GalleryThumb src={src} onRemove={onRemove} /> : null;
 }
 
@@ -1083,8 +1086,12 @@ function LivePreview({ form }: { form: FormState }) {
   const sDay  = sp[2] || null;
   const sMon  = sp[1] ? MONTHS_SHORT[parseInt(sp[1]) - 1] : null;
   const price = form.waves.find(w => w.price === "0" || !!w.price)?.price;
-  const coverSrc = useMemo(() => form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null, [form.coverImage, form.coverImageUrl]);
-  useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
+  const [coverSrc, setCoverSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null;
+    startTransition(() => setCoverSrc(url));
+    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
+  }, [form.coverImage, form.coverImageUrl]);
   const descriptionText = stripHtml(form.description || "");
 
   return (
@@ -1216,11 +1223,19 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
   const fmtCloseDate = (iso: string) =>
     new Date(iso + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 
-  const coverSrc = useMemo(() => (form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl) || null, [form.coverImage, form.coverImageUrl]);
-  useEffect(() => () => { if (coverSrc?.startsWith("blob:")) URL.revokeObjectURL(coverSrc); }, [coverSrc]);
+  const [coverSrc, setCoverSrc] = useState<string | null>(null);
+  useEffect(() => {
+    const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
+    startTransition(() => setCoverSrc(url || null));
+    return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
+  }, [form.coverImage, form.coverImageUrl]);
 
-  const photoSrcs = useMemo(() => form.photos.map(f => URL.createObjectURL(f)), [form.photos]);
-  useEffect(() => () => photoSrcs.forEach(u => URL.revokeObjectURL(u)), [photoSrcs]);
+  const [photoSrcs, setPhotoSrcs] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = form.photos.map(f => URL.createObjectURL(f));
+    startTransition(() => setPhotoSrcs(urls));
+    return () => urls.forEach(u => URL.revokeObjectURL(u));
+  }, [form.photos]);
   const gallery = [...form.photoUrls, ...photoSrcs];
 
   const prizeAmount = form.prizeMoney ? normalisePrizeAmount(form.prizeMoneyAmount) : "";
@@ -1469,7 +1484,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const [step,            setStep]            = useState(0);
   const [form,            setForm]            = useState<FormState>(INITIAL);
-  const [loadingEvent,    setLoadingEvent]    = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("id"));
+  const [loadingEvent,    setLoadingEvent]    = useState(false);
   const [saving,          setSaving]          = useState(false);
   const [apiError,        setApiError]        = useState("");
   const [submitErrors,    setSubmitErrors]    = useState<number[]>([]);
@@ -1527,7 +1542,7 @@ export default function NewListingPage() {
         });
       })
       .catch(() => {})
-      .finally(() => { setLoadingEvent(false); setStep(4); setVisited(new Set([0, 1, 2, 3, 4])); });
+      .finally(() => setLoadingEvent(false));
   }, []);
 
   const stepHasErrors = (s: number): boolean => {
@@ -1562,7 +1577,7 @@ export default function NewListingPage() {
     setStep(target);
   };
 
-  const submitToApi = async (asDraft: boolean, overrideTitle?: string): Promise<void> => {
+  const submitToApi = async (asDraft: boolean, overrideTitle?: string): Promise<boolean> => {
     setSaving(true); setApiError(""); setSubmitErrors([]);
     try {
       let coverImageUrl: string | null = null;
@@ -1571,7 +1586,7 @@ export default function NewListingPage() {
         fd.append("file", form.coverImage);
         fd.append("type", "cover");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!uploadRes.ok) { setApiError("Cover image upload failed. Please try again or remove the image."); return; }
+        if (!uploadRes.ok) { setApiError("Cover image upload failed. Please try again or remove the image."); return false; }
         const { fileUrl } = await uploadRes.json(); coverImageUrl = fileUrl;
       }
 
@@ -1581,7 +1596,7 @@ export default function NewListingPage() {
         fd.append("file", photo);
         fd.append("type", "photo");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!uploadRes.ok) { setApiError(`Gallery photo "${photo.name}" failed to upload. Please try again or remove it.`); return; }
+        if (!uploadRes.ok) { setApiError(`Gallery photo "${photo.name}" failed to upload. Please try again or remove it.`); return false; }
         const { fileUrl } = await uploadRes.json(); photoUrls.push(fileUrl);
       }
 
@@ -1624,11 +1639,13 @@ export default function NewListingPage() {
       }
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return; }
+      if (!res.ok) { setApiError(data.error ?? "Something went wrong."); return false; }
       if (asDraft && !eventId && data.id) setEventId(data.id);
       router.push("/organiser/dashboard");
+      return true;
     } catch {
       setApiError("Something went wrong. Please check your connection and try again.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -1657,9 +1674,7 @@ export default function NewListingPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-
-      <div className="pt-14">
-        <div className="anim-fade-slide">
+      <div className="anim-fade-slide">
 
           {/* Sticky header */}
           <div className="sticky top-16 z-30 bg-dark/95 backdrop-blur border-b border-dark-lighter">
@@ -1719,11 +1734,10 @@ export default function NewListingPage() {
                   <div className="font-headline text-[11px] font-bold uppercase tracking-[0.25em] text-primary mb-2">
                     STEP {STEPS[step].n} / {STEPS[STEPS.length - 1].n}
                   </div>
-                  <h1 className="font-headline text-[28px] sm:text-[38px] font-black italic tracking-tighter leading-none text-light">
+                  <h1 className="font-headline text-[28px] sm:text-[38px] font-black italic tracking-tighter leading-tight text-light">
                     {STEP_HEADINGS[step].h}
                   </h1>
-                  <p className="font-headline text-muted mt-2 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
-                  <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mt-2"><span className="text-primary font-black text-[13px]">*</span> = required</div>
+                  <p className="font-headline text-muted mt-3 max-w-lg text-[14px]">{STEP_HEADINGS[step].sub}</p>
                 </div>
 
                 {step === 0 && <BasicsStep  form={form} update={update} />}
@@ -1801,7 +1815,6 @@ export default function NewListingPage() {
               <LivePreview form={form} />
             </aside>
           </div>
-        </div>
       </div>
 
       {showFullPreview && <EventFullPreview form={form} onClose={() => setShowFullPreview(false)} />}

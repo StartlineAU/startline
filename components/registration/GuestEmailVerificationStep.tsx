@@ -151,11 +151,16 @@ export default function GuestEmailVerificationStep({
             )}
           </div>
 
-          {sending[email] && !sent[email] && (
+          {sending[email] && !sent[email] && !errors[email] && (
             <p className="text-[12px] text-muted">Sending code…</p>
           )}
 
-          {sent[email] && !verified[email] && (
+          {/* Show the code-entry UI once a send has been attempted — whether it
+              succeeded or errored. A failed initial send must never dead-end the
+              step: the buyer still gets the input plus a Resend button so they
+              can recover (a code may already have been sent, or they can retry
+              once the resend cooldown clears). */}
+          {(sent[email] || errors[email]) && !verified[email] && (
             <>
               <div>
                 <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
@@ -202,10 +207,6 @@ export default function GuestEmailVerificationStep({
                 </button>
               </div>
             </>
-          )}
-
-          {errors[email] && !sent[email] && !verified[email] && (
-            <p className="font-headline text-[11px] font-medium text-red-400">{errors[email]}</p>
           )}
         </div>
       ))}
