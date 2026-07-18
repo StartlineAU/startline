@@ -25,7 +25,7 @@ export const revalidate = 60;
 export async function generateStaticParams() {
   try {
     const events = await getAllEvents();
-    return events.map((e) => ({ id: e.id }));
+    return events.map((e: { id: string }) => ({ id: e.id }));
   } catch {
     return [];
   }
@@ -34,7 +34,7 @@ export async function generateStaticParams() {
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const raw = await getAllEvents();
-  const found = raw.find((e) => e.id === id);
+  const found = raw.find((e: { id: string }) => e.id === id);
   if (!found) notFound();
 
   const event = toUserEvent(found);
