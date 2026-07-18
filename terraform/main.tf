@@ -64,7 +64,7 @@ locals {
             - corepack enable && pnpm install --frozen-lockfile
             - >
               SECRET="startline/nonprod/app"
-              && [ "$AWS_BRANCH" = "production" ] && SECRET="startline/prod/app"
+              && [ "$AWS_BRANCH" = "prod" ] && SECRET="startline/prod/app"
               && aws secretsmanager get-secret-value
               --secret-id "$SECRET"
               --query SecretString --output text
@@ -86,7 +86,7 @@ locals {
   # captures only the things that diverge between prod and nonprod.
   environments = {
     prod = {
-      branch_name                  = "production"
+      branch_name                  = "prod"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
       vpc_cidr                     = "10.20.0.0/16"
@@ -98,7 +98,7 @@ locals {
       site_url                     = "https://startlineau.com"
     }
     nonprod = {
-      branch_name                  = "non-production"
+      branch_name                  = "nonprod"
       amplify_stage                = "DEVELOPMENT"
       auto_build_enabled           = false
       vpc_cidr                     = "10.21.0.0/16"

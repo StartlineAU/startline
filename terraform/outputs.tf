@@ -18,8 +18,8 @@ output "amplify_production_branch" {
   value       = module.env["prod"].branch_name
 }
 
-output "amplify_non_production_branch" {
-  description = "Non-production branch name in Amplify."
+output "amplify_nonprod_branch" {
+  description = "Nonprod branch name in Amplify."
   value       = module.env["nonprod"].branch_name
 }
 

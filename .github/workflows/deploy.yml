@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - non-production
-      - production
+      - nonprod
+      - prod
 
 concurrency:
   group: ${{ github.ref_name }}
@@ -19,14 +19,14 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'production' && 'prod' || 'nonprod' }}
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'nonprod' }}
     steps:
       - uses: actions/checkout@v5
 
       - uses: ./.github/actions/load-env
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
-          environment: ${{ github.ref_name == 'production' && 'prod' || 'nonprod' }}
+          environment: ${{ github.ref_name == 'prod' && 'prod' || 'nonprod' }}
 
       - name: Resolve Amplify app ID
         id: amplify-app
@@ -40,7 +40,7 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const env = '${{ github.ref_name == 'production' && 'prod' || 'nonprod' }}'
+            const env = '${{ github.ref_name == 'prod' && 'prod' || 'nonprod' }}'
             const deployment = await github.rest.repos.createDeployment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -97,7 +97,7 @@ jobs:
         with:
           script: |
             const state = '${{ job.status }}' === 'success' ? 'success' : 'failure'
-            const envUrl = '${{ github.ref_name == 'production' && 'https://startlineau.com' || 'https://nonprod.startlineau.com' }}'
+            const envUrl = '${{ github.ref_name == 'prod' && 'https://startlineau.com' || 'https://nonprod.startlineau.com' }}'
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
