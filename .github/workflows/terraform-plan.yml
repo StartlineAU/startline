@@ -105,42 +105,14 @@ jobs:
             echo "No plan file found, skipping Infracost diff" > /tmp/plan-output.txt
           fi
 
-      - name: Post PR comment
+      - name: Post Infracost comment
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BODY="/tmp/pr-comment.md"
-          echo "## Terraform Plan" > "$BODY"
-
-          PLAN=$(cat /tmp/plan-output.txt 2>/dev/null || echo "No plan output available")
-          MAX_LEN=50000
-          if [ ${#PLAN} -gt $MAX_LEN ]; then
-            PLAN="${PLAN:0:$MAX_LEN}"$'\n'"... (truncated, see workflow logs for full output)"
-          fi
-
-          {
-            echo ""
-            echo "<details><summary>Plan Output</summary>"
-            echo ""
-            echo '```'
-            echo "$PLAN"
-            echo '```'
-            echo "</details>"
-          } >> "$BODY"
-
           if [ -s /tmp/infracost-diff.json ]; then
-            echo "" >> "$BODY"
-            echo "## Infracost" >> "$BODY"
-            echo "" >> "$BODY"
-            infracost comment github --path /tmp/infracost-diff.json --dry-run 2>&1 | head -c 30000 >> "$BODY"
+            infracost comment github \
+              --repo ${{ github.repository }} \
+              --pull-request ${{ github.event.pull_request.number }} \
+              --path /tmp/infracost-diff.json \
+              --behavior delete-and-new \
+              --github-token ${{ secrets.GITHUB_TOKEN }} 2>/dev/null || true
           fi
-
-          jq -Rs '{body: .}' < "$BODY" > /tmp/comment-payload.json 2>/dev/null
-          gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            --jq '.[] | select(.user.login == "github-actions[bot]") | .id' 2>/dev/null | \
-            while read id; do
-              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" --silent 2>/dev/null || true
-            done
-          gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            --input /tmp/comment-payload.json 2>/dev/null || true
