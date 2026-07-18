@@ -64,7 +64,6 @@ jobs:
             --branch-name main \
             --job-type RELEASE \
             --commit-id ${{ github.sha }} \
-            --commit-message "${{ github.event.head_commit.message }}" \
             --query 'jobSummary.jobId' --output text)
           echo "amplify_job_id=$JOB_ID" >> $GITHUB_OUTPUT
 
