@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 import { adminLogin } from "./helpers";
 
 test.describe("admin login", () => {
@@ -28,6 +29,11 @@ test.describe("admin login", () => {
 });
 
 test.describe("admin dashboard", () => {
+  test("dashboard visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await argosScreenshot(page, "admin-dashboard");
+  });
+
   test("dashboard shows stats cards after login", async ({ page }) => {
     await adminLogin(page);
 

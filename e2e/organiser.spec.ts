@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 import { organiserLogin } from "./helpers";
 
 test.describe("organiser login", () => {
@@ -20,6 +21,11 @@ test.describe("organiser login", () => {
 });
 
 test.describe("organiser dashboard", () => {
+  test("dashboard visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await argosScreenshot(page, "organiser-dashboard");
+  });
+
   test("dashboard shows stats and events after login", async ({ page }) => {
     await organiserLogin(page);
 

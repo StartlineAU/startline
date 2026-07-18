@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { argosScreenshot } from "@argos-ci/playwright";
 import { goToHomepage } from "./helpers";
 
 async function openSignInModal(page: import("@playwright/test").Page) {
@@ -8,6 +9,11 @@ async function openSignInModal(page: import("@playwright/test").Page) {
 }
 
 test.describe("auth modal — sign in", () => {
+  test("sign-in modal visual snapshot", async ({ page }) => {
+    await openSignInModal(page);
+    await argosScreenshot(page, "sign-in-modal");
+  });
+
   test("unknown email never dead-ends: 'no account found' or password fallback", async ({ page }) => {
     await openSignInModal(page);
     await page.getByPlaceholder("you@example.com").fill(`nobody.${Date.now()}@example.com`);

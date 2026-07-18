@@ -21,15 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Terraform plan
+      - name: Auth & secrets
         shell: bash
         run: |
-          # Install terraform
-          curl -sLo terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
-          unzip -q terraform.zip -d /tmp/terraform-bin
-          export PATH="/tmp/terraform-bin:$PATH"
-
-          # Auth via OIDC
           JWT=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
 
@@ -42,24 +36,80 @@ jobs:
             --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
             --output text)
 
-          AK=$(echo "$CREDS" | awk '{print $1}')
-          SK=$(echo "$CREDS" | awk '{print $2}')
-          ST=$(echo "$CREDS" | awk '{print $3}')
+          for var in \
+            "AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')" \
+            "AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')" \
+            "AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')" \
+            "AWS_DEFAULT_REGION=ap-southeast-2"; do
+            echo "$var" >> "$GITHUB_ENV"
+          done
 
-          export AWS_ACCESS_KEY_ID=$AK
-          export AWS_SECRET_ACCESS_KEY=$SK
-          export AWS_SESSION_TOKEN=$ST
-          export AWS_DEFAULT_REGION=ap-southeast-2
-
-          # Fetch CI/CD bootstrap secrets
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
-          # Export terraform input variables from bootstrap
-          export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
+      - name: Install Infracost
+        shell: bash
+        working-directory: /tmp
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          infracost configure set api_key $INFRACOST_API_KEY
 
-          # Terraform
+      # --- Baseline on base branch ---
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Generate Infracost baseline
+        shell: bash
+        run: |
+          terraform init -input=false
+          terraform plan -out=/tmp/base.tfplan -no-color -lock=false -input=false
+          terraform show -json /tmp/base.tfplan > /tmp/plan-base.json
+          infracost breakdown --path /tmp/plan-base.json --format json --out-file /tmp/infracost-base.json
+
+      # --- PR branch ---
+      - uses: actions/checkout@v5
+
+      - name: Terraform plan
+        shell: bash
+        run: |
           terraform init -input=false
           terraform validate -no-tests
-          terraform plan -no-color -lock=false -input=false
+          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false 2>&1 | tee /tmp/plan-output.txt
+
+      - name: Generate Infracost diff
+        shell: bash
+        run: |
+          terraform show -json /tmp/pr.tfplan > /tmp/plan-pr.json
+          infracost diff --path /tmp/plan-pr.json --compare-to /tmp/infracost-base.json --format json --out-file /tmp/infracost-diff.json 2>&1 || echo "infracost diff failed (non-blocking)"
+
+      - name: Post PR comment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT="## Terraform Plan"
+
+          PLAN=$(cat /tmp/plan-output.txt)
+          MAX_LEN=50000
+          if [ ${#PLAN} -gt $MAX_LEN ]; then
+            PLAN="${PLAN:0:$MAX_LEN}%0A... (truncated, see workflow logs for full output)"
+          fi
+          COMMENT="$COMMENT%0A<details><summary>Plan Output</summary>%0A%0A\`\`\`%0A$PLAN%0A\`\`\`%0A</details>"
+
+          if [ -s /tmp/infracost-diff.json ]; then
+            SUMMARY=$(infracost comment github --path /tmp/infracost-diff.json --dry-run 2>/dev/null | head -c 30000)
+            COMMENT="$COMMENT%0A%0A## Infracost%0A%0A$SUMMARY"
+          fi
+
+          # Delete previous bot comment(s) then post new one
+          gh api "/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | .id' | \
+            while read id; do
+              gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" || true
+            done
+
+          gh pr comment ${{ github.event.pull_request.number }} --body "$COMMENT" --repo ${{ github.repository }}

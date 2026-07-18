@@ -149,3 +149,5 @@ jobs:
           pnpm dev -p 3000 &
           npx wait-on http://localhost:3000/admin/login --timeout 60000
       - run: pnpm test:e2e
+      - name: Upload to Argos
+        run: npx argos upload --token $ARGOS_TOKEN
