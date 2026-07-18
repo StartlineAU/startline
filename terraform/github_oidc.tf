@@ -54,8 +54,8 @@ resource "aws_iam_role_policy_attachment" "terraform_ci_admin" {
 }
 
 # ponytail: read-only role for PR workflows — terraform plan and CI checks.
-# Uses AWS managed ReadOnlyAccess instead of a custom list to avoid whack-a-mole.
-# Cognito admin is needed for e2e seeding.
+# Broad read coverage mirrors the MCP policy; Cognito admin is needed for e2e seeding.
+# Separate CI-specific role if Cognito scope is uncomfortable.
 
 data "aws_iam_policy_document" "terraform_ci_readonly_assume" {
   statement {
@@ -73,11 +73,14 @@ data "aws_iam_policy_document" "terraform_ci_readonly_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Read-only role is safe from any branch — the IAM policy restricts its scope.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:*"]
+      values = [
+        "repo:${var.github_repository}:refs/pull/*",
+        "repo:${var.github_repository}:refs/heads/main",
+        "repo:${var.github_repository}:refs/heads/non-production",
+      ]
     }
   }
 }
@@ -87,32 +90,52 @@ resource "aws_iam_role" "terraform_ci_readonly" {
   assume_role_policy = data.aws_iam_policy_document.terraform_ci_readonly_assume.json
 }
 
-data "aws_iam_policy" "read_only" {
-  arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "readonly_base" {
-  role       = aws_iam_role.terraform_ci_readonly.name
-  policy_arn = data.aws_iam_policy.read_only.arn
-}
-
-resource "aws_iam_policy" "terraform_ci_readonly_extra" {
-  name        = "StartlineCIReadOnlyExtra"
-  description = "Extra permissions beyond ReadOnlyAccess needed by CI/plan workflows"
+resource "aws_iam_policy" "terraform_ci_readonly" {
+  name        = "StartlineCIReadOnly"
+  description = "Read-only + Cognito admin for CI/plan workflows"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "SecretsManagerRead"
+        Sid    = "ReadAllServices"
         Effect = "Allow"
         Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret",
+          "ec2:Describe*",
+          "s3:Get*",
+          "s3:List*",
+          "rds:Describe*",
+          "iam:Get*",
+          "iam:List*",
+          "cognito-idp:Describe*",
+          "cognito-idp:List*",
+          "amplify:Get*",
+          "amplify:List*",
+          "route53:Get*",
+          "route53:List*",
+          "cloudwatch:Describe*",
+          "cloudwatch:Get*",
+          "cloudwatch:List*",
+          "logs:Describe*",
+          "logs:Get*",
+          "logs:List*",
+          "acm:Describe*",
+          "acm:List*",
+          "kms:Describe*",
+          "kms:List*",
+          "ecr:Describe*",
+          "ecr:List*",
+          "elasticache:Describe*",
+          "elasticache:List*",
         ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SecretsManagerRead"
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/nonprod/*",
-          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/prod/*",
         ]
       },
       {
@@ -131,7 +154,7 @@ resource "aws_iam_policy" "terraform_ci_readonly_extra" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "terraform_ci_readonly_extra" {
+resource "aws_iam_role_policy_attachment" "terraform_ci_readonly" {
   role       = aws_iam_role.terraform_ci_readonly.name
-  policy_arn = aws_iam_policy.terraform_ci_readonly_extra.arn
+  policy_arn = aws_iam_policy.terraform_ci_readonly.arn
 }

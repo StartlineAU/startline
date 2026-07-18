@@ -46,11 +46,20 @@ jobs:
           export AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')
           export AWS_DEFAULT_REGION=ap-southeast-2
 
-          # Export terraform input variables from bootstrap secret
+          # Fetch CI/CD bootstrap + app secrets
           BOOTSTRAP=$(aws secretsmanager get-secret-value \
             --secret-id startline/ci-bootstrap \
             --query SecretString --output text)
-          export TF_VAR_docs_droplet_ip=$(echo "$BOOTSTRAP" | jq -r '.docs_droplet_ip')
+          eval "$(echo "$BOOTSTRAP" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"')"
+          eval "$(echo "$BOOTSTRAP" | jq -r 'to_entries[] | "export TF_VAR_\(.key)=\(.value | @sh)"')"
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+          echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+          APP=$(aws secretsmanager get-secret-value \
+            --secret-id startline/nonprod/app \
+            --query SecretString --output text)
+          eval "$(echo "$APP" | jq -r 'to_entries[] | "export \(.key)=\(.value | @sh)"')"
+          echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
           # Terraform
           terraform init -input=false
