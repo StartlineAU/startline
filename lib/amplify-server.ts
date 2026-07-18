@@ -3,15 +3,19 @@ import { jwtVerify, createRemoteJWKSet } from "jose";
 import prisma from "./prisma";
 
 export type ServerSession = {
-  sub:    string;
-  email:  string;
-  groups: string[];
+  sub:          string;
+  email:        string;
+  groups:       string[];
+  phoneNumber?: string;
+  birthdate?:   string;
 };
 
 export type UserSession = {
-  sub:   string; // Prisma User.id
-  email: string;
-  name:  string | null;
+  sub:          string; // Prisma User.id
+  email:        string;
+  name:         string | null;
+  phoneNumber?: string;
+  birthdate?:   string;
 };
 
 export type OrganiserSession = {
@@ -64,6 +68,8 @@ export async function getServerSession(): Promise<ServerSession | null> {
 
     const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
     const sub   = payload.sub as string;
+    const phoneNumber = payload.phone_number as string | undefined;
+    const birthdate   = payload.birthdate as string | undefined;
 
     // The email must come from the verified id-token `email` claim: access
     // tokens carry no email, and for this pool `LastAuthUser` is the Cognito
@@ -85,7 +91,7 @@ export async function getServerSession(): Promise<ServerSession | null> {
       }
     }
 
-    return { sub, email, groups };
+    return { sub, email, groups, phoneNumber, birthdate };
   } catch {
     return null;
   }
@@ -106,7 +112,7 @@ export async function getUserSession(): Promise<UserSession | null> {
       create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email || cognitoSession.sub },
       select: { id: true, email: true, name: true },
     });
-    return { sub: user.id, email: user.email, name: user.name };
+    return { sub: user.id, email: user.email, name: user.name, phoneNumber: cognitoSession.phoneNumber, birthdate: cognitoSession.birthdate };
   } catch {
     return null;
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
@@ -10,7 +10,6 @@ import {
   AlignLeft, Trophy,
 } from "lucide-react";
 import { encodePrizePool, parsePrizePool, normalisePrizeAmount } from "@/lib/prize-pool";
-import OrganiserTopBar      from "@/components/organiser/TopBar";
 import AddressAutocomplete  from "@/components/ui/AddressAutocomplete";
 import SuburbAutocomplete   from "@/components/ui/SuburbAutocomplete";
 
@@ -141,7 +140,7 @@ function DatePickerPopover({
     return () => document.removeEventListener("mousedown", h);
   }, []);
   useEffect(() => {
-    if (value) { const [y, m] = value.split("-").map(Number); setViewYear(y); setViewMonth(m - 1); }
+    if (value) { startTransition(() => { const [y, m] = value.split("-").map(Number); setViewYear(y); setViewMonth(m - 1); }); }
   }, [value]);
 
   const toIso = (d: number) => `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -930,7 +929,7 @@ function GalleryFileThumb({ file, onRemove }: { file: File; onRemove: () => void
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     const url = URL.createObjectURL(file);
-    setSrc(url);
+    startTransition(() => setSrc(url));
     return () => URL.revokeObjectURL(url);
   }, [file]);
   return src ? <GalleryThumb src={src} onRemove={onRemove} /> : null;
@@ -1090,7 +1089,7 @@ function LivePreview({ form }: { form: FormState }) {
   const [coverSrc, setCoverSrc] = useState<string | null>(null);
   useEffect(() => {
     const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl || null;
-    setCoverSrc(url);
+    startTransition(() => setCoverSrc(url));
     return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
   }, [form.coverImage, form.coverImageUrl]);
   const descriptionText = stripHtml(form.description || "");
@@ -1227,14 +1226,14 @@ function EventFullPreview({ form, onClose }: { form: FormState; onClose: () => v
   const [coverSrc, setCoverSrc] = useState<string | null>(null);
   useEffect(() => {
     const url = form.coverImage ? URL.createObjectURL(form.coverImage) : form.coverImageUrl;
-    setCoverSrc(url || null);
+    startTransition(() => setCoverSrc(url || null));
     return () => { if (url?.startsWith("blob:")) URL.revokeObjectURL(url); };
   }, [form.coverImage, form.coverImageUrl]);
 
   const [photoSrcs, setPhotoSrcs] = useState<string[]>([]);
   useEffect(() => {
     const urls = form.photos.map(f => URL.createObjectURL(f));
-    setPhotoSrcs(urls);
+    startTransition(() => setPhotoSrcs(urls));
     return () => urls.forEach(u => URL.revokeObjectURL(u));
   }, [form.photos]);
   const gallery = [...form.photoUrls, ...photoSrcs];
@@ -1496,14 +1495,14 @@ export default function NewListingPage() {
   const [direction,       setDirection]       = useState<"forward" | "back">("forward");
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [eventId,         setEventId]         = useState<string | null>(null);
+  const [loadingEvent, setLoadingEvent] = useState(true);
   const originalFields = useRef<Record<string, unknown>>({});
 
   const update = (patch: Partial<FormState>) => setForm(f => ({ ...f, ...patch }));
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("id");
-    if (!id) return;
-    setLoadingEvent(true);
+    if (!id) { setLoadingEvent(false); return; }
     fetch(`/api/organiser/events/${id}`)
       .then(r => r.json())
       .then(e => {
@@ -1676,9 +1675,7 @@ export default function NewListingPage() {
 
   return (
     <div className="min-h-screen bg-dark-darker">
-      <OrganiserTopBar />
-      <div className="pt-14">
-        <div className="anim-fade-slide">
+      <div className="anim-fade-slide">
 
           {/* Sticky header */}
           <div className="sticky top-16 z-30 bg-dark/95 backdrop-blur border-b border-dark-lighter">
@@ -1819,7 +1816,6 @@ export default function NewListingPage() {
               <LivePreview form={form} />
             </aside>
           </div>
-        </div>
       </div>
 
       {showFullPreview && <EventFullPreview form={form} onClose={() => setShowFullPreview(false)} />}
