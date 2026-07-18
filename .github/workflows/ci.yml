@@ -135,9 +135,6 @@ jobs:
       - run: npx playwright install chromium
       - run: npx prisma generate
       - run: npx prisma migrate deploy
-      - name: Seed database
-        shell: bash
-        run: npx prisma db seed
       - name: Start Next.js dev server
         shell: bash
         run: |
