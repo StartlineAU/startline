@@ -23,6 +23,7 @@ test.describe("organiser login", () => {
 test.describe("organiser dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
     await organiserLogin(page);
+    await page.waitForLoadState("networkidle");
     await argosScreenshot(page, "organiser-dashboard");
   });
 

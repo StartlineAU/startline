@@ -11,6 +11,7 @@ async function openSignInModal(page: import("@playwright/test").Page) {
 test.describe("auth modal — sign in", () => {
   test("sign-in modal visual snapshot", async ({ page }) => {
     await openSignInModal(page);
+    await page.waitForLoadState("networkidle");
     await argosScreenshot(page, "sign-in-modal");
   });
 

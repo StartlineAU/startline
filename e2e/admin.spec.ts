@@ -31,6 +31,7 @@ test.describe("admin login", () => {
 test.describe("admin dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
     await adminLogin(page);
+    await page.waitForLoadState("networkidle");
     await argosScreenshot(page, "admin-dashboard");
   });
 
