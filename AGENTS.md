@@ -79,7 +79,7 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 
 Infra in `terraform/`:
 - `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
-- App deploys via Amplify on branch push: `nonprod` → nonprod, `prod` → live
+- App deploys via Amplify on branch push: `prod` → live. PR previews deploy automatically to temp URLs against the nonprod backend.
 - No app code CI (no lint/test/build checks)
 
 Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
