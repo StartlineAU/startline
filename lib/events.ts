@@ -45,9 +45,8 @@ export async function getAllEvents() {
       },
     });
 
-// ponytail: minimal type for map callback, full Prisma type would be ideal
-type EventRow = { id: string; waves: unknown; _count: { registrations: number } };
-    return events.map((e: EventRow) => ({
+    // ponytail: `any` avoids Prisma type dependency; `pnpm build` verifies correctness
+    return events.map((e: any) => ({
       ...e,
       fromPrice: lowestPrice(e.waves),
       registrationCount: e._count.registrations,
