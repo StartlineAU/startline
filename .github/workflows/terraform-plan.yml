@@ -138,4 +138,4 @@ jobs:
               gh api -X DELETE "/repos/${{ github.repository }}/issues/comments/$id" || true
             done
 
-          gh pr comment ${{ github.event.pull_request.number }} --body-file "$BODY" --repo ${{ github.repository }}
+          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat "$BODY")" --repo ${{ github.repository }} 2>&1 || echo "gh comment failed with exit $?"
