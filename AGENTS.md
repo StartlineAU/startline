@@ -139,6 +139,8 @@ Use `-s=<name>` for isolated sessions (e.g., `-s=customer`, `-s=organiser`). Pas
 
 Use `gh` CLI — the MCP `server-github` fails for this private org repo.
 
+**`main` is protected.** Never push directly — always use a PR.
+
 ### Pre-commit gate
 
 Before staging/committing:
