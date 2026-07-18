@@ -170,6 +170,10 @@ module "env" {
 
   cdn_custom_domain = each.key == "prod" ? "cdn.startlineau.com" : null
   cdn_cert_arn      = each.key == "prod" ? aws_acm_certificate.cdn.arn : null
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 }
 
 # Custom apex domain. DNS records in dns.tf reference this association.
