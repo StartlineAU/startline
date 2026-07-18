@@ -104,6 +104,7 @@ test.describe("admin events page", () => {
     await adminLogin(page);
     await page.goto("/admin/events?status=APPROVED");
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await argosScreenshot(page, "admin-events-approved");
   });
 

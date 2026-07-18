@@ -119,6 +119,7 @@ test.describe("organiser dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
     await organiserLogin(page);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2000);
     await argosScreenshot(page, "organiser-dashboard");
   });
 
