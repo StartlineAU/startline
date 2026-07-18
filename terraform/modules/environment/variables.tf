@@ -14,7 +14,7 @@ variable "amplify_app_id" {
 }
 
 variable "branch_name" {
-  description = "Git branch deployed to this environment (e.g. production, non-production)."
+  description = "Git branch deployed to this environment (e.g. prod, nonprod)."
   type        = string
 }
 
