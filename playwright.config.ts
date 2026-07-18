@@ -25,7 +25,7 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: "pnpm dev -p 3000",
+        command: "CI=true pnpm dev -p 3000",
         url: "http://localhost:3000/admin/login",
         reuseExistingServer: true,
         timeout: 90000,
