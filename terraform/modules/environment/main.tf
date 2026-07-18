@@ -529,6 +529,51 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
 
 # ===== CloudFront CDN for upload bucket =====
 
+resource "aws_wafv2_web_acl" "cdn" {
+  provider = aws.us_east_1
+
+  name        = "${var.project_name}-${var.name}-cdn-waf"
+  description = "Rate-limiting WAF for ${var.name} CDN"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "rate-limit"
+    priority = 1
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 5000
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name                = "${var.project_name}_${var.name}_cdn_rate_limit"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = false
+    metric_name                = "${var.project_name}_${var.name}_cdn_waf"
+    sampled_requests_enabled   = false
+  }
+
+  tags = {
+    Environment = local.environment_tag
+    Service     = var.project_name
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "cdn" {
   name                              = "${var.project_name}-${var.name}-cdn-oac"
   description                       = "OAC for ${var.name} upload bucket"
@@ -541,6 +586,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
   is_ipv6_enabled     = true
+  web_acl_id          = aws_wafv2_web_acl.cdn.arn
   comment             = "CDN for ${var.name} upload bucket"
   price_class         = "PriceClass_100"
   aliases             = var.cdn_custom_domain != null ? [var.cdn_custom_domain] : []
