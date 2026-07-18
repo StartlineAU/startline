@@ -46,10 +46,11 @@ runs:
         # Verify
         aws sts get-caller-identity --output text
 
-        # Load secrets
+        # Load CI/CD bootstrap secrets (export raw AND TF_VAR_ prefixed for Terraform)
         BOOTSTRAP=$(aws secretsmanager get-secret-value \
-          --secret-id startline/tf-bootstrap \
+          --secret-id startline/ci-bootstrap \
           --query SecretString --output text)
+        echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
         echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
         APP=$(aws secretsmanager get-secret-value \
