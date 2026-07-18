@@ -25,7 +25,7 @@ export const revalidate = 60;
 export async function generateStaticParams() {
   try {
     const events = await getAllEvents();
-    return events.map((e) => ({ id: e.id }));
+    return events.map((e: { id: string }) => ({ id: e.id }));
   } catch {
     return [];
   }
