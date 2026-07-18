@@ -64,10 +64,11 @@ jobs:
 
       - name: Install Infracost
         shell: bash
-        working-directory: /tmp
         run: |
-          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          curl -sL "https://github.com/infracost/infracost/releases/download/v0.10.45/infracost-linux-amd64.tar.gz" -o /tmp/infracost.tar.gz
+          tar -xzf /tmp/infracost.tar.gz -C /usr/local/bin
           infracost configure set api_key $INFRACOST_API_KEY
+          infracost version
 
       # --- Baseline on base branch ---
       - uses: actions/checkout@v5
