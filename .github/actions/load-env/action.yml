@@ -46,16 +46,29 @@ runs:
         # Verify
         aws sts get-caller-identity --output text
 
-        # Load CI/CD bootstrap secrets (export raw AND TF_VAR_ prefixed for Terraform)
+        # Load CI/CD bootstrap secrets
         BOOTSTRAP=$(aws secretsmanager get-secret-value \
           --secret-id startline/ci-bootstrap \
           --query SecretString --output text)
+
+        # Mask every value so nothing appears in logs
+        while IFS= read -r value; do
+          echo "::add-mask::$value"
+        done < <(echo "$BOOTSTRAP" | jq -r 'values[]')
+
+        # Export to env (raw + TF_VAR_ prefixed)
         echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
         echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
         APP=$(aws secretsmanager get-secret-value \
           --secret-id startline/${{ inputs.environment }}/app \
           --query SecretString --output text)
+
+        # Mask all app secret values too
+        while IFS= read -r value; do
+          echo "::add-mask::$value"
+        done < <(echo "$APP" | jq -r 'values[]')
+
         echo "$APP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
 
         echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/startline?schema=public" >> "$GITHUB_ENV"
