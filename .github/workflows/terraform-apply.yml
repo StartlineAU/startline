@@ -1,11 +1,13 @@
 name: Terraform apply
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-*.yml'
+      - '.github/actions/load-env/**'
 
 permissions:
   id-token: write
