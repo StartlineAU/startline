@@ -6,8 +6,10 @@ provider "aws" {
   # module's resource-level tags, which override this default.
   default_tags {
     tags = {
-      Project   = var.project_name
-      ManagedBy = "terraform"
+      Project     = var.project_name
+      ManagedBy   = "terraform"
+      Environment = "Prod"
+      Service     = var.project_name
     }
   }
 }
@@ -20,8 +22,10 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = var.project_name
-      ManagedBy = "terraform"
+      Project     = var.project_name
+      ManagedBy   = "terraform"
+      Environment = "Prod"
+      Service     = var.project_name
     }
   }
 }

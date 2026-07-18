@@ -29,16 +29,16 @@ data "aws_iam_policy_document" "terraform_ci_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
-  # Admin role is only assumable from protected branches (push/tag events).
-  # PRs use the separate read-only role below.
-  condition {
-    test     = "StringLike"
-    variable = "token.actions.githubusercontent.com:sub"
-    values = [
-      "repo:${var.github_repository}:*:refs/heads/main",
-    ]
+    # Admin role is only assumable from protected branches (push/tag events).
+    # PRs use the separate read-only role below.
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:${var.github_repository}:*:refs/heads/main",
+      ]
+    }
   }
-}
 }
 
 resource "aws_iam_role" "terraform_ci" {

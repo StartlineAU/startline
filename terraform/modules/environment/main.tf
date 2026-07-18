@@ -17,7 +17,8 @@ resource "aws_vpc" "database" {
 
   tags = {
     Name        = "${var.project_name}-${var.name}"
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -26,7 +27,8 @@ resource "aws_internet_gateway" "database" {
 
   tags = {
     Name        = "${var.project_name}-${var.name}"
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -39,7 +41,8 @@ resource "aws_subnet" "database_public" {
 
   tags = {
     Name        = "${var.project_name}-${var.name}-public-${count.index}"
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -53,7 +56,8 @@ resource "aws_route_table" "database_public" {
 
   tags = {
     Name        = "${var.project_name}-${var.name}-public"
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -68,7 +72,8 @@ resource "aws_db_subnet_group" "postgres" {
   subnet_ids = aws_subnet.database_public[*].id
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -100,7 +105,8 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -129,15 +135,18 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name   = aws_db_subnet_group.postgres.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  publicly_accessible          = var.database_publicly_accessible
-  skip_final_snapshot          = var.database_skip_final_snapshot
-  final_snapshot_identifier    = var.database_skip_final_snapshot ? null : "${var.project_name}-${var.name}-postgres-final"
-  backup_retention_period      = var.database_backup_retention_period
-  deletion_protection          = var.database_deletion_protection
-  performance_insights_enabled = var.database_performance_insights_enabled
+  publicly_accessible             = var.database_publicly_accessible
+  skip_final_snapshot             = var.database_skip_final_snapshot
+  final_snapshot_identifier       = var.database_skip_final_snapshot ? null : "${var.project_name}-${var.name}-postgres-final"
+  backup_retention_period         = var.database_backup_retention_period
+  deletion_protection             = var.database_deletion_protection
+  performance_insights_enabled    = var.database_performance_insights_enabled
+  copy_tags_to_snapshot           = true
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -146,12 +155,14 @@ resource "aws_secretsmanager_secret" "database" {
   recovery_window_in_days = var.database_secret_recovery_window_days
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
 locals {
-  database_url = "postgresql://${var.database_username}:${urlencode(random_password.db_master.result)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${var.database_name}?schema=public&sslmode=require"
+  environment_tag = title(var.name)
+  database_url    = "postgresql://${var.database_username}:${urlencode(random_password.db_master.result)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${var.database_name}?schema=public&sslmode=require"
 }
 
 resource "aws_secretsmanager_secret_version" "database" {
@@ -176,23 +187,24 @@ resource "aws_secretsmanager_secret" "app" {
   recovery_window_in_days = 0
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
-    NEXT_PUBLIC_COGNITO_USER_POOL_ID  = aws_cognito_user_pool.this.id
-    NEXT_PUBLIC_COGNITO_CLIENT_ID     = aws_cognito_user_pool_client.web.id
-    GUEST_EMAIL_VERIFICATION_SECRET   = random_password.guest_email_verification.result
-    AWS_S3_BUCKET                     = aws_s3_bucket.uploads.id
-    AWS_S3_REGION                     = "ap-southeast-2"
-    NEXT_PUBLIC_CDN_URL               = var.cdn_custom_domain != null ? "https://${var.cdn_custom_domain}" : "https://${aws_cloudfront_distribution.cdn.domain_name}"
-    DATABASE_URL                      = local.database_url
-    NEXT_PUBLIC_SITE_URL              = var.site_url
-    NEXT_PUBLIC_BASE_URL              = var.site_url
-    NEXT_PUBLIC_AWS_REGION            = "ap-southeast-2"
+    NEXT_PUBLIC_COGNITO_USER_POOL_ID = aws_cognito_user_pool.this.id
+    NEXT_PUBLIC_COGNITO_CLIENT_ID    = aws_cognito_user_pool_client.web.id
+    GUEST_EMAIL_VERIFICATION_SECRET  = random_password.guest_email_verification.result
+    AWS_S3_BUCKET                    = aws_s3_bucket.uploads.id
+    AWS_S3_REGION                    = "ap-southeast-2"
+    NEXT_PUBLIC_CDN_URL              = var.cdn_custom_domain != null ? "https://${var.cdn_custom_domain}" : "https://${aws_cloudfront_distribution.cdn.domain_name}"
+    DATABASE_URL                     = local.database_url
+    NEXT_PUBLIC_SITE_URL             = var.site_url
+    NEXT_PUBLIC_BASE_URL             = var.site_url
+    NEXT_PUBLIC_AWS_REGION           = "ap-southeast-2"
   })
 }
 
@@ -201,14 +213,21 @@ resource "aws_secretsmanager_secret_version" "app" {
 resource "aws_kms_key" "cognito_email" {
   description             = "Encrypts OTP codes passed from Cognito to the custom email Lambda"
   deletion_window_in_days = 10
+  enable_key_rotation     = true
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
 resource "aws_iam_role" "cognito_email_lambda" {
   name = "${var.project_name}-${var.name}-cognito-email-lambda"
+
+  tags = {
+    Environment = local.environment_tag
+    Service     = var.project_name
+  }
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -264,7 +283,8 @@ resource "aws_lambda_function" "cognito_email" {
   }
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -329,7 +349,8 @@ resource "aws_cognito_user_pool" "this" {
   deletion_protection = var.cognito_deletion_protection ? "ACTIVE" : "INACTIVE"
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
 
@@ -396,7 +417,29 @@ resource "aws_s3_bucket" "uploads" {
   force_destroy = var.name != "prod"
 
   tags = {
-    Environment = var.name
+    Environment = local.environment_tag
+    Service     = var.project_name
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
+  bucket = aws_s3_bucket.uploads.id
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+  rule {
+    id     = "expire-old-objects"
+    status = "Enabled"
+    filter {}
+    expiration {
+      days = 365
+    }
   }
 }
 
@@ -441,6 +484,25 @@ data "aws_iam_policy_document" "uploads_oac" {
       values   = [aws_cloudfront_distribution.cdn.arn]
     }
   }
+
+  statement {
+    sid    = "DenyNonSSL"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = ["s3:*"]
+    resources = [
+      aws_s3_bucket.uploads.arn,
+      "${aws_s3_bucket.uploads.arn}/*",
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "uploads_oac" {
@@ -476,11 +538,12 @@ resource "aws_cloudfront_origin_access_control" "cdn" {
 }
 
 resource "aws_cloudfront_distribution" "cdn" {
-  enabled         = true
-  is_ipv6_enabled = true
-  comment         = "CDN for ${var.name} upload bucket"
-  price_class     = "PriceClass_100"
-  aliases         = var.cdn_custom_domain != null ? [var.cdn_custom_domain] : []
+  enabled             = true
+  default_root_object = "index.html"
+  is_ipv6_enabled     = true
+  comment             = "CDN for ${var.name} upload bucket"
+  price_class         = "PriceClass_100"
+  aliases             = var.cdn_custom_domain != null ? [var.cdn_custom_domain] : []
 
   origin {
     domain_name              = aws_s3_bucket.uploads.bucket_regional_domain_name
@@ -527,5 +590,10 @@ resource "aws_cloudfront_distribution" "cdn" {
     geo_restriction {
       restriction_type = "none"
     }
+  }
+
+  tags = {
+    Environment = local.environment_tag
+    Service     = var.project_name
   }
 }
