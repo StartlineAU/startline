@@ -73,14 +73,11 @@ data "aws_iam_policy_document" "terraform_ci_readonly_assume" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Read-only role is safe from any branch — the IAM policy restricts its scope.
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        "repo:${var.github_repository}:refs/pull/*",
-        "repo:${var.github_repository}:refs/heads/main",
-        "repo:${var.github_repository}:refs/heads/non-production",
-      ]
+      values   = ["repo:${var.github_repository}:*"]
     }
   }
 }
