@@ -81,6 +81,13 @@ test.describe("admin dashboard", () => {
 });
 
 test.describe("admin events page", () => {
+  test("admin events page visual snapshot", async ({ page }) => {
+    await adminLogin(page);
+    await page.goto("/admin/events?status=PENDING");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "admin-events-pending");
+  });
+
   test("events page renders with tabs", async ({ page }) => {
     await adminLogin(page);
     await page.goto("/admin/events");

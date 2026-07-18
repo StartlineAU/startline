@@ -30,6 +30,14 @@ test.describe("events page", () => {
   });
 });
 
+test.describe("event detail page", () => {
+  test("event detail visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "event-detail");
+  });
+});
+
 test.describe("static pages", () => {
   test("contact page renders", async ({ page }) => {
     await page.goto("/contact");

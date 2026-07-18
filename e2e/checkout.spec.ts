@@ -113,6 +113,12 @@ test.describe("checkout flow", () => {
 });
 
 test.describe("confirmation page", () => {
+  test("confirmation page visual snapshot", async ({ page }) => {
+    await page.goto("/events/seed-event-001/register/confirmation");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "registration-confirmation");
+  });
+
   test("renders standalone with confirmation message and links", async ({ page }) => {
     await page.goto("/events/seed-event-001/register/confirmation");
     await page.waitForLoadState("networkidle");

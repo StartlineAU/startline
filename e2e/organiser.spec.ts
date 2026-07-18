@@ -20,6 +20,47 @@ test.describe("organiser login", () => {
   });
 });
 
+test.describe("new listing wizard", () => {
+  test("new listing step 1 visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+    await argosScreenshot(page, "new-listing-step1");
+  });
+
+  test("new listing final review visual snapshot", async ({ page }) => {
+    await organiserLogin(page);
+    await page.goto("/organiser/new-listing");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByPlaceholder(/Apex Throwdown/i).fill("E2E Visual Test Event");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+
+    await page.getByText("Pick start date").click();
+    await page.getByRole("button", { name: /today/i }).click();
+    await page.getByRole("button", { name: /\d{4}/i }).first().click();
+    const timeInputs = page.locator('input[type="time"]');
+    await timeInputs.first().fill("09:00");
+    const addrInput = page.getByPlaceholder(/start typing an address/i);
+    await addrInput.fill("1 Test St, Sydney NSW 2000");
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+
+    await page.getByRole("button", { name: /startline/i }).first().click();
+    const price = page.locator('input[placeholder="129"]');
+    if (await price.isVisible()) await price.fill("50");
+    await page.getByRole("button", { name: /no refunds/i }).click();
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+
+    await page.getByRole("button", { name: /continue/i }).click();
+    await page.waitForTimeout(500);
+
+    await argosScreenshot(page, "new-listing-review");
+  });
+});
+
 test.describe("organiser dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
     await organiserLogin(page);
