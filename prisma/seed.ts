@@ -73,16 +73,21 @@ async function fetchCognitoSubs(): Promise<{
   subsByEmail: Record<string, string>;
   adminSubs: string[];
 }> {
-  const allUsers = await cognito.send(new ListUsersCommand({
-    UserPoolId: userPoolId,
-  }));
-
   const subsByEmail: Record<string, string> = {};
-  for (const user of allUsers.Users ?? []) {
-    const email = user.Attributes?.find(a => a.Name === "email")?.Value;
-    const sub   = user.Username;
-    if (email && sub) subsByEmail[email] = sub;
-  }
+  let paginationToken: string | undefined;
+  do {
+    const cmd: ListUsersCommand = new ListUsersCommand({
+      UserPoolId: userPoolId,
+      PaginationToken: paginationToken,
+    });
+    const page = await cognito.send(cmd);
+    for (const user of page.Users ?? []) {
+      const email = user.Attributes?.find(a => a.Name === "email")?.Value;
+      const sub   = user.Username;
+      if (email && sub) subsByEmail[email] = sub;
+    }
+    paginationToken = page.PaginationToken;
+  } while (paginationToken);
 
   const adminResp = await cognito.send(new ListUsersInGroupCommand({
     UserPoolId: userPoolId,
