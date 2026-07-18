@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           curl -sLo /tmp/terraform.zip https://releases.hashicorp.com/terraform/1.10.0/terraform_1.10.0_linux_amd64.zip
-          unzip -q /tmp/terraform.zip -d /usr/local/bin
+          unzip -qo /tmp/terraform.zip -d /usr/local/bin
           terraform version
 
       - name: Install Infracost
