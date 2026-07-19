@@ -76,9 +76,18 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 ## Terraform + Amplify CI/CD
 
 Infra in `terraform/`:
-- `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
-- App deploys via Amplify on push to `main`. PR previews deploy automatically to temp URLs.
-- `ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational).
+
+Terraform uses a unified state with a `target_environment` variable (`all`/`prod`/`staging`) to scope applies:
+- **Push to `staging`** → `terraform apply -var=target_environment=staging` (staging resources only)
+- **Push to `main`** → `terraform apply -var=target_environment=all` (both environments)
+- **PRs** → `terraform plan` runs with the scope matching the base branch
+
+| Workflow | Trigger | Scope |
+|---|---|---|
+| `terraform-plan.yml` | PR to `main` or `staging` | Plan matching base branch |
+| `terraform-apply.yml` | Push to `main` or `staging` | `all` on main, `staging` on staging |
+
+`ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational).
 
 Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
 
@@ -86,13 +95,13 @@ Amplify build spec fetches from SM at build time — individual key rotations do
 
 ### Environments
 
-Two environments managed by Terraform (`main.tf` → `local.environments`):
+Two environments managed by Terraform (`main.tf` → `local.environments`). PR previews enabled on both branches:
 
-| Environment | Branch | Resources | Build behavior |
-|---|---|---|---|
-| `prod` | `main` | Prod Cognito, RDS, S3, CDN | Migrate, no seed |
-| `staging` | `staging` | Staging Cognito, RDS, S3, CDN | Migrate + seed |
-| PR previews (any) | feature branches | Uses **staging** resources | No migrate, no seed, auth bypass |
+| Environment | Branch | Amplify stage | Auto-build | PR previews | DB behavior |
+|---|---|---|---|---|---|
+| `prod` | `main` | PRODUCTION | No (GH Actions triggers) | Yes | Migrate, no seed |
+| `staging` | `staging` | BETA | Yes | Yes | Migrate + seed |
+| PR previews | feature branches | — | — | Yes | Uses staging DB, no migrate/seed, auth bypass |
 
 The build spec (`local.build_spec`) selects the SM secret based on `AWS_BRANCH_NAME`:
 - `main` → `startline/prod/app`

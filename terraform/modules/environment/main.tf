@@ -448,7 +448,8 @@ resource "aws_amplify_branch" "this" {
   branch_name = var.branch_name
   stage       = var.amplify_stage
 
-  enable_auto_build = var.auto_build_enabled
+  enable_auto_build           = var.auto_build_enabled
+  enable_pull_request_preview  = var.enable_pull_request_preview
 
   environment_variables = merge(
     {
@@ -458,6 +459,13 @@ resource "aws_amplify_branch" "this" {
     },
     var.extra_branch_environment_variables,
   )
+
+  lifecycle {
+    precondition {
+      condition     = contains(["PRODUCTION", "BETA", "DEVELOPMENT"], var.amplify_stage)
+      error_message = "amplify_stage must be one of PRODUCTION, BETA, or DEVELOPMENT."
+    }
+  }
 
   tags = {
     Environment = var.name == "prod" ? "Prod" : "Stage"

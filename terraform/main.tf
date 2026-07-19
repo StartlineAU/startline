@@ -134,6 +134,7 @@ locals {
       branch_name                  = "main"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
+      enable_pull_request_preview  = true
       vpc_cidr                     = "10.20.0.0/16"
       database_name                = "${var.project_name}_prod"
       database_skip_final_snapshot = false
@@ -147,6 +148,7 @@ locals {
       branch_name                  = "staging"
       amplify_stage                = "BETA"
       auto_build_enabled           = true
+      enable_pull_request_preview  = true
       vpc_cidr                     = "10.21.0.0/16"
       database_name                = "${var.project_name}_staging"
       database_skip_final_snapshot = true
@@ -157,19 +159,24 @@ locals {
       enable_daily_stop            = true
     }
   }
+
+  enabled_environments = var.target_environment == "all" ? local.environments : {
+    for k, v in local.environments : k => v if k == var.target_environment
+  }
 }
 
 module "env" {
-  for_each = local.environments
+  for_each = local.enabled_environments
   source   = "./modules/environment"
 
   name           = each.key
   project_name   = var.project_name
   amplify_app_id = aws_amplify_app.this.id
 
-  branch_name        = each.value.branch_name
-  amplify_stage      = each.value.amplify_stage
-  auto_build_enabled = each.value.auto_build_enabled
+  branch_name                 = each.value.branch_name
+  amplify_stage               = each.value.amplify_stage
+  auto_build_enabled          = each.value.auto_build_enabled
+  enable_pull_request_preview = each.value.enable_pull_request_preview
 
   vpc_cidr      = each.value.vpc_cidr
   database_name = each.value.database_name
@@ -206,7 +213,7 @@ module "env" {
 
 # Custom apex domain. DNS records in dns.tf reference this association.
 resource "aws_amplify_domain_association" "this" {
-  count       = var.amplify_custom_domain != null ? 1 : 0
+  count       = var.amplify_custom_domain != null && (var.target_environment == "all" || var.target_environment == "prod") ? 1 : 0
   app_id      = aws_amplify_app.this.id
   domain_name = var.amplify_custom_domain
 
