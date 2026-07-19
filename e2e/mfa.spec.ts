@@ -29,7 +29,7 @@ test.describe("passkey sign-in UI", () => {
 
   test("passkey and email divider renders", async ({ page }) => {
     await openSignInModal(page);
-    await expect(page.getByText(/or/i)).toBeVisible();
+    await expect(page.getByText("or", { exact: true })).toBeVisible();
   });
 });
 
