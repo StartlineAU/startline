@@ -76,7 +76,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the site.
 
 Secrets are stored in AWS Secrets Manager and loaded automatically via `.envrc` + direnv:
 
-- `startline/ci-bootstrap` — CI/CD bootstrap secrets (API keys for Cloudflare, Resend, Amplify, DigitalOcean)
+- `startline/ci-bootstrap` — CI/CD bootstrap secrets (API keys for Cloudflare, Resend, Amplify)
 - `startline/nonprod/app` — All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.)
 - `startline/prod/app` — All prod env vars (live values)
 
