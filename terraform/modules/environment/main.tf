@@ -251,7 +251,7 @@ resource "aws_scheduler_schedule" "daily_stop" {
   schedule_expression_timezone = "Australia/Melbourne"
 
   target {
-    arn      = "arn:aws:scheduler:::aws-sdk/rds:stopDBInstance"
+    arn      = "arn:aws:scheduler:::aws-sdk:rds:stopDBInstance"
     role_arn = aws_iam_role.scheduler[0].arn
 
     input = jsonencode({
