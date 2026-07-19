@@ -91,3 +91,55 @@ moved {
   from = aws_cognito_user_pool_client.web
   to   = module.env["prod"].aws_cognito_user_pool_client.web
 }
+
+# count-indexed resources (target_environment-aware applies)
+
+moved {
+  from = aws_route53_record.amplify_cert_validation
+  to   = aws_route53_record.amplify_cert_validation[0]
+}
+
+moved {
+  from = aws_route53_record.apex_alias
+  to   = aws_route53_record.apex_alias[0]
+}
+
+moved {
+  from = aws_route53_record.www_cname
+  to   = aws_route53_record.www_cname[0]
+}
+
+moved {
+  from = aws_route53_record.organiser_cname
+  to   = aws_route53_record.organiser_cname[0]
+}
+
+moved {
+  from = aws_route53_record.cdn_alias
+  to   = aws_route53_record.cdn_alias[0]
+}
+
+moved {
+  from = cloudflare_record.apex
+  to   = cloudflare_record.apex[0]
+}
+
+moved {
+  from = cloudflare_record.www
+  to   = cloudflare_record.www[0]
+}
+
+moved {
+  from = cloudflare_record.organiser
+  to   = cloudflare_record.organiser[0]
+}
+
+moved {
+  from = cloudflare_record.cdn
+  to   = cloudflare_record.cdn[0]
+}
+
+moved {
+  from = cloudflare_record.amplify_cert_validation
+  to   = cloudflare_record.amplify_cert_validation[0]
+}

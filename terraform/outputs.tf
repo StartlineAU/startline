@@ -61,7 +61,7 @@ output "cognito_app_client_secret" {
 
 output "amplify_domain_dns_records" {
   description = "DNS records for the apex domain."
-  value = var.amplify_custom_domain == null ? [] : concat(
+  value = var.amplify_custom_domain == null || length(aws_amplify_domain_association.this) == 0 ? [] : concat(
     [
       for s in aws_amplify_domain_association.this[0].sub_domain : {
         type   = "CNAME"
