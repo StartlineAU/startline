@@ -10,7 +10,7 @@ export default function Footer() {
             <Link href="/" className="inline-flex items-center mb-3">
               <Image
                 src="/images/logo-title.svg"
-                alt="StartLine"
+                alt="Startline"
                 width={130}
                 height={34}
                 className="h-7 w-auto"
@@ -119,7 +119,7 @@ export default function Footer() {
 
         <div className="border-t border-dark-lighter pt-5">
           <p className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted">
-            &copy; {new Date().getFullYear()} StartLine. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Startline. All Rights Reserved.
           </p>
         </div>
       </div>

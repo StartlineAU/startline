@@ -25,6 +25,7 @@ jobs:
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
           environment: prod
+          bootstrap-export-keys: ""
 
       - name: Resolve Amplify app ID
         id: amplify-app

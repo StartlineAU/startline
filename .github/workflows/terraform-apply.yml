@@ -26,6 +26,7 @@ jobs:
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
           environment: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
+          bootstrap-export-keys: ""
 
       - name: Install Terraform
         shell: bash

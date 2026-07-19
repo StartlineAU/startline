@@ -2,7 +2,7 @@
 
 ## Overview
 
-StartLine helps performance-driven fitness individuals discover competitive events across Australia. Find fitness racing, CrossFit competitions, running races, and hybrid fitness events in one place.
+Startline helps performance-driven fitness individuals discover competitive events across Australia. Find fitness racing, CrossFit competitions, running races, and hybrid fitness events in one place.
 
 ## Tech Stack
 

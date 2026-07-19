@@ -25,6 +25,7 @@ jobs:
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
           environment: prod
+          bootstrap-export-keys: INFRACOST_API_KEY
 
       - name: Install Terraform
         shell: bash

@@ -1,4 +1,4 @@
-# S3 bucket holding Terraform state for StartLine infra.
+# S3 bucket holding Terraform state for Startline infra.
 #
 # Bootstrap order (one-time):
 #   1. Apply with current local backend to create this bucket.
