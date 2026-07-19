@@ -134,7 +134,21 @@ variable "bucket_cors_allowed_origins" {
   type        = list(string)
 }
 
+# --- RDS daily stop (staging only) ---
+
+variable "enable_daily_stop" {
+  description = "Schedule RDS to stop at midnight Melbourne time nightly. For staging to save ~$15/mo."
+  type        = bool
+  default     = false
+}
+
 # --- CloudFront CDN ---
+
+variable "cdn_waf_enabled" {
+  description = "Enable WAF rate-limiting on the CDN. Skip for staging to save $6/mo."
+  type        = bool
+  default     = true
+}
 
 variable "cdn_custom_domain" {
   description = "Custom domain for the upload CDN (e.g. cdn.startlineau.com). Null means use CloudFront default domain."

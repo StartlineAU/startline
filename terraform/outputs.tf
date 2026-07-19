@@ -104,6 +104,48 @@ output "uploads_bucket_regional_domain_name" {
   value       = module.env["prod"].uploads_bucket_regional_domain_name
 }
 
+# ── Staging outputs ─────────────────────────────────────────────────────
+
+output "staging_cognito_user_pool_id" {
+  description = "Staging Cognito User Pool ID."
+  value       = module.env["staging"].cognito_user_pool_id
+}
+
+output "staging_cognito_app_client_id" {
+  description = "Staging Cognito App Client ID."
+  value       = module.env["staging"].cognito_app_client_id
+}
+
+output "staging_cognito_issuer_url" {
+  description = "Staging OIDC issuer URL."
+  value       = module.env["staging"].cognito_issuer_url
+}
+
+output "staging_database_host" {
+  description = "Staging RDS hostname."
+  value       = module.env["staging"].database_host
+}
+
+output "staging_database_secret_arn" {
+  description = "Staging Secrets Manager secret ARN for the database."
+  value       = module.env["staging"].database_secret_arn
+}
+
+output "staging_uploads_bucket_id" {
+  description = "Staging S3 upload bucket name."
+  value       = module.env["staging"].uploads_bucket_id
+}
+
+output "staging_uploads_bucket_arn" {
+  description = "Staging S3 upload bucket ARN."
+  value       = module.env["staging"].uploads_bucket_arn
+}
+
+output "staging_app_secret_arn" {
+  description = "Staging Secrets Manager secret containing all app env vars."
+  value       = module.env["staging"].app_secret_arn
+}
+
 output "startline_dev_access_key_id" {
   description = "Access key ID for the startline-dev IAM user."
   value       = aws_iam_access_key.startline_dev.id

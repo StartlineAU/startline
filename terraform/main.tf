@@ -62,12 +62,14 @@ locals {
             - >
               corepack enable && pnpm install --frozen-lockfile
               && npx prisma generate
+              && export ENV=staging \
+              && if [ "$AWS_BRANCH_NAME" = "main" ]; then export ENV=prod; fi \
               && aws secretsmanager get-secret-value
-              --secret-id startline/prod/app
+              --secret-id startline/$ENV/app
               --query SecretString --output text
               | node -e "const s=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8').trim());for(const[k,v]of Object.entries(s))console.log(k+'='+v)" >> .env.production
               && ( [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production ; true )
-              && ( [ -z "$AWS_PULL_REQUEST_ID" ] && ( npx prisma migrate deploy || npx prisma migrate reset --force ) ; true )
+              && ( [ -z "$AWS_PULL_REQUEST_ID" ] && ( npx prisma migrate deploy || npx prisma migrate reset --force ) && ( [ "$ENV" != "prod" ] && npx prisma db seed ; true ) ; true )
         build:
           commands:
             - pnpm run build
@@ -129,6 +131,20 @@ locals {
       cognito_deletion_protection  = true
       bucket_cors_allowed_origins  = ["https://startlineau.com", "https://organiser.startlineau.com"]
       site_url                     = "https://startlineau.com"
+      enable_daily_stop            = false
+    }
+    staging = {
+      branch_name                  = "staging"
+      amplify_stage                = "BETA"
+      auto_build_enabled           = true
+      vpc_cidr                     = "10.21.0.0/16"
+      database_name                = "${var.project_name}_staging"
+      database_skip_final_snapshot = true
+      database_deletion_protection = false
+      cognito_deletion_protection  = false
+      bucket_cors_allowed_origins  = ["*"]
+      site_url                     = "https://staging.startlineau.com"
+      enable_daily_stop            = true
     }
   }
 }
@@ -160,14 +176,16 @@ module "env" {
   database_deletion_protection          = each.value.database_deletion_protection
   database_performance_insights_enabled = var.database_performance_insights_enabled
   database_secret_recovery_window_days  = var.database_secret_recovery_window_days
+  enable_daily_stop                     = each.value.enable_daily_stop
 
   cognito_deletion_protection = each.value.cognito_deletion_protection
 
   resend_api_key = local.bootstrap.resend_api_key
-  site_url       = each.value.site_url
+  site_url       = each.key == "prod" ? each.value.site_url : "https://${each.value.branch_name}.${aws_amplify_app.this.default_domain}"
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
 
+  cdn_waf_enabled   = each.key == "prod"
   cdn_custom_domain = each.key == "prod" ? "cdn.startlineau.com" : null
   cdn_cert_arn      = each.key == "prod" ? aws_acm_certificate.cdn.arn : null
 

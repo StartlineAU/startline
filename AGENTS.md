@@ -54,9 +54,10 @@ Connect Express for organiser payouts. Payments via `api/organiser/stripe/`. Mon
 All secrets in AWS Secrets Manager, loaded by `.envrc` + direnv. **No `.env` file.**
 
 | Secret | Contents |
-|---|---|
+|---|---|---|
 | `startline/ci-bootstrap` | CI/CD bootstrap (amplify PAT, cloudflare token, resend key, DO token, gitleaks license) |
 | `startline/prod/app` | Prod env vars (Cognito IDs, Stripe live keys, S3 creds, etc.) |
+| `startline/staging/app` | Staging env vars (non-prod Cognito, RDS, S3) — created by Terraform |
 
 `.envrc` at repo root fetches from SM and exports to shell. Hardcoded local constants (Docker Postgres URL, Mailpit SMTP).
 
@@ -84,6 +85,20 @@ Infra in `terraform/`:
 Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
 
 Amplify build spec fetches from SM at build time — individual key rotations don't need a TF run.
+
+### Environments
+
+Two environments managed by Terraform (`main.tf` → `local.environments`):
+
+| Environment | Branch | Resources | Build behavior |
+|---|---|---|---|
+| `prod` | `main` | Prod Cognito, RDS, S3, CDN | Migrate, no seed |
+| `staging` | `staging` | Staging Cognito, RDS, S3, CDN | Migrate + seed |
+| PR previews (any) | feature branches | Uses **staging** resources | No migrate, no seed, auth bypass |
+
+The build spec (`local.build_spec`) selects the SM secret based on `AWS_BRANCH_NAME`:
+- `main` → `startline/prod/app`
+- everything else → `startline/staging/app`
 
 ## Design system
 

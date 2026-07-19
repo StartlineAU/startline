@@ -161,7 +161,7 @@ resource "aws_secretsmanager_secret" "database" {
 }
 
 locals {
-  environment_tag = title(var.name)
+  environment_tag = var.name == "prod" ? "Prod" : "Stage"
   database_url    = "postgresql://${var.database_username}:${urlencode(random_password.db_master.result)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${var.database_name}?schema=public&sslmode=require"
 }
 
@@ -206,6 +206,62 @@ resource "aws_secretsmanager_secret_version" "app" {
     NEXT_PUBLIC_BASE_URL             = var.site_url
     NEXT_PUBLIC_AWS_REGION           = "ap-southeast-2"
   })
+}
+
+# ===== RDS daily stop scheduler (staging only) =====
+
+resource "aws_iam_role" "scheduler" {
+  count = var.enable_daily_stop ? 1 : 0
+  name  = "${var.project_name}-${var.name}-rds-scheduler"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "scheduler.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Environment = local.environment_tag
+    Service     = var.project_name
+  }
+}
+
+resource "aws_iam_role_policy" "scheduler" {
+  count = var.enable_daily_stop ? 1 : 0
+  role  = aws_iam_role.scheduler[0].id
+
+  policy = jsonencode({
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["rds:StopDBInstance"]
+      Resource = aws_db_instance.postgres.arn
+    }]
+  })
+}
+
+resource "aws_scheduler_schedule" "daily_stop" {
+  count = var.enable_daily_stop ? 1 : 0
+  name  = "${var.project_name}-${var.name}-rds-daily-stop"
+
+  flexible_time_window { mode = "OFF" }
+
+  schedule_expression          = "cron(0 0 * * ? *)"
+  schedule_expression_timezone = "Australia/Melbourne"
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk/rds:stopDBInstance"
+    role_arn = aws_iam_role.scheduler[0].arn
+
+    input = jsonencode({
+      DbInstanceIdentifier = aws_db_instance.postgres.identifier
+    })
+
+    retry_policy {
+      maximum_retry_attempts = 0
+    }
+  }
 }
 
 # ===== Cognito custom email sender =====
@@ -530,6 +586,7 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
 # ===== CloudFront CDN for upload bucket =====
 
 resource "aws_wafv2_web_acl" "cdn" {
+  count = var.cdn_waf_enabled ? 1 : 0
   provider = aws.us_east_1
 
   name        = "${var.project_name}-${var.name}-cdn-waf"
@@ -586,7 +643,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
   is_ipv6_enabled     = true
-  web_acl_id          = aws_wafv2_web_acl.cdn.arn
+  web_acl_id          = var.cdn_waf_enabled ? aws_wafv2_web_acl.cdn[0].arn : null
   comment             = "CDN for ${var.name} upload bucket"
   price_class         = "PriceClass_100"
   aliases             = var.cdn_custom_domain != null ? [var.cdn_custom_domain] : []
