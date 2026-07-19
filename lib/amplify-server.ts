@@ -1,7 +1,12 @@
 import "server-only";
 
-import { auth } from "@/lib/auth/server";
+import { auth as neonAuth } from "@/lib/auth/server";
 import prisma from "./prisma";
+
+function getAuth() {
+  if (!neonAuth) return null;
+  return neonAuth;
+}
 
 export type ServerSession = {
   id:     string;
@@ -38,7 +43,9 @@ export async function getServerSession(): Promise<ServerSession | null> {
   }
 
   try {
-    const { data: session } = await auth.getSession();
+    const instance = getAuth();
+    if (!instance) return null;
+    const { data: session } = await instance.getSession();
     if (!session?.user) return null;
     return { id: session.user.id, email: session.user.email, name: session.user.name ?? null };
   } catch {
