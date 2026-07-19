@@ -314,6 +314,7 @@ async function main() {
       inclusions: "Race entry, finisher medal, recovery snack bag", refundPolicy: "Flexible",
       registrationType: "startline", feeStructure: "athlete",
       coverImageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&q=80",
+      photos: [],
     },
   });
 
@@ -325,7 +326,7 @@ async function main() {
       tagline: "", description: "Draft — details TBC",
       eventDate: "2026-12-05", startTime: "09:00", endTime: "15:00",
       venue: "TBC", city: "Sydney", state: "nsw", format: "team", level: "open",
-      categories: [], waves: [], registrationType: "startline", feeStructure: "athlete",
+      categories: [], waves: [], photos: [], registrationType: "startline", feeStructure: "athlete",
     },
   });
 
@@ -340,7 +341,7 @@ async function main() {
       venue: "Yering Station", city: "Yering", state: "vic",
       format: "individual", level: "open", categories: ["5K", "10K", "Half Marathon"],
       cap: 500, waves: [{ label: "5K Entry", price: "45" }, { label: "10K Entry", price: "55" }, { label: "Half Marathon", price: "75" }],
-      registrationType: "startline", feeStructure: "athlete", refundPolicy: "Firm",
+      photos: [], registrationType: "startline", feeStructure: "athlete", refundPolicy: "Firm",
       rejectionReason: "Event date has already passed.", reviewedAt: new Date("2026-04-01T09:00:00Z"),
     },
   });
@@ -381,7 +382,7 @@ async function main() {
       create: { id: e.id, organiserId: org.id, status: e.status, title: e.title, discipline: e.discipline,
         tagline: e.tagline, description: e.description, eventDate: e.eventDate, startTime: e.startTime, endTime: e.endTime,
         venue: e.venue, city: e.city, state: e.state, format: e.format, level: e.level, categories: e.categories,
-        cap: e.cap, waves: e.waves, registrationType: "startline", feeStructure: "athlete" },
+        cap: e.cap, waves: e.waves, photos: [], registrationType: "startline", feeStructure: "athlete" },
     });
   }
 
