@@ -149,10 +149,14 @@ locals {
       enable_daily_stop            = true
     }
   }
+
+  enabled_environments = var.target_environment == "all" ? local.environments : {
+    for k, v in local.environments : k => v if k == var.target_environment
+  }
 }
 
 module "env" {
-  for_each = local.environments
+  for_each = local.enabled_environments
   source   = "./modules/environment"
 
   name           = each.key
@@ -199,7 +203,7 @@ module "env" {
 
 # Custom apex domain. DNS records in dns.tf reference this association.
 resource "aws_amplify_domain_association" "this" {
-  count       = var.amplify_custom_domain != null ? 1 : 0
+  count       = var.amplify_custom_domain != null && (var.target_environment == "all" || var.target_environment == "prod") ? 1 : 0
   app_id      = aws_amplify_app.this.id
   domain_name = var.amplify_custom_domain
 

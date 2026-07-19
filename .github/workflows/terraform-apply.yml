@@ -3,7 +3,7 @@ name: Terraform apply
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-*.yml'
@@ -25,7 +25,7 @@ jobs:
       - uses: ./.github/actions/load-env
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
-          environment: prod
+          environment: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
 
       - name: Install Terraform
         shell: bash
@@ -37,5 +37,5 @@ jobs:
         shell: bash
         run: |
           terraform init -input=false
-          terraform apply -auto-approve -input=false
+          terraform apply -auto-approve -input=false -var="target_environment=${{ github.ref_name == 'main' && 'all' || 'staging' }}"
 

@@ -106,4 +106,14 @@ variable "database_secret_recovery_window_days" {
   default     = 0
 }
 
+variable "target_environment" {
+  description = "Which environment(s) to manage: 'all', 'prod', or 'staging'."
+  type        = string
+  default     = "all"
+  validation {
+    condition     = contains(["all", "prod", "staging"], var.target_environment)
+    error_message = "Must be 'all', 'prod', or 'staging'."
+  }
+}
+
 
