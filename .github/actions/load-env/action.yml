@@ -7,6 +7,9 @@ inputs:
   environment:
     description: "environment name (prod, etc.)"
     default: "prod"
+  bootstrap-export-keys:
+    description: "Comma-separated list of bootstrap keys to export as env vars (empty = none)"
+    default: ""
 
 runs:
   using: "composite"
@@ -32,9 +35,17 @@ runs:
           echo "::add-mask::$value"
         done < <(echo "$BOOTSTRAP" | jq -r 'values[]')
 
-        # Export to env (raw + TF_VAR_ prefixed)
-        echo "$BOOTSTRAP" | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
-        echo "$BOOTSTRAP" | jq -r 'to_entries[] | "TF_VAR_\(.key)=\(.value)"' >> "$GITHUB_ENV"
+        # Export only whitelisted bootstrap keys (raw + TF_VAR_ prefixed)
+        if [ -n "${{ inputs.bootstrap-export-keys }}" ]; then
+          IFS=',' read -ra KEYS <<< "${{ inputs.bootstrap-export-keys }}"
+          for key in "${KEYS[@]}"; do
+            val=$(echo "$BOOTSTRAP" | jq -r --arg k "$key" '.[$k] // empty')
+            if [ -n "$val" ]; then
+              echo "$key=$val" >> "$GITHUB_ENV"
+              echo "TF_VAR_$key=$val" >> "$GITHUB_ENV"
+            fi
+          done
+        fi
 
         APP=$(aws secretsmanager get-secret-value \
           --secret-id startline/${{ inputs.environment }}/app \
