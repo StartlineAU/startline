@@ -116,7 +116,7 @@ test.describe("auth modal — sign up", () => {
     await page.waitForURL("**/auth/verify-email**", { timeout: 20000 });
     await expect(page).not.toHaveURL(/\/customer\//);
     await expect(page.getByText("This page could not be found.")).not.toBeVisible();
-    await expect(page.getByText(/code/i)).toBeVisible();
+    await expect(page.locator("#verify-code-input")).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 });
