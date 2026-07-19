@@ -163,6 +163,7 @@ resource "cloudflare_record" "dmarc" {
 # Cloudflare supports CNAME flattening at the apex — no ALIAS record needed.
 
 resource "cloudflare_record" "apex" {
+  count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id
   name    = "startlineau.com"
   type    = "CNAME"
@@ -172,6 +173,7 @@ resource "cloudflare_record" "apex" {
 }
 
 resource "cloudflare_record" "www" {
+  count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id
   name    = "www"
   type    = "CNAME"
@@ -181,6 +183,7 @@ resource "cloudflare_record" "www" {
 }
 
 resource "cloudflare_record" "organiser" {
+  count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id
   name    = "organiser"
   type    = "CNAME"
@@ -192,6 +195,7 @@ resource "cloudflare_record" "organiser" {
 # ===== Upload CDN (CloudFront) =====
 
 resource "cloudflare_record" "cdn" {
+  count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id
   name    = "cdn"
   type    = "CNAME"
@@ -201,6 +205,7 @@ resource "cloudflare_record" "cdn" {
 
 # ===== Amplify ACM certificate validation — must be DNS-only (unproxied) =====
 resource "cloudflare_record" "amplify_cert_validation" {
+  count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id
   name    = trimsuffix(local.amplify_cert_record[0], ".")
   type    = "CNAME"

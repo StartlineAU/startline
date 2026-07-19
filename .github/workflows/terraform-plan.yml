@@ -2,7 +2,7 @@ name: Terraform plan
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-*.yml'
@@ -25,6 +25,7 @@ jobs:
         with:
           aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
           environment: prod
+          bootstrap-export-keys: INFRACOST_API_KEY
 
       - name: Install Terraform
         shell: bash
@@ -64,7 +65,7 @@ jobs:
         run: |
           terraform init -input=false
           terraform validate -no-tests
-          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false 2>&1 | tee /tmp/plan-output.txt || true
+          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false -var="target_environment=${{ github.base_ref == 'main' && 'all' || 'staging' }}" 2>&1 | tee /tmp/plan-output.txt || true
 
       - name: Generate Infracost diff
         shell: bash

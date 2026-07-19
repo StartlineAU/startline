@@ -13,7 +13,7 @@ test.describe("about page", () => {
 test.describe("homepage", () => {
   test("renders with expected title", async ({ page }) => {
     await goToHomepage(page);
-    await expect(page).toHaveTitle(/StartLine/i);
+    await expect(page).toHaveTitle(/Startline/i);
   });
 
   test("homepage visual snapshot", async ({ page }) => {

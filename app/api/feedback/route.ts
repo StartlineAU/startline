@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#1D1D1D;border:1px solid #2A2A2A;border-radius:12px;">
       <tr>
         <td style="padding:28px 32px 8px;">
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#B3E153;">StartLine Feedback</p>
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#B3E153;">Startline Feedback</p>
           <h1 style="margin:0 0 4px;font-size:24px;font-weight:700;color:#F5F7FA;">${escapeHtml(title)}</h1>
           <p style="margin:0 0 28px;font-size:12px;color:#6E737B;">Ref ${ref}</p>
         </td>
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   const resend = new Resend(resendApiKey);
 
   const { data, error } = await resend.emails.send({
-    from:    "StartLine <noreply@startlineau.com>",
+    from:    "Startline <noreply@startlineau.com>",
     to:      ADMIN_EMAIL,
     replyTo,
     subject: `[${escapeHtml(type)}] ${escapeHtml(title)} — ${ref}`,
