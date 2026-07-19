@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { sendRegistrationConfirmationEmail } from "@/lib/email";
@@ -89,11 +90,11 @@ export async function POST(req: NextRequest) {
 
 async function ensureGuestUser(email: string, name: string): Promise<string> {
   try {
-    const cognitoSub = await ensureAthleteCognitoUser(email);
+    await ensureAthleteCognitoUser(email);
     const user = await prisma.user.upsert({
       where: { email },
-      update: { cognitoSub, name: name || undefined },
-      create: { email, cognitoSub, name: name || undefined },
+      update: { name: name || undefined },
+      create: { email, authId: randomUUID(), name: name || undefined },
     });
     return user.id;
   } catch (err) {

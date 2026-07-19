@@ -25,6 +25,10 @@
     "terraform": {
       "type": "local",
       "command": ["docker", "run", "-i", "--rm", "hashicorp/terraform-mcp-server:latest"]
+    },
+    "neon": {
+      "type": "local",
+      "command": ["npx", "-y", "@neondatabase/mcp-server-neon", "start", "{env:NEON_API_KEY}"]
     }
   }
 }

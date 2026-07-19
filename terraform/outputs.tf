@@ -23,40 +23,9 @@ output "aws_account_id" {
   value       = data.aws_caller_identity.current.account_id
 }
 
-output "database_secret_arn" {
-  description = "Secrets Manager secret ARN for the database."
-  value       = module.env["prod"].database_secret_arn
-}
-
-output "database_host" {
-  description = "RDS hostname."
-  value       = module.env["prod"].database_host
-}
-
-output "cognito_user_pool_id" {
-  description = "Cognito User Pool ID."
-  value       = module.env["prod"].cognito_user_pool_id
-}
-
-output "cognito_user_pool_arn" {
-  description = "Cognito User Pool ARN."
-  value       = module.env["prod"].cognito_user_pool_arn
-}
-
-output "cognito_issuer_url" {
-  description = "OIDC issuer URL."
-  value       = module.env["prod"].cognito_issuer_url
-}
-
-output "cognito_app_client_id" {
-  description = "App Client ID."
-  value       = module.env["prod"].cognito_app_client_id
-}
-
-output "cognito_app_client_secret" {
-  description = "App Client secret (sensitive)."
-  value       = module.env["prod"].cognito_app_client_secret
-  sensitive   = true
+output "app_secret_arn" {
+  description = "Secrets Manager secret ARN for app env vars."
+  value       = module.env["prod"].app_secret_arn
 }
 
 output "amplify_domain_dns_records" {
@@ -80,28 +49,13 @@ output "amplify_domain_dns_records" {
 }
 
 output "github_actions_role_arn" {
-  description = "Set as GitHub repo variable AWS_ROLE_ARN. Admin access, main branch only."
+  description = "Set as GitHub repo variable AWS_ROLE_ARN."
   value       = aws_iam_role.terraform_ci.arn
 }
 
 output "github_actions_readonly_role_arn" {
   description = "Set as GitHub repo variable AWS_ROLE_ARN_READONLY for PR workflows."
   value       = aws_iam_role.terraform_ci_readonly.arn
-}
-
-output "uploads_bucket_id" {
-  description = "S3 upload bucket name."
-  value       = module.env["prod"].uploads_bucket_id
-}
-
-output "uploads_bucket_arn" {
-  description = "S3 upload bucket ARN."
-  value       = module.env["prod"].uploads_bucket_arn
-}
-
-output "uploads_bucket_regional_domain_name" {
-  description = "S3 upload bucket regional domain name."
-  value       = module.env["prod"].uploads_bucket_regional_domain_name
 }
 
 output "startline_dev_access_key_id" {

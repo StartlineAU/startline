@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, ChevronDown, Check, AtSign, ShieldAlert } from "lucide-react";
-import { signIn, signUp, signOut, resetPassword, confirmResetPassword, confirmSignIn } from "aws-amplify/auth";
+import { X, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, ChevronDown, Check, AtSign } from "lucide-react";
+import { authClient } from "@/lib/auth/client";
 import { useAuthContext } from "@/context/AuthContext";
 import { validateUsername } from "@/lib/username-validation";
 
@@ -59,8 +59,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
   const [newPwConfirm,    setNewPwConfirm]    = useState("");
   const [resetSent,       setResetSent]       = useState(false);
   const [newPwStep,       setNewPwStep]       = useState<"initial" | "sent" | "done">("initial");
-  // When signIn returned CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED
-  const [challengeFlow,   setChallengeFlow]   = useState(false);
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,7 +83,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       setUsername(""); setUsernameStatus("idle"); setUsernameError("");
       setCheckingEmail(false); setUserExists(null); setUserStatus(null);
       setResetCode(""); setNewPassword(""); setNewPwConfirm("");
-      setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+      setResetSent(false); setNewPwStep("initial");
       /* eslint-enable react-hooks/set-state-in-effect */
     }
     return () => { document.body.style.overflow = ""; };
@@ -156,24 +155,21 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setError("");
     setLoading(true);
     try {
-      await signOut({ global: false }).catch(() => {});
-      const result = await signIn({ username: email, password });
+      await authClient.signOut().catch(() => {});
+      const { data, error } = await authClient.signIn.email({ email, password });
 
-      if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") {
-        onClose(); router.push("/auth/verify-email?email=" + encodeURIComponent(email)); return;
-      }
-      if (result.nextStep.signInStep === "RESET_PASSWORD") {
-        onClose(); router.push("/auth/forgot-password?email=" + encodeURIComponent(email)); return;
-      }
-      if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
-        setPassword("");
-        setNewPassword("");
-        setNewPwConfirm("");
-        setChallengeFlow(true);
+      if (error) {
+        if (error.code === "EMAIL_NOT_VERIFIED") {
+          onClose(); router.push("/auth/verify-email?email=" + encodeURIComponent(email)); return;
+        }
+        if (error.code === "INVALID_EMAIL_OR_PASSWORD") {
+          setError("Incorrect email or password.");
+        } else if (error.code === "USER_NOT_FOUND") {
+          setError("No account found with that email.");
+        } else {
+          setError(error.message || "Something went wrong. Please try again.");
+        }
         return;
-      }
-      if (result.nextStep.signInStep !== "DONE") {
-        setError("Additional verification required. Please contact support."); return;
       }
 
       await fetch("/api/user/auth/session", { method: "POST" });
@@ -199,42 +195,8 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const errName = (err as { name?: string })?.name ?? "";
-      const msg     = err instanceof Error ? err.message : "";
-      if (errName === "NotAuthorizedException" || msg.includes("Incorrect username or password")) {
-        setError("Incorrect email or password.");
-      } else if (errName === "UserNotConfirmedException") {
-        onClose(); router.push("/auth/verify-email?email=" + encodeURIComponent(email));
-      } else if (errName === "UserNotFoundException") {
-        setError("No account found with that email.");
-      } else {
-        setError(msg || "Something went wrong. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Handle new‑password challenge from sign-in ──────────────────────────────
-  const handleConfirmNewPassword = async () => {
-    setError("");
-    if (newPassword.length < 8) { setError("Password must be at least 8 characters."); return; }
-    if (newPassword !== newPwConfirm) { setError("Passwords do not match."); return; }
-    setLoading(true);
-    try {
-      const result = await confirmSignIn({ challengeResponse: newPassword });
-
-      if (result.nextStep.signInStep !== "DONE") {
-        setError("Something went wrong. Please try again."); return;
-      }
-
-      await fetch("/api/user/auth/session", { method: "POST" });
-      await refresh();
-      onSuccess?.();
-      onClose();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to set password.";
-      setError(msg);
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -245,16 +207,15 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setError("");
     setLoading(true);
     try {
-      await resetPassword({ username: email });
+      const { error } = await authClient.forgetPassword.emailOtp({ email });
+      if (error) {
+        setError(error.message || "Failed to send reset code.");
+        return;
+      }
       setResetSent(true);
       setNewPwStep("sent");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to send reset code.";
-      if (msg.includes("LimitExceededException")) {
-        setError("Too many attempts. Please try again later.");
-      } else {
-        setError(msg);
-      }
+    } catch {
+      setError("Failed to send reset code.");
     } finally {
       setLoading(false);
     }
@@ -267,18 +228,30 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     if (newPassword !== newPwConfirm) { setError("Passwords do not match."); return; }
     setLoading(true);
     try {
-      await confirmResetPassword({
-        username: email,
-        confirmationCode: resetCode,
-        newPassword,
+      const { error } = await authClient.emailOtp.resetPassword({
+        email,
+        otp: resetCode,
+        password: newPassword,
       });
+      if (error) {
+        if (error.code === "INVALID_OTP") {
+          setError("That code is incorrect.");
+        } else if (error.code === "OTP_EXPIRED") {
+          setError("That code has expired. Please request a new one.");
+        } else if (error.code === "INVALID_PASSWORD" || error.code === "PASSWORD_TOO_SHORT") {
+          setError("Password must be at least 8 characters with upper, lower and a number.");
+        } else {
+          setError(error.message || "Failed to reset password.");
+        }
+        return;
+      }
       // Sign in immediately with the new password
       setPassword(newPassword);
       setError("");
       try {
-        await signOut({ global: false }).catch(() => {});
-        const result = await signIn({ username: email, password: newPassword });
-        if (result.nextStep.signInStep === "DONE") {
+        await authClient.signOut().catch(() => {});
+        const { error: signInError } = await authClient.signIn.email({ email, password: newPassword });
+        if (!signInError) {
           await fetch("/api/user/auth/session", { method: "POST" });
           await refresh();
           onSuccess?.();
@@ -289,17 +262,8 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       // Fallback: show the password field
       setUserStatus("CONFIRMED");
       setNewPwStep("done");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to reset password.";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Please request a new one.");
-      } else if (msg.includes("InvalidPasswordException")) {
-        setError("Password must be at least 8 characters with upper, lower and a number.");
-      } else {
-        setError(msg);
-      }
+    } catch {
+      setError("Failed to reset password.");
     } finally {
       setLoading(false);
     }
@@ -348,48 +312,33 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     if (!phone.trim()) { setError("Please enter your phone number."); return; }
     if (!acceptedTerms) { setError("You must accept the Terms & Conditions and Privacy Policy to continue."); return; }
 
-    const rawPhone  = phone.trim().replace(/[\s\-()]/g, "");
-    const e164Phone = rawPhone.startsWith("0")
-      ? "+61" + rawPhone.slice(1)
-      : rawPhone.startsWith("61")
-        ? "+" + rawPhone
-        : rawPhone.startsWith("+")
-          ? rawPhone
-          : "+61" + rawPhone;
-
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     setLoading(true);
     try {
-      await signUp({
-        username: email,
+      const { error } = await authClient.signUp.email({
+        email,
         password,
-        options: {
-          userAttributes: {
-            email,
-            name:         fullName,
-            phone_number: e164Phone,
-            birthdate:    isoDate,
-          },
-          autoSignIn: true,
-        },
+        name: fullName,
+        callbackURL: "/auth/verify-email",
       });
+      if (error) {
+        if (error.code === "USER_ALREADY_EXISTS") {
+          setError("An account with that email already exists.");
+        } else if (error.code === "PASSWORD_TOO_SHORT") {
+          setError("Password must be at least 8 characters with upper, lower and a number.");
+        } else {
+          setError(error.message || "Registration failed. Please try again.");
+        }
+        return;
+      }
       try {
-        sessionStorage.setItem("startline_pending_name",  fullName);
-        sessionStorage.setItem("startline_pending_dob",   isoDate);
-        sessionStorage.setItem("startline_pending_phone", e164Phone);
+        sessionStorage.setItem("startline_pending_name", fullName);
       } catch {}
       setError("");
       setView("username");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("UsernameExistsException")) {
-        setError("An account with that email already exists.");
-      } else if (msg.includes("InvalidPasswordException")) {
-        setError("Password must be at least 8 characters with upper, lower and a number.");
-      } else {
-        setError(msg || "Registration failed. Please try again.");
-      }
+    } catch {
+      setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -409,7 +358,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setView(v); setError(""); setPassword(""); setConfirm("");
     setCheckingEmail(false); setUserExists(null); setUserStatus(null);
     setResetCode(""); setNewPassword(""); setNewPwConfirm("");
-    setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+    setResetSent(false); setNewPwStep("initial");
   };
 
   const goBackToEmail = () => {
@@ -418,7 +367,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setPassword("");
     setError("");
     setResetCode(""); setNewPassword(""); setNewPwConfirm("");
-    setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+    setResetSent(false); setNewPwStep("initial");
   };
 
   const dobDayRef   = useRef<HTMLInputElement>(null);
@@ -466,7 +415,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
         )}
 
         {/* ── Sign In – Email step ── */}
-        {view === "signin" && userExists === null && !challengeFlow && (
+        {view === "signin" && userExists === null && (
           <>
             <div className="mb-6">
               <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">User Portal</span>
@@ -535,7 +484,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
         )}
 
         {/* ── Sign In – Password step ── */}
-        {view === "signin" && userExists === true && userStatus === "CONFIRMED" && !challengeFlow && (
+        {view === "signin" && userExists === true && userStatus === "CONFIRMED" && (
           <>
             <div className="mb-6">
               <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">User Portal</span>
@@ -583,7 +532,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
         )}
 
         {/* ── Sign In – New password required (FORCE_CHANGE_PASSWORD) ── */}
-        {view === "signin" && userExists === true && userStatus !== "CONFIRMED" && !challengeFlow && (
+        {view === "signin" && userExists === true && userStatus !== "CONFIRMED" && (
           <>
             <div className="mb-6">
               <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">Finish Setup</span>
@@ -687,61 +636,6 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                 Use a different email
               </button>
             )}
-          </>
-        )}
-
-        {/* ── Sign In – New password challenge (CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED) ── */}
-        {view === "signin" && challengeFlow && (
-          <>
-            <div className="mb-6">
-              <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">Set New Password</span>
-              <h2 className="font-headline text-4xl font-black italic tracking-tighter leading-[0.9] mb-2">
-                Update your<br /><span className="text-primary">password.</span>
-              </h2>
-              <p className="text-muted text-[14px] leading-relaxed">Your account requires a new password before you can sign in.</p>
-            </div>
-
-            {error && <div className={errCls}>{error}</div>}
-
-            <form onSubmit={(e) => { e.preventDefault(); handleConfirmNewPassword(); }} className="space-y-3">
-              <div>
-                <label htmlFor="challenge-new-password" className={labelCls}>New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input
-                    id="challenge-new-password"
-                    type={showPw ? "text" : "password"}
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min 8 characters"
-                    className={inputCls + " pr-11"}
-                    autoFocus
-                  />
-                  <button type="button" onClick={() => setShowPw(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-dark hover:text-primary transition-colors">
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="challenge-confirm-password" className={labelCls}>Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                  <input
-                    id="challenge-confirm-password"
-                    type={showPw ? "text" : "password"}
-                    required
-                    value={newPwConfirm}
-                    onChange={(e) => setNewPwConfirm(e.target.value)}
-                    placeholder="Re-enter password"
-                    className={inputCls}
-                  />
-                </div>
-              </div>
-              <button type="submit" disabled={loading} className={btnCls}>
-                {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Updating…</> : <>Set password <ArrowRight className="w-4 h-4" /></>}
-              </button>
-            </form>
           </>
         )}
 

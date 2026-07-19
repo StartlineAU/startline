@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, KeyRound } from "lucide-react";
-import { resetPassword, confirmResetPassword } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 
 type Step = "request" | "confirm";
 
 function ForgotPasswordForm() {
-  const router       = useRouter();
   const searchParams = useSearchParams();
 
   const [step,        setStep]        = useState<Step>("request");
   const [email,       setEmail]       = useState(searchParams.get("email") ?? "");
-  const [code,        setCode]        = useState("");
+  const [otp,         setOtp]         = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm,     setConfirm]     = useState("");
   const [showPw,      setShowPw]      = useState(false);
@@ -26,15 +25,10 @@ function ForgotPasswordForm() {
     e.preventDefault();
     setError(""); setLoading(true);
     try {
-      await resetPassword({ username: email });
+      await authClient.forgetPassword.emailOtp({ email });
       setStep("confirm");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("UserNotFoundException") || msg.includes("NotAuthorizedException")) {
-        setStep("confirm"); // Don't reveal if email exists
-      } else {
-        setError("Could not send reset code. Please try again.");
-      }
+    } catch {
+      setError("Could not send reset code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -48,19 +42,20 @@ function ForgotPasswordForm() {
 
     setLoading(true);
     try {
-      await confirmResetPassword({ username: email, confirmationCode: code.trim(), newPassword });
-      router.push("/?reset=1");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Go back and request a new one.");
-      } else if (msg.includes("InvalidPasswordException")) {
-        setError("Password must be at least 8 characters with upper, lower and a number.");
-      } else {
-        setError("Could not reset your password. Please try again.");
+      const { error: err } = await authClient.emailOtp.resetPassword({ email, otp, password: newPassword });
+      if (err) {
+        if (err.code === "INVALID_OTP") {
+          setError("That code is incorrect. Please check and try again.");
+        } else if (err.code === "OTP_EXPIRED") {
+          setError("That code has expired. Go back and request a new one.");
+        } else if (err.code === "PASSWORD_TOO_SHORT") {
+          setError("Password must be at least 8 characters.");
+        } else {
+          setError(err.message || "Could not reset your password. Please try again.");
+        }
+        return;
       }
+      window.location.href = "/?reset=1";
     } finally {
       setLoading(false);
     }
@@ -84,7 +79,7 @@ function ForgotPasswordForm() {
               Forgot your<br /><span className="text-primary">password?</span>
             </h1>
             <p className="text-muted text-[15px] leading-relaxed mb-8 text-center">
-              Enter your email and we&apos;ll send you a 6-digit reset code.
+              Enter your email and we&apos;ll send you a reset code.
             </p>
 
             {error && (
@@ -114,7 +109,7 @@ function ForgotPasswordForm() {
               Enter your<br /><span className="text-primary">reset code.</span>
             </h1>
             <p className="text-muted text-[15px] leading-relaxed mb-8 text-center">
-              Check <strong className="text-light">{email}</strong> for your 6-digit code, then choose a new password.
+              Check <strong className="text-light">{email}</strong> for your code, then choose a new password.
             </p>
 
             {error && (
@@ -125,7 +120,7 @@ function ForgotPasswordForm() {
               <div>
                 <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">Reset code</label>
                 <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} required
-                  value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                  value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light tracking-[0.5em] text-center placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors font-headline font-black" />
               </div>
@@ -151,7 +146,7 @@ function ForgotPasswordForm() {
                     className="w-full bg-dark border border-dark-lighter rounded-md pl-10 pr-4 py-3 text-[15px] text-light placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors" />
                 </div>
               </div>
-              <button type="submit" disabled={loading || code.length < 6}
+              <button type="submit" disabled={loading || otp.length < 6}
                 className="bg-machined shadow-machined w-full text-dark font-headline text-sm font-bold uppercase tracking-widest py-4 rounded-md flex items-center justify-center gap-2 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
                 {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Resetting…</> : <>Set new password <ArrowRight className="w-4 h-4" /></>}
               </button>

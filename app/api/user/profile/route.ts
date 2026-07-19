@@ -23,11 +23,7 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({
-    ...user,
-    mobile: session.phoneNumber,
-    dateOfBirth: session.birthdate,
-  });
+  return NextResponse.json(user);
 }
 
 export async function PUT(req: Request) {

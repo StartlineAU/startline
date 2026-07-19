@@ -59,25 +59,33 @@ locals {
       phases:
         preBuild:
           commands:
+            - corepack enable && pnpm install --frozen-lockfile
+            - npx prisma generate
             - >
-              corepack enable && pnpm install --frozen-lockfile
-              && npx prisma generate
-              && aws secretsmanager get-secret-value
+              aws secretsmanager get-secret-value
               --secret-id startline/prod/app
               --query SecretString --output text
-              | node -e "const s=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8').trim());for(const[k,v]of Object.entries(s))console.log(k+'='+v)" >> .env.production
-              && ( [ -n "$AWS_PULL_REQUEST_ID" ] && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production ; true )
-              && ( [ -z "$AWS_PULL_REQUEST_ID" ] && ( npx prisma migrate deploy || npx prisma migrate reset --force ) ; true )
+              | node -e "const s=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8').trim());for(const[k,v]of Object.entries(s))console.log(k+'='+v)"
+              >> .env.production
+            - >
+              [ -n "$AWS_PULL_REQUEST_ID" ] &&
+              bash scripts/setup-preview-db.sh
+              && echo "DATABASE_URL=$(cat /tmp/neon-url)" >> .env.production
+              && echo "NEXT_PUBLIC_AUTH_BYPASS=true" >> .env.production
+              && npx prisma migrate deploy
+            - >
+              [ -z "$AWS_PULL_REQUEST_ID" ] &&
+              ( npx prisma migrate deploy || npx prisma migrate reset --force )
         build:
           commands:
             - pnpm run build
-      artifacts:
-        baseDirectory: .next
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
+        artifacts:
+          baseDirectory: .next
+          files:
+            - '**/*'
+        cache:
+          paths:
+            - node_modules/**/*
   EOT
 }
 
@@ -103,6 +111,10 @@ resource "aws_amplify_app" "this" {
     enable_pull_request_preview = true
     enable_auto_build           = false
     stage                       = "DEVELOPMENT"
+    environment_variables = {
+      NEON_API_KEY    = local.bootstrap.neon_api_key
+      NEON_PROJECT_ID = local.bootstrap.neon_project_id
+    }
   }
 
   lifecycle {
@@ -122,13 +134,8 @@ locals {
       branch_name                  = "main"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
-      vpc_cidr                     = "10.20.0.0/16"
-      database_name                = "${var.project_name}_prod"
-      database_skip_final_snapshot = false
-      database_deletion_protection = true
-      cognito_deletion_protection  = true
-      bucket_cors_allowed_origins  = ["https://startlineau.com", "https://organiser.startlineau.com"]
       site_url                     = "https://startlineau.com"
+      bucket_cors_allowed_origins  = ["https://startlineau.com", "https://organiser.startlineau.com"]
     }
   }
 }
@@ -145,38 +152,20 @@ module "env" {
   amplify_stage      = each.value.amplify_stage
   auto_build_enabled = each.value.auto_build_enabled
 
-  vpc_cidr      = each.value.vpc_cidr
-  database_name = each.value.database_name
+  site_url = each.value.site_url
 
-  database_engine_version               = var.database_engine_version
-  database_instance_class               = var.database_instance_class
-  database_allocated_storage            = var.database_allocated_storage
-  database_max_allocated_storage        = var.database_max_allocated_storage
-  database_username                     = var.database_username
-  database_publicly_accessible          = var.database_publicly_accessible
-  database_allowed_cidr_blocks          = var.database_allowed_cidr_blocks
-  database_skip_final_snapshot          = each.value.database_skip_final_snapshot
-  database_backup_retention_period      = var.database_backup_retention_period
-  database_deletion_protection          = each.value.database_deletion_protection
-  database_performance_insights_enabled = var.database_performance_insights_enabled
-  database_secret_recovery_window_days  = var.database_secret_recovery_window_days
-
-  cognito_deletion_protection = each.value.cognito_deletion_protection
-
-  resend_api_key = local.bootstrap.resend_api_key
-  site_url       = each.value.site_url
+  neon_api_key    = local.bootstrap.neon_api_key
+  neon_project_id = local.bootstrap.neon_project_id
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
 
-  cdn_custom_domain = each.key == "prod" ? "cdn.startlineau.com" : null
-  cdn_cert_arn      = each.key == "prod" ? aws_acm_certificate.cdn.arn : null
+  cdn_cert_arn = aws_acm_certificate.cdn.arn
 
   providers = {
     aws.us_east_1 = aws.us_east_1
   }
 }
 
-# Custom apex domain. DNS records in dns.tf reference this association.
 resource "aws_amplify_domain_association" "this" {
   count       = var.amplify_custom_domain != null ? 1 : 0
   app_id      = aws_amplify_app.this.id

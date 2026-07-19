@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, startTransition } from "react";
-import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 
 export type Role = "user" | "organiser" | "admin";
 
@@ -37,26 +37,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hydrate = useCallback(async () => {
     try {
-      const session = await fetchAuthSession();
-      if (!session.tokens?.accessToken) {
+      const { data: session } = await authClient.getSession();
+      if (!session?.user) {
         setUser(null);
         setStatus("unauthenticated");
         return;
       }
 
-      const current = await getCurrentUser();
-      const idPayload = session.tokens.idToken?.payload;
-      const loginId = current.signInDetails?.loginId ?? "";
-      const email =
-        (typeof idPayload?.email === "string" && idPayload.email.includes("@")
-          ? idPayload.email
-          : loginId.includes("@")
-            ? loginId
-            : "");
-
       setUser({
-        sub:   current.userId,
-        email,
+        sub:   session.user.id,
+        email: session.user.email,
       });
       setStatus("authenticated");
     } catch {
@@ -69,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     startTransition(() => hydrate());
   }, [hydrate]);
 
-  // Fetch role when auth status changes
   useEffect(() => {
     if (status !== "authenticated") return;
     let cancelled = false;
@@ -85,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [status]);
 
   const logout = useCallback(async () => {
-    await signOut();
+    await authClient.signOut();
     setUser(null);
     setStatus("unauthenticated");
   }, []);

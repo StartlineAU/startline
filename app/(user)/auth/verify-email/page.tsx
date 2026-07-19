@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, ArrowRight, RotateCcw, Check } from "lucide-react";
-import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 import { useAuthContext } from "@/context/AuthContext";
 
 function VerifyEmailForm() {
@@ -49,37 +49,25 @@ function VerifyEmailForm() {
     setError("");
     setLoading(true);
     try {
-      await confirmSignUp({ username: email, confirmationCode: code.trim() });
+      const { error: err } = await authClient.verifyEmail({ query: { token: code.trim(), callbackURL: "/" } });
 
-      // Seamlessly sign the user in — falls back to a manual sign-in prompt
-      // if the auto sign-in session isn't available (e.g. verified on another device).
-      try {
-        const result = await autoSignIn();
-        if (result.nextStep.signInStep === "DONE") {
-          await fetch("/api/user/auth/session", { method: "POST" });
-          await applyPendingProfile();
-          await refresh();
-          setVerified(true);
-          setLoading(false);
-          setTimeout(() => router.push("/"), 1400);
-          return;
+      if (err) {
+        if (err.code === "INVALID_TOKEN") {
+          setError("That code is incorrect. Please check and try again.");
+        } else if (err.code === "EMAIL_ALREADY_VERIFIED") {
+          setError("This email is already verified. Try signing in.");
+        } else {
+          setError(err.message || "Verification failed. Please try again.");
         }
-      } catch {
-        // fall through to manual sign-in redirect below
+        return;
       }
 
-      router.push("/?verified=1");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Use the resend button below.");
-      } else if (msg.includes("AliasExistsException")) {
-        setError("This email is already verified. Try signing in.");
-      } else {
-        setError("Verification failed. Please try again.");
-      }
+      await fetch("/api/user/auth/session", { method: "POST" });
+      await applyPendingProfile();
+      await refresh();
+      setVerified(true);
+      setLoading(false);
+      setTimeout(() => router.push("/"), 1400);
     } finally {
       setLoading(false);
     }
@@ -90,20 +78,10 @@ function VerifyEmailForm() {
     setError(""); setSuccess("");
     setResending(true);
     try {
-      await resendSignUpCode({ username: email });
-      setSuccess("A new code has been sent. Check your inbox and spam folder — look for an email from Amazon Cognito or no-reply@verificationemail.com.");
-    } catch (err: unknown) {
-      const errName = (err as { name?: string })?.name ?? "";
-      const msg = err instanceof Error ? err.message : "";
-      if (errName === "LimitExceededException" || msg.includes("LimitExceededException")) {
-        setError("Too many attempts. Wait a few minutes, then try resend again.");
-      } else if (errName === "InvalidParameterException" || msg.includes("User is already confirmed")) {
-        setError("This email is already verified. Try signing in instead.");
-      } else if (errName === "UserNotFoundException") {
-        setError("No account found for that email. Sign up again or check the address is correct.");
-      } else {
-        setError(msg || "Could not resend the code. Please try again.");
-      }
+      await authClient.sendVerificationEmail({ email, callbackURL: "/" });
+      setSuccess("A new verification email has been sent. Check your inbox and spam folder.");
+    } catch {
+      setError("Could not resend the code. Please try again.");
     } finally {
       setResending(false);
     }
@@ -141,15 +119,12 @@ function VerifyEmailForm() {
               Verify your email
             </div>
             <h1 className="font-headline text-4xl font-black italic tracking-tighter text-light mb-4 text-center">
-              Enter your<br /><span className="text-primary">6-digit code.</span>
+              Enter your<br /><span className="text-primary">code.</span>
             </h1>
-            <p className="text-muted text-[15px] leading-relaxed mb-4 text-center">
+            <p className="text-muted text-[15px] leading-relaxed mb-8 text-center">
               We sent a verification code to{" "}
               {email ? <strong className="text-light">{email}</strong> : "your email"}.
               Enter it below to activate your account.
-            </p>
-            <p className="text-muted text-[12px] leading-relaxed mb-8 text-center">
-              This code is sent by AWS Cognito (not Resend). Check spam/junk, and allow a minute or two for delivery.
             </p>
 
             {error && (
@@ -175,13 +150,10 @@ function VerifyEmailForm() {
 
               <div>
                 <label htmlFor="verify-code-input" className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">Verification code</label>
-                <input
-                  id="verify-code-input"
-                  type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} required
+                <input id="verify-code-input" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} required
                   value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
-                  className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light tracking-[0.5em] text-center placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors font-headline font-black"
-                />
+                  className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light tracking-[0.5em] text-center placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors font-headline font-black" />
               </div>
 
               <button type="submit" disabled={loading || code.length < 6}

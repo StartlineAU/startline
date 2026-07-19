@@ -10,7 +10,7 @@ export async function POST() {
 
   try {
     const user = await prisma.user.findUnique({
-      where: { cognitoSub: session.sub },
+      where: { authId: session.id },
       select: { id: true },
     });
     if (!user) {

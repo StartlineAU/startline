@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ fileUrl: `${baseUrl}/${key}` });
   }
 
-  // Local dev: save to public/uploads/
   const dir = join(process.cwd(), "public", "uploads", type);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, filename), buffer);

@@ -1,14 +1,6 @@
 import { randomBytes } from "crypto";
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
-  AdminGetUserCommand,
-  UsernameExistsException,
-} from "@aws-sdk/client-cognito-identity-provider";
 
-const region     = process.env.NEXT_PUBLIC_AWS_REGION ?? "ap-southeast-2";
-const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? "";
-const client     = new CognitoIdentityProviderClient({ region });
+const authUrl = process.env.NEON_AUTH_BASE_URL ?? "";
 
 function generateTempPassword(): string {
   const rand = randomBytes(8).toString("hex");
@@ -16,54 +8,35 @@ function generateTempPassword(): string {
 }
 
 export async function ensureAthleteCognitoUser(email: string): Promise<string> {
-  const normalized = email.toLowerCase().trim();
+  if (!authUrl) return email;
 
   try {
-    const result = await client.send(new AdminGetUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-    }));
-    return result.Username ?? normalized;
-  } catch (err) {
-    if (!(err instanceof UsernameExistsException) && (err as { name?: string }).name !== "UserNotFoundException") {
-      throw err;
+    const res = await fetch(`${authUrl}/auth/sign-up/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.toLowerCase().trim(),
+        password: generateTempPassword(),
+        name: email.split("@")[0],
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return data?.user?.id ?? email;
     }
-  }
 
-  try {
-    await client.send(new AdminCreateUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-      TemporaryPassword: generateTempPassword(),
-      MessageAction: "SUPPRESS",
-    }));
-  } catch (err) {
-    if (!(err instanceof UsernameExistsException)) throw err;
-  }
+    const body = await res.json();
+    if (body?.code === "USER_ALREADY_EXISTS" || res.status === 409) {
+      return email;
+    }
 
-  const result = await client.send(new AdminGetUserCommand({
-    UserPoolId: userPoolId,
-    Username: normalized,
-  }));
-  return result.Username ?? normalized;
+    return email;
+  } catch {
+    return email;
+  }
 }
 
 export async function getCognitoUserStatus(email: string): Promise<{ exists: boolean; status: string | null }> {
-  const normalized = email.toLowerCase().trim();
-
-  try {
-    const result = await client.send(new AdminGetUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-    }));
-    return { exists: true, status: result.UserStatus ?? null };
-  } catch (err) {
-    // Only a definitive "no such user" means the account doesn't exist.
-    // Anything else (AccessDenied, throttling, network) must propagate —
-    // otherwise real account holders get told they have no account.
-    if ((err as { name?: string }).name === "UserNotFoundException") {
-      return { exists: false, status: null };
-    }
-    throw err;
-  }
+  return { exists: false, status: null };
 }

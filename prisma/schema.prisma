@@ -9,11 +9,11 @@ datasource db {
 
 // ─── Admin accounts (created on first Cognito login, must be in "Admins" group) ─
 model Admin {
-  id         String   @id @default(uuid())
-  cognitoSub String   @unique
-  email      String   @unique
-  name       String?
-  createdAt  DateTime @default(now())
+  id      String   @id @default(uuid())
+  authId  String   @unique
+  email   String   @unique
+  name    String?
+  createdAt DateTime @default(now())
 
   eventReviews Event[]        @relation("EventReviewedBy")
   auditLogs    AdminAuditLog[]
@@ -282,16 +282,16 @@ enum RegistrationStatus {
 // have an associated Organiser profile (1:1).
 model User {
   id         String   @id @default(uuid())
-  cognitoSub String   @unique
+  authId     String   @unique
   email      String   @unique
-  name       String?  // full name
-  username   String?  @unique // public handle, chosen during profile setup
+  name       String?
+  username   String?  @unique
   bio        String?
   profilePicUrl String?
-  isPublic   Boolean  @default(true) // public profile visible to others
+  isPublic   Boolean  @default(true)
   isBanned   Boolean  @default(false)
-  city       String? // for map centering on login
-  state      String? // for map centering on login
+  city       String?
+  state      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

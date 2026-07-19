@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, ArrowRight, RotateCcw, Check } from "lucide-react";
-import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 import { useAuthContext } from "@/context/AuthContext";
 
 interface VerifyEmailConfig {
@@ -45,33 +45,27 @@ function VerifyEmailFormInner({ config, onVerified }: Props) {
     setError("");
     setLoading(true);
     try {
-      await confirmSignUp({ username: email, confirmationCode: code.trim() });
+      const { error: err } = await authClient.verifyEmail({ query: { token: code.trim(), callbackURL: "/" } });
 
-      try {
-        const result = await autoSignIn();
-        if (result.nextStep.signInStep === "DONE") {
-          await fetch(config.sessionEndpoint, { method: "POST" });
-          await onVerified?.();
-          await refresh();
-          setVerified(true);
-          setLoading(false);
-          setTimeout(() => router.push(config.redirectPath), 1400);
-          return;
+      if (err) {
+        if (err.code === "INVALID_TOKEN") {
+          setError("That code is incorrect. Please check and try again.");
+        } else if (err.code === "EXPIRED_TOKEN") {
+          setError("That code has expired. Use the resend button below.");
+        } else if (err.code === "EMAIL_ALREADY_VERIFIED") {
+          setError("This email is already verified. Try signing in.");
+        } else {
+          setError(err.message || "Verification failed. Please try again.");
         }
-      } catch {}
-
-      router.push(config.bottomLinkHref + "?verified=1");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Use the resend button below.");
-      } else if (msg.includes("AliasExistsException")) {
-        setError("This email is already verified. Try signing in.");
-      } else {
-        setError("Verification failed. Please try again.");
+        return;
       }
+
+      await fetch(config.sessionEndpoint, { method: "POST" });
+      await onVerified?.();
+      await refresh();
+      setVerified(true);
+      setLoading(false);
+      setTimeout(() => router.push(config.redirectPath), 1400);
     } finally {
       setLoading(false);
     }
@@ -82,20 +76,10 @@ function VerifyEmailFormInner({ config, onVerified }: Props) {
     setError(""); setSuccess("");
     setResending(true);
     try {
-      await resendSignUpCode({ username: email });
-      setSuccess("A new code has been sent. Check your inbox and spam folder — look for an email from Amazon Cognito or no-reply@verificationemail.com.");
-    } catch (err: unknown) {
-      const errName = (err as { name?: string })?.name ?? "";
-      const msg = err instanceof Error ? err.message : "";
-      if (errName === "LimitExceededException" || msg.includes("LimitExceededException")) {
-        setError("Too many attempts. Wait a few minutes, then try resend again.");
-      } else if (errName === "InvalidParameterException" || msg.includes("User is already confirmed")) {
-        setError("This email is already verified. Try signing in instead.");
-      } else if (errName === "UserNotFoundException") {
-        setError("No account found for that email. Sign up again or check the address is correct.");
-      } else {
-        setError(msg || "Could not resend the code. Please try again.");
-      }
+      await authClient.sendVerificationEmail({ email, callbackURL: "/" });
+      setSuccess("A new verification email has been sent. Check your inbox and spam folder.");
+    } catch {
+      setError("Could not resend the code. Please try again.");
     } finally {
       setResending(false);
     }

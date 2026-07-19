@@ -146,6 +146,19 @@ locals {
   amplify_cert_record = split(" CNAME ", aws_amplify_domain_association.this[0].certificate_verification_dns_record)
 }
 
+resource "aws_route53_record" "cdn_alias" {
+  zone_id         = aws_route53_zone.primary.zone_id
+  name            = "cdn.startlineau.com"
+  type            = "A"
+  allow_overwrite = true
+
+  alias {
+    name                   = module.env["prod"].cdn_distribution_domain_name
+    zone_id                = local.cloudfront_hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "amplify_cert_validation" {
   zone_id         = aws_route53_zone.primary.zone_id
   name            = trimsuffix(local.amplify_cert_record[0], ".")
@@ -186,15 +199,4 @@ resource "aws_route53_record" "organiser_cname" {
   allow_overwrite = true
 }
 
-resource "aws_route53_record" "cdn_alias" {
-  zone_id         = aws_route53_zone.primary.zone_id
-  name            = "cdn.startlineau.com"
-  type            = "A"
-  allow_overwrite = true
 
-  alias {
-    name                   = module.env["prod"].cdn_distribution_domain_name
-    zone_id                = local.cloudfront_hosted_zone_id
-    evaluate_target_health = false
-  }
-}

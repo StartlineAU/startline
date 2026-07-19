@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, ArrowRight, RotateCcw, Check } from "lucide-react";
-import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 import { useAuthContext } from "@/context/AuthContext";
 
 function VerifyEmailForm() {
@@ -28,36 +28,28 @@ function VerifyEmailForm() {
     setLoading(true);
 
     try {
-      await confirmSignUp({ username: email, confirmationCode: code.trim() });
+      const { error: err } = await authClient.verifyEmail({ query: { token: code.trim(), callbackURL: "/organiser" } });
 
-      // Seamlessly sign the user in — falls back to a manual sign-in prompt
-      // if the auto sign-in session isn't available (e.g. verified on another device).
-      try {
-        const result = await autoSignIn();
-        if (result.nextStep.signInStep === "DONE") {
-          await fetch("/api/organiser/auth/session", { method: "POST" });
-          await refresh();
-          setVerified(true);
-          setLoading(false);
-          setTimeout(() => router.push("/organiser/dashboard"), 1400);
-          return;
+      if (err) {
+        if (err.code === "INVALID_TOKEN") {
+          setError("That code is incorrect. Please check and try again.");
+        } else if (err.code === "EXPIRED_TOKEN") {
+          setError("That code has expired. Use the resend button below.");
+        } else if (err.code === "EMAIL_ALREADY_VERIFIED") {
+          setError("This email is already verified. Try signing in.");
+        } else {
+          setError(err.message || "Verification failed. Please try again.");
         }
-      } catch {
-        // fall through to manual sign-in redirect below
+        return;
       }
 
-      router.push("/organiser?verified=1");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Use the resend button below.");
-      } else if (msg.includes("AliasExistsException")) {
-        setError("This email is already verified. Try signing in.");
-      } else {
-        setError("Verification failed. Please try again.");
-      }
+      await fetch("/api/organiser/auth/session", { method: "POST" });
+      await refresh();
+      setVerified(true);
+      setLoading(false);
+      setTimeout(() => router.push("/organiser/dashboard"), 1400);
+    } catch {
+      setError("Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -69,8 +61,8 @@ function VerifyEmailForm() {
     setSuccess("");
     setResending(true);
     try {
-      await resendSignUpCode({ username: email });
-      setSuccess("A new code has been sent to your inbox.");
+      await authClient.sendVerificationEmail({ email, callbackURL: "/organiser" });
+      setSuccess("A new verification email has been sent.");
     } catch {
       setError("Could not resend the code. Please try again.");
     } finally {

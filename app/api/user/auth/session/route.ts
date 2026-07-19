@@ -10,9 +10,9 @@ export async function POST() {
 
   try {
     await prisma.user.upsert({
-      where:  { cognitoSub: session.sub },
+      where:  { authId: session.id },
       update: { email: session.email },
-      create: { cognitoSub: session.sub, email: session.email },
+      create: { authId: session.id, email: session.email },
       select: { id: true },
     });
     return NextResponse.json({ ok: true });

@@ -8,12 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorised." }, { status: 401 });
   }
 
-  if (session.groups.includes("admins")) {
-    return NextResponse.json({ role: "admin" });
-  }
-
   const user = await prisma.user.findUnique({
-    where: { cognitoSub: session.sub },
+    where: { authId: session.id },
     include: { organiser: { select: { id: true } } },
   });
 

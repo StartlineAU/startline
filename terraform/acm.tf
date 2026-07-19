@@ -1,6 +1,3 @@
-# ACM certificate for the CDN custom domain (cdn.startlineau.com).
-# Must be in us-east-1 for CloudFront. DNS-validated via Cloudflare records.
-
 resource "aws_acm_certificate" "cdn" {
   provider          = aws.us_east_1
   domain_name       = "cdn.startlineau.com"

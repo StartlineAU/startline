@@ -3,6 +3,7 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   '@stripe/cli': true
+  core-js: set this to true or false
   esbuild: true
   prisma: true
   sharp: true

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, KeyRound } from "lucide-react";
-import { resetPassword, confirmResetPassword } from "aws-amplify/auth";
+import { authClient } from "@/lib/auth/client";
 
 type Step = "request" | "confirm";
 
@@ -27,16 +27,14 @@ function ForgotPasswordForm() {
     setError("");
     setLoading(true);
     try {
-      await resetPassword({ username: email });
-      setStep("confirm");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("UserNotFoundException") || msg.includes("NotAuthorizedException")) {
-        // Don't reveal whether the email exists — show generic message
-        setStep("confirm");
-      } else {
+      const { error: err } = await authClient.forgetPassword.emailOtp({ email });
+      if (err) {
         setError("Could not send reset code. Please try again.");
+        return;
       }
+      setStep("confirm");
+    } catch {
+      setError("Could not send reset code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -51,23 +49,22 @@ function ForgotPasswordForm() {
 
     setLoading(true);
     try {
-      await confirmResetPassword({
-        username:        email,
-        confirmationCode: code.trim(),
-        newPassword,
-      });
-      router.push("/organiser");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
-        setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Go back and request a new one.");
-      } else if (msg.includes("InvalidPasswordException")) {
-        setError("Password does not meet requirements (min 8 chars, upper, lower, number).");
-      } else {
-        setError("Could not reset your password. Please try again.");
+      const { error: err } = await authClient.emailOtp.resetPassword({ email, otp: code.trim(), password: newPassword });
+      if (err) {
+        if (err.code === "INVALID_OTP") {
+          setError("That code is incorrect. Please check and try again.");
+        } else if (err.code === "OTP_EXPIRED") {
+          setError("That code has expired. Go back and request a new one.");
+        } else if (err.code === "PASSWORD_TOO_SHORT") {
+          setError("Password must be at least 8 characters.");
+        } else {
+          setError(err.message || "Could not reset your password. Please try again.");
+        }
+        return;
       }
+      router.push("/organiser");
+    } catch {
+      setError("Could not reset your password. Please try again.");
     } finally {
       setLoading(false);
     }
