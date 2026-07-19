@@ -1,0 +1,20 @@
+name: Source Branch Check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify source branch
+        run: |
+          if [ "${{ github.head_ref }}" != "staging" ]; then
+            echo "❌ Only pull requests from the 'staging' branch into 'main' are permitted."
+            exit 1
+          fi
+          echo "✅ Source branch is staging — allowed."
