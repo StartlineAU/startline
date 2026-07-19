@@ -401,7 +401,11 @@ resource "aws_cognito_user_pool" "this" {
     }
   }
 
-  mfa_configuration   = "OFF"
+  mfa_configuration = "OPTIONAL"
+
+  software_token_mfa_configuration {
+    enabled = true
+  }
   deletion_protection = var.cognito_deletion_protection ? "ACTIVE" : "INACTIVE"
 
   tags = {
@@ -417,6 +421,7 @@ resource "aws_cognito_user_pool_client" "web" {
   generate_secret = false
 
   explicit_auth_flows = [
+    "ALLOW_USER_AUTH",
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
   ]
@@ -586,7 +591,7 @@ resource "aws_s3_bucket_cors_configuration" "uploads" {
 # ===== CloudFront CDN for upload bucket =====
 
 resource "aws_wafv2_web_acl" "cdn" {
-  count = var.cdn_waf_enabled ? 1 : 0
+  count    = var.cdn_waf_enabled ? 1 : 0
   provider = aws.us_east_1
 
   name        = "${var.project_name}-${var.name}-cdn-waf"

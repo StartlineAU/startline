@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldAlert } from "lucide-react";
 import { signIn, signOut, confirmSignIn, fetchAuthSession } from "aws-amplify/auth";
 
 export default function AdminLoginPage() {
@@ -17,6 +17,11 @@ export default function AdminLoginPage() {
   const [needsNewPassword, setNeedsNewPassword] = useState(false);
   const [newPassword,      setNewPassword]      = useState("");
   const [showNewPw,        setShowNewPw]        = useState(false);
+
+  // MFA state
+  const [mfaStep,       setMfaStep]       = useState<"none" | "setup" | "challenge">("none");
+  const [totpCode,      setTotpCode]      = useState("");
+  const [totpSetupUri,  setTotpSetupUri]  = useState<string | null>(null);
 
   const completeAdminSignIn = async () => {
     const session = await fetchAuthSession();
@@ -47,6 +52,23 @@ export default function AdminLoginPage() {
 
       if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
         setNeedsNewPassword(true);
+        return;
+      }
+
+      if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_TOTP_CODE") {
+        setMfaStep("challenge");
+        setTotpCode("");
+        return;
+      }
+
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_TOTP_SETUP") {
+        const details = result.nextStep.totpSetupDetails;
+        if (details) {
+          const uri = typeof details.getSetupUri === "function" ? details.getSetupUri("Startline") : null;
+          setTotpSetupUri(uri ? uri.toString() : null);
+        }
+        setMfaStep("setup");
+        setTotpCode("");
         return;
       }
 
@@ -95,6 +117,53 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handleMfaConfirm = async () => {
+    setError("");
+    if (!totpCode || totpCode.length < 6) { setError("Please enter the 6-digit code."); return; }
+    setLoading(true);
+    try {
+      const result = await confirmSignIn({ challengeResponse: totpCode });
+
+      if (result.nextStep.signInStep === "DONE") {
+        await completeAdminSignIn();
+        return;
+      }
+
+      if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_TOTP_CODE") {
+        setError("Invalid code. Try again.");
+        return;
+      }
+
+      setError("Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Invalid code. Try again.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSetupConfirm = async () => {
+    setError("");
+    if (!totpCode || totpCode.length < 6) { setError("Please enter the 6-digit code from your authenticator app."); return; }
+    setLoading(true);
+    try {
+      const result = await confirmSignIn({ challengeResponse: totpCode });
+
+      if (result.nextStep.signInStep === "DONE") {
+        await completeAdminSignIn();
+        return;
+      }
+
+      setError("Invalid code. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Setup failed. Try again.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-dark-darker px-6">
       <div className="w-full max-w-[400px] page-in">
@@ -115,7 +184,95 @@ export default function AdminLoginPage() {
           </div>
         )}
 
-        {needsNewPassword ? (
+        {mfaStep === "challenge" ? (
+          <>
+            <div className="mb-6">
+              <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">Admin Portal</span>
+              <h1 className="font-headline text-5xl font-black italic tracking-tighter leading-[0.9] mb-2">
+                Two-Factor<br /><span className="text-primary">auth.</span>
+              </h1>
+              <p className="text-muted text-[15px] leading-relaxed mb-6">Enter the 6-digit code from your authenticator app.</p>
+            </div>
+
+            {error && (
+              <div className="mb-5 px-4 py-3 rounded-md bg-red-900/20 border border-red-500/30 text-red-400 font-headline text-[13px]">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); handleMfaConfirm(); }} className="space-y-5">
+              <div>
+                <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
+                  Authenticator Code
+                </label>
+                <input
+                  type="text" inputMode="numeric" autoComplete="one-time-code" required
+                  value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors tracking-[0.5em] text-center font-bold"
+                  autoFocus
+                />
+              </div>
+              <button type="submit" disabled={loading || totpCode.length < 6}
+                className="bg-machined shadow-machined w-full text-dark font-headline text-sm font-bold uppercase tracking-widest py-4 rounded-md flex items-center justify-center gap-2 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                {loading
+                  ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Verifying…</>
+                  : <>Verify & sign in <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </form>
+          </>
+        ) : mfaStep === "setup" ? (
+          <>
+            <div className="mb-6">
+              <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">Admin Portal</span>
+              <h1 className="font-headline text-5xl font-black italic tracking-tighter leading-[0.9] mb-2">
+                Set up<br /><span className="text-primary">MFA.</span>
+              </h1>
+              <p className="text-muted text-[15px] leading-relaxed mb-6">
+                Admins are required to set up multi-factor authentication. Scan the QR code with your authenticator app, then enter the code.
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-5 px-4 py-3 rounded-md bg-red-900/20 border border-red-500/30 text-red-400 font-headline text-[13px]">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {totpSetupUri && (
+                <div className="flex justify-center">
+                  <div className="bg-white p-4 rounded-lg">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpSetupUri)}`}
+                      alt="TOTP Setup QR Code"
+                      className="w-48 h-48"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-2">
+                  Code from App
+                </label>
+                <input
+                  type="text" inputMode="numeric" required
+                  value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full bg-dark border border-dark-lighter rounded-md px-4 py-3 text-[22px] text-light placeholder:text-muted-dark focus:border-primary focus:outline-none transition-colors tracking-[0.5em] text-center font-bold"
+                  autoFocus
+                />
+              </div>
+              <button type="button" onClick={handleMfaSetupConfirm} disabled={loading || totpCode.length < 6}
+                className="bg-machined shadow-machined w-full text-dark font-headline text-sm font-bold uppercase tracking-widest py-4 rounded-md flex items-center justify-center gap-2 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed">
+                {loading
+                  ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Verifying…</>
+                  : <>Verify & sign in <ArrowRight className="w-4 h-4" /></>}
+              </button>
+            </div>
+          </>
+        ) : needsNewPassword ? (
           <form onSubmit={handleSetNewPassword} className="space-y-5">
             <div className="mb-2 px-4 py-3 rounded-md bg-primary/10 border border-primary/30 text-primary font-headline text-[13px]">
               Your account requires a new password before you can sign in.

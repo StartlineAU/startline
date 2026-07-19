@@ -7,6 +7,7 @@ import {
   AdminSetUserPasswordCommand,
   AdminAddUserToGroupCommand,
   AdminGetUserCommand,
+  AdminSetUserMFAPreferenceCommand,
   ListUsersInGroupCommand,
   UsernameExistsException,
   UserNotFoundException,
@@ -64,6 +65,14 @@ async function ensureCognitoUsers(): Promise<void> {
         UserPoolId: userPoolId,
         Username: user.email,
         GroupName: "admins",
+      }));
+      await cognito.send(new AdminSetUserMFAPreferenceCommand({
+        UserPoolId: userPoolId,
+        Username: user.email,
+        SoftwareTokenMfaSettings: {
+          Enabled: true,
+          PreferredMfa: true,
+        },
       }));
     }
   }
@@ -178,6 +187,7 @@ async function main() {
         email: user.email,
         name: user.displayName,
         username: user.email.split("@")[0].replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
+        mfaEnabled: user.isAdmin,
       },
     });
     userBySub[sub] = record.id;

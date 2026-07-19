@@ -292,6 +292,8 @@ model User {
   isBanned   Boolean  @default(false)
   city       String? // for map centering on login
   state      String? // for map centering on login
+  mfaEnabled   Boolean  @default(false)
+  recoveryCodes String? // AES-256-GCM encrypted JSON array of 10 single-use recovery codes
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
