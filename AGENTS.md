@@ -176,6 +176,18 @@ Use labels, native issue type (Bug/Feature/Task), Priority/Effort via GraphQL (f
 
 Configured in `opencode.json`: stripe, resend, aws, cloudflare. Skills listed below.
 
+## README accuracy
+
+`README.md` has several known inaccuracies. Do not treat it as authoritative — cross-reference with this file and the actual codebase:
+
+- **License:** README says MIT, actual `LICENSE` file is All Rights Reserved.
+- **Secret name:** README says `startline/nonprod/app`, actual name is `startline/staging/app`.
+- **`.envrc`:** README says it exists at root fetching SM secrets — it does not exist in the repo (gitignored). Devs load env vars another way (direnv + local config).
+- **Scripts table:** Missing `typecheck`, `prisma:generate`, `test:watch`, `stripe:*`, `start`, `test:registration`, `staging:db:start`.
+- **`prisma:migrate`:** README says "Apply Prisma migrations" — the script actually runs `prisma migrate dev` (dev-only, creates migrations), not `prisma migrate deploy`.
+- **Site state:** README describes a live event browsing platform; the site is currently in waitlist mode.
+- **Admin domain:** Implies three separate domains; admin actually shares `organiser.startlineau.com` as a path prefix.
+
 ## Idempotency
 
 - Prisma client singleton in `lib/prisma.ts`.
