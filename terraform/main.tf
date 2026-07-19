@@ -62,8 +62,8 @@ locals {
             - >
               corepack enable && pnpm install --frozen-lockfile
               && npx prisma generate
-              && export ENV=staging \
-              && if [ "$AWS_BRANCH_NAME" = "main" ]; then export ENV=prod; fi \
+              && export ENV=staging
+              && if [ "$AWS_BRANCH_NAME" = "main" ]; then export ENV=prod; fi
               && aws secretsmanager get-secret-value
               --secret-id startline/$ENV/app
               --query SecretString --output text
