@@ -10,7 +10,7 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 
 ## Development
 
-- **Package manager:** pnpm 11.10.0
+- **Package manager:** pnpm 11.11.0
 - **Dev:** `pnpm dev` (Turbopack). **Build:** `pnpm build` (standalone `next.config.ts`). `@/*` → root.
 - **Docker:** PostgreSQL 15 on :5432 + Mailpit (SMTP :1025, UI :8026). Start: `docker compose up -d`.
 - **Worktree?** Check via `git worktree list`. If yes, Docker infra runs on main checkout — just `pnpm dev`, no `docker compose up`.
@@ -19,8 +19,6 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 ## Auth (Cognito)
 
 JWT verification in `middleware.ts` via `jose`. Tokens in Cognito-managed cookies. Only Cognito group: `admins`. Authorisation at DB level (Prisma).
-
-Uses AWS Cognito with JWT verification in middleware via `jose`. Tokens in Cognito-managed cookies. Only `admins` group used — non-admin users have no special group assignment. Authorisation at the DB level (Prisma).
 
 Production Cognito pool (managed via Terraform). Users created by `prisma/seed.ts` via `AdminCreateUser` + `AdminSetUserPassword` per seed user, plus `AdminAddUserToGroup` for admin only.
 
@@ -69,7 +67,7 @@ prefix = ["/Users/Lachlan/"]
 
 **Key rotation:** Update the SM secret, trigger an Amplify rebuild. No code changes, no TF runs.
 
-**CI:** Composite action at `.github/actions/load-env/` — assumes OIDC role, fetches bootstrap + app secrets, exports as env vars. Used by all 3 workflows.
+**CI:** Composite action at `.github/actions/load-env/` — assumes OIDC role, fetches bootstrap + app secrets, exports as env vars. Used by all workflows.
 
 ## Git worktrees
 
@@ -80,7 +78,7 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 Infra in `terraform/`:
 - `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
 - App deploys via Amplify on push to `main`. PR previews deploy automatically to temp URLs.
-- No app code CI (no lint/test/build checks)
+- `ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational).
 
 Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
 
