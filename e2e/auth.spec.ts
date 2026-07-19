@@ -98,33 +98,17 @@ test.describe("auth modal — sign up", () => {
     await page.getByPlaceholder("Min 8 characters").fill("Password123!");
     await page.getByPlaceholder("Re-enter password").fill("Password123!");
     await page.getByRole("button", { name: "Create account", exact: true }).click();
-    await page.waitForSelector("text=Tell us a bit about yourself");
 
-    await page.getByPlaceholder("First").fill("Ux");
-    await page.getByPlaceholder("Last").fill("Tester");
-    await page.locator('input[aria-label="Day"]').fill("15");
-    await page.locator('input[aria-label="Month"]').fill("06");
-    await page.locator('input[aria-label="Year"]').fill("1995");
-    await page.getByPlaceholder("+61 400 000 000").fill("0400123456");
-    await page.locator('input[type="checkbox"]').check({ force: true });
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-
-    // signUp() hits real Cognito — give it real network time
-    await page.waitForSelector("text=Choose your", { timeout: 20000 });
-    await page.getByRole("button", { name: "Skip for now" }).click();
-
+    // Neon Auth sign-up sends a verification email and redirects to verify-email
     await page.waitForURL("**/auth/verify-email**", { timeout: 20000 });
     await expect(page).not.toHaveURL(/\/customer\//);
     await expect(page.getByText("This page could not be found.")).not.toBeVisible();
-    await expect(page.getByRole("heading", { name: /6-digit code/i })).toBeVisible();
+    await expect(page.getByText(/code/i)).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
 
-    // A wrong code must show an error and NOT redirect/auto-sign-in.
-    // (The auto-sign-in success path itself can't be exercised here — Cognito
-    // emails a real 6-digit code to an inbox this suite has no access to.
-    // Verify that path manually with a real mailbox after touching this flow.)
+    // A wrong code must show an error and NOT auto-sign-in.
     await page.locator("#verify-code-input").fill("000000");
-    await page.getByRole("button", { name: /verify & sign in/i }).click();
+    await page.getByRole("button", { name: /verify/i }).click();
     await expect(page.getByText(/verification failed|code is incorrect/i)).toBeVisible({ timeout: 10000 });
     await expect(page).toHaveURL(/\/auth\/verify-email/);
   });
