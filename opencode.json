@@ -10,11 +10,6 @@
       "type": "local",
       "command": ["bash", "-c", "export $(grep RESEND_API_KEY .env | xargs) && exec npx -y resend-mcp"]
     },
-    "aws": {
-      "type": "local",
-      "command": ["uvx", "mcp-proxy-for-aws@1.6.3", "https://aws-mcp.us-east-1.api.aws/mcp", "--metadata", "AWS_REGION=ap-southeast-2", "--profile", "mcp-server"],
-      "timeout": 100000
-    },
     "cloudflare": {
       "type": "local",
       "command": ["npx", "-y", "@cloudflare/mcp-server-cloudflare", "run", "cae4a54688a0a4c53bda4bd62eb37c35"],
@@ -22,9 +17,22 @@
         "CLOUDFLARE_API_TOKEN": "{env:CLOUDFLARE_API_TOKEN}"
       }
     },
-    "terraform": {
+    "supabase": {
       "type": "local",
-      "command": ["docker", "run", "-i", "--rm", "hashicorp/terraform-mcp-server:latest"]
+      "command": ["npx", "-y", "@supabase/mcp-server-supabase"],
+      "env": {
+        "SUPABASE_URL": "{env:NEXT_PUBLIC_SUPABASE_URL}",
+        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SERVICE_ROLE_KEY}",
+        "SUPABASE_ANON_KEY": "{env:NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+      }
+    },
+    "vercel": {
+      "type": "local",
+      "command": ["npx", "-y", "@nick-keller/vercel-mcp"],
+      "env": {
+        "VERCEL_TOKEN": "{env:VERCEL_TOKEN}",
+        "VERCEL_TEAM_ID": "{env:VERCEL_TEAM_ID}"
+      }
     }
   }
 }
