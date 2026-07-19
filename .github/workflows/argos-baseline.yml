@@ -2,7 +2,7 @@ name: Argos Baseline
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
 
 permissions:
   id-token: write
