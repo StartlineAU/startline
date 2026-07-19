@@ -130,19 +130,16 @@ jobs:
         run: npx prisma db seed
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Start Next.js dev server
         shell: bash
         run: |
           pnpm dev -p 3000 &
-          npx wait-on http://localhost:3000/admin/login --timeout 60000
+          npx wait-on http://localhost:3000/waitlist --timeout 60000
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
+          NEXT_PUBLIC_AUTH_BYPASS: "true"
       - run: pnpm test:e2e
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

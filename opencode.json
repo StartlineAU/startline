@@ -28,7 +28,7 @@
     },
     "vercel": {
       "type": "local",
-      "command": ["npx", "-y", "@nick-keller/vercel-mcp"],
+      "command": ["npx", "-y", "@robinson_ai_systems/vercel-mcp"],
       "env": {
         "VERCEL_TOKEN": "{env:VERCEL_TOKEN}",
         "VERCEL_TEAM_ID": "{env:VERCEL_TEAM_ID}"
