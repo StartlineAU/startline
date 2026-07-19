@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getOrganiserSession } from "@/lib/amplify-server";
+import { getOrganiserSession } from "@/lib/supabase-server";
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

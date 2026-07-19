@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getOrganiserSession } from "@/lib/amplify-server";
+import { getOrganiserSession } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 
 export async function GET() {

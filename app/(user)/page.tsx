@@ -1,6 +1,6 @@
 import { getAllEvents } from "@/lib/events";
 import { toUserEvents } from "@/lib/user-events";
-import { getUserSession } from "@/lib/amplify-server";
+import { getUserSession } from "@/lib/supabase-server";
 import prisma from "@/lib/prisma";
 import HeroCarousel from "@/components/HeroCarousel";
 import HeroSearch from "@/components/HeroSearch";

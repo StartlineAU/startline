@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, KeyRound } from "lucide-react";
-import { resetPassword, confirmResetPassword } from "aws-amplify/auth";
+import { createBrowserClient } from "@supabase/ssr";
 
 type Step = "request" | "confirm";
 
@@ -21,22 +21,24 @@ function ForgotPasswordForm() {
   const [error,       setError]       = useState("");
   const [loading,     setLoading]     = useState(false);
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+
   // ── Step 1: Request reset code ─────────────────────────────────────────────
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await resetPassword({ username: email });
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/organiser/forgot-password?email=${encodeURIComponent(email)}`,
+      });
+      if (resetError) throw resetError;
       setStep("confirm");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("UserNotFoundException") || msg.includes("NotAuthorizedException")) {
-        // Don't reveal whether the email exists — show generic message
-        setStep("confirm");
-      } else {
-        setError("Could not send reset code. Please try again.");
-      }
+    } catch {
+      setStep("confirm");
     } finally {
       setLoading(false);
     }
@@ -51,20 +53,21 @@ function ForgotPasswordForm() {
 
     setLoading(true);
     try {
-      await confirmResetPassword({
-        username:        email,
-        confirmationCode: code.trim(),
-        newPassword,
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: code.trim(),
+        type: "recovery",
       });
+      if (verifyError) throw verifyError;
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) throw updateError;
+
       router.push("/organiser");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
+      if (msg.includes("invalid")) {
         setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
-        setError("That code has expired. Go back and request a new one.");
-      } else if (msg.includes("InvalidPasswordException")) {
-        setError("Password does not meet requirements (min 8 chars, upper, lower, number).");
       } else {
         setError("Could not reset your password. Please try again.");
       }

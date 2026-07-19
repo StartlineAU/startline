@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCognitoUserStatus } from "@/lib/athlete-accounts";
+import { getUserStatusByEmail } from "@/lib/athlete-accounts";
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email." }, { status: 400 });
     }
 
-    const { exists, status } = await getCognitoUserStatus(email);
-    return NextResponse.json({ exists, status });
+    const { exists } = await getUserStatusByEmail(email);
+    return NextResponse.json({ exists, status: exists ? "CONFIRMED" : null });
   } catch {
     return NextResponse.json({ error: "Failed to check user." }, { status: 503 });
   }

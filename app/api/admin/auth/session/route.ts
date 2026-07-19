@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "@/lib/amplify-server";
+import { getServerSession } from "@/lib/supabase-server";
 export async function POST() {
   const session = await getServerSession();
 
@@ -10,9 +10,9 @@ export async function POST() {
 
   try {
     await prisma.admin.upsert({
-      where:  { cognitoSub: session.sub },
+      where:  { authId: session.sub },
       update: { email: session.email },
-      create: { cognitoSub: session.sub, email: session.email },
+      create: { authId: session.sub, email: session.email },
       select: { id: true },
     });
 

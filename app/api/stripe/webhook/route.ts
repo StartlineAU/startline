@@ -8,7 +8,7 @@ import {
   athleteNameFromParticipant,
   type CompactParticipant,
 } from "@/lib/registration-form";
-import { ensureAthleteCognitoUser } from "@/lib/athlete-accounts";
+import { ensureAthleteUser } from "@/lib/athlete-accounts";
 
 const formatCents = (c: number) => `$${(c / 100).toFixed(2)}`;
 
@@ -89,11 +89,11 @@ export async function POST(req: NextRequest) {
 
 async function ensureGuestUser(email: string, name: string): Promise<string> {
   try {
-    const cognitoSub = await ensureAthleteCognitoUser(email);
+    const authId = await ensureAthleteUser(email);
     const user = await prisma.user.upsert({
       where: { email },
-      update: { cognitoSub, name: name || undefined },
-      create: { email, cognitoSub, name: name || undefined },
+      update: { authId, name: name || undefined },
+      create: { email, authId, name: name || undefined },
     });
     return user.id;
   } catch (err) {

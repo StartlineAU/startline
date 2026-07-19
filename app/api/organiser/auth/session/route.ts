@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "@/lib/amplify-server";
+import { getServerSession } from "@/lib/supabase-server";
 
 export async function POST() {
   const session = await getServerSession();
@@ -10,7 +10,7 @@ export async function POST() {
 
   try {
     const user = await prisma.user.findUnique({
-      where: { cognitoSub: session.sub },
+      where: { authId: session.sub },
       select: { id: true },
     });
     if (!user) {

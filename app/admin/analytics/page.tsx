@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 import prisma from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import {

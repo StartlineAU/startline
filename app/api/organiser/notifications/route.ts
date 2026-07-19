@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getOrganiserSession } from "@/lib/amplify-server";
+import { getOrganiserSession } from "@/lib/supabase-server";
 // GET /api/organiser/notifications
 // Returns the 30 most recent notifications; includes unread count in header
 export async function GET() {

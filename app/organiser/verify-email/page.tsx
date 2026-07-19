@@ -5,14 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, ArrowRight, RotateCcw, Check } from "lucide-react";
-import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth";
 import { useAuthContext } from "@/context/AuthContext";
 
 function VerifyEmailForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const emailParam   = searchParams.get("email") ?? "";
-  const { refresh }  = useAuthContext();
+  const { refresh, supabase }  = useAuthContext();
 
   const [email,   setEmail]   = useState(emailParam);
   const [code,    setCode]    = useState("");
@@ -28,33 +27,24 @@ function VerifyEmailForm() {
     setLoading(true);
 
     try {
-      await confirmSignUp({ username: email, confirmationCode: code.trim() });
+      const { error: verifyError } = await supabase?.auth.verifyOtp({
+        email,
+        token: code.trim(),
+        type: "signup",
+      }) ?? {};
+      if (verifyError) throw verifyError;
 
-      // Seamlessly sign the user in — falls back to a manual sign-in prompt
-      // if the auto sign-in session isn't available (e.g. verified on another device).
-      try {
-        const result = await autoSignIn();
-        if (result.nextStep.signInStep === "DONE") {
-          await fetch("/api/organiser/auth/session", { method: "POST" });
-          await refresh();
-          setVerified(true);
-          setLoading(false);
-          setTimeout(() => router.push("/organiser/dashboard"), 1400);
-          return;
-        }
-      } catch {
-        // fall through to manual sign-in redirect below
-      }
-
-      router.push("/organiser?verified=1");
+      await fetch("/api/organiser/auth/session", { method: "POST" });
+      await refresh();
+      setVerified(true);
+      setLoading(false);
+      setTimeout(() => router.push("/organiser/dashboard"), 1400);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("CodeMismatchException")) {
+      if (msg.includes("invalid")) {
         setError("That code is incorrect. Please check and try again.");
-      } else if (msg.includes("ExpiredCodeException")) {
+      } else if (msg.includes("expired")) {
         setError("That code has expired. Use the resend button below.");
-      } else if (msg.includes("AliasExistsException")) {
-        setError("This email is already verified. Try signing in.");
       } else {
         setError("Verification failed. Please try again.");
       }
@@ -69,7 +59,11 @@ function VerifyEmailForm() {
     setSuccess("");
     setResending(true);
     try {
-      await resendSignUpCode({ username: email });
+      const { error: resendError } = await supabase?.auth.resend({
+        type: "signup",
+        email,
+      }) ?? {};
+      if (resendError) throw resendError;
       setSuccess("A new code has been sent to your inbox.");
     } catch {
       setError("Could not resend the code. Please try again.");

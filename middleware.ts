@@ -1,16 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify, createRemoteJWKSet } from "jose";
-import type { JWTPayload } from "jose";
-
-const region   = process.env.NEXT_PUBLIC_AWS_REGION          ?? "";
-const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? "";
-const clientId   = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID    ?? "";
-
-const cognitoDomain = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
-
-const JWKS = createRemoteJWKSet(
-  new URL(`${cognitoDomain}/.well-known/jwks.json`)
-);
+import { createServerClient } from "@supabase/ssr";
 
 const ORGANISER_PROTECTED = [
   "/organiser/dashboard",
@@ -32,39 +21,41 @@ const ADMIN_PROTECTED = [
 const USER_DOMAIN = "startlineau.com";
 const ORGANISER_DOMAIN = "organiser.startlineau.com";
 
-async function getVerifiedPayload(req: NextRequest): Promise<JWTPayload | null> {
-  const lastAuthUser = req.cookies.get(
-    `CognitoIdentityServiceProvider.${clientId}.LastAuthUser`
-  )?.value;
-  if (!lastAuthUser) return null;
-
-  const accessToken = (
-    req.cookies.get(`CognitoIdentityServiceProvider.${clientId}.${lastAuthUser}.accessToken`)?.value ??
-    req.cookies.get(`CognitoIdentityServiceProvider.${clientId}.${encodeURIComponent(lastAuthUser)}.accessToken`)?.value
-  );
-  if (!accessToken) return null;
-
-  try {
-    const { payload } = await jwtVerify(accessToken, JWKS, {
-      issuer: cognitoDomain,
-      audience: undefined,
-    });
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-function isAdmin(payload: JWTPayload): boolean {
-  const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
-  return groups.includes("admins");
-}
-
-const isBypass = process.env.NODE_ENV === "development" ||
+const isBypass =
+  process.env.NODE_ENV === "development" ||
   process.env.NEXT_PUBLIC_AUTH_BYPASS === "true";
 
 export async function middleware(req: NextRequest) {
   if (isBypass) return NextResponse.next();
+
+  let res = NextResponse.next();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  function isAdmin(): boolean {
+    return (
+      session?.user?.app_metadata?.role === "admin"
+    );
+  }
 
   const { pathname } = req.nextUrl;
   const host = req.headers.get("host") ?? "";
@@ -75,17 +66,15 @@ export async function middleware(req: NextRequest) {
     }
 
     if (ORGANISER_PROTECTED.some((p) => pathname.startsWith(p))) {
-      const payload = await getVerifiedPayload(req);
-      if (!payload) return NextResponse.redirect(new URL("https://startlineau.com"));
-      return NextResponse.next();
+      if (!session) return NextResponse.redirect(new URL("https://startlineau.com"));
+      return res;
     }
 
     if (ADMIN_PROTECTED.some((p) => pathname.startsWith(p))) {
-      const payload = await getVerifiedPayload(req);
-      if (!payload || !isAdmin(payload)) {
+      if (!session || !isAdmin()) {
         return NextResponse.redirect(new URL("/admin/login", req.url));
       }
-      return NextResponse.next();
+      return res;
     }
 
     if (
@@ -99,15 +88,17 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("https://startlineau.com"));
     }
 
-    return NextResponse.next();
+    return res;
   }
 
   if (host === USER_DOMAIN || host === `www.${USER_DOMAIN}`) {
-    if (pathname === "/waitlist"
-        || pathname.startsWith("/api/waitlist")
-        || pathname.startsWith("/_next")
-        || pathname.startsWith("/images")
-        || pathname.startsWith("/favicon")) {
+    if (
+      pathname === "/waitlist" ||
+      pathname.startsWith("/api/waitlist") ||
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/images") ||
+      pathname.startsWith("/favicon")
+    ) {
       return NextResponse.next();
     }
     return NextResponse.rewrite(new URL("/waitlist", req.url));
@@ -118,24 +109,20 @@ export async function middleware(req: NextRequest) {
   }
 
   if (ORGANISER_PROTECTED.some((p) => pathname.startsWith(p))) {
-    const payload = await getVerifiedPayload(req);
-    if (!payload) return NextResponse.redirect(new URL("/", req.url));
-    return NextResponse.next();
+    if (!session) return NextResponse.redirect(new URL("/", req.url));
+    return res;
   }
 
   if (ADMIN_PROTECTED.some((p) => pathname.startsWith(p))) {
-    const payload = await getVerifiedPayload(req);
-    if (!payload || !isAdmin(payload)) {
+    if (!session || !isAdmin()) {
       return NextResponse.redirect(new URL("/admin/login", req.url));
     }
-    return NextResponse.next();
+    return res;
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|images/|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|images/|favicon.ico).*)"],
 };

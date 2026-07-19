@@ -1,81 +1,82 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback, startTransition } from "react";
-import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Role = "user" | "organiser" | "admin";
 
 export type AuthUser = {
-  sub:   string;
+  sub: string;
   email: string;
 };
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthContextValue = {
-  user:    AuthUser | null;
-  role:    Role | null;
-  status:  AuthStatus;
+  user: AuthUser | null;
+  role: Role | null;
+  status: AuthStatus;
   loading: boolean;
   refresh: () => Promise<void>;
-  logout:  () => Promise<void>;
+  logout: () => Promise<void>;
+  supabase: SupabaseClient | null;
 };
 
 const AuthContext = createContext<AuthContextValue>({
-  user:    null,
-  role:    null,
-  status:  "loading",
+  user: null,
+  role: null,
+  status: "loading",
   loading: true,
   refresh: async () => {},
-  logout:  async () => {},
+  logout: async () => {},
+  supabase: null,
 });
 
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createBrowserClient(url, key);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user,   setUser]   = useState<AuthUser | null>(null);
-  const [role,   setRole]   = useState<Role | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [supabase] = useState(() => getSupabase());
 
   const hydrate = useCallback(async () => {
+    if (!supabase) { setStatus("unauthenticated"); return; }
     try {
-      const session = await fetchAuthSession();
-      if (!session.tokens?.accessToken) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
         setUser(null);
         setStatus("unauthenticated");
         return;
       }
 
-      const current = await getCurrentUser();
-      const idPayload = session.tokens.idToken?.payload;
-      const loginId = current.signInDetails?.loginId ?? "";
-      const email =
-        (typeof idPayload?.email === "string" && idPayload.email.includes("@")
-          ? idPayload.email
-          : loginId.includes("@")
-            ? loginId
-            : "");
-
       setUser({
-        sub:   current.userId,
-        email,
+        sub: session.user.id,
+        email: session.user.email ?? "",
       });
       setStatus("authenticated");
     } catch {
       setUser(null);
       setStatus("unauthenticated");
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     startTransition(() => hydrate());
   }, [hydrate]);
 
-  // Fetch role when auth status changes
   useEffect(() => {
     if (status !== "authenticated") return;
     let cancelled = false;
     fetch("/api/user/role")
-      .then(r => (r.ok ? r.json() : null))
-      .then(data => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
         if (!cancelled && data?.role) setRole(data.role);
       })
       .catch(() => {});
@@ -85,22 +86,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [status]);
 
   const logout = useCallback(async () => {
-    await signOut();
+    await supabase?.auth.signOut();
     setUser(null);
     setStatus("unauthenticated");
-  }, []);
+  }, [supabase]);
 
   return (
-      <AuthContext.Provider
-        value={{
-          user,
-          role,
-          status,
-          loading: status === "loading",
-          refresh: hydrate,
-          logout,
-        }}
-      >
+    <AuthContext.Provider
+      value={{
+        user,
+        role,
+        status,
+        loading: status === "loading",
+        refresh: hydrate,
+        logout,
+        supabase,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

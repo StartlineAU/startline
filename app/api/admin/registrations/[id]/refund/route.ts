@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 import { writeAuditLog } from "@/lib/audit";
 

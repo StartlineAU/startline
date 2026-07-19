@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getUserSession } from "@/lib/amplify-server";
+import { getUserSession } from "@/lib/supabase-server";
 
 export async function POST(req: Request) {
   const session = await getUserSession();

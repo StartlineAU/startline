@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 
 const VALID_STATUSES = ["CONFIRMED", "CANCELLED", "REFUNDED"] as const;
 type RegStatus = (typeof VALID_STATUSES)[number];

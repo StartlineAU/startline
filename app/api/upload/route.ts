@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { getOrganiserSession } from "@/lib/amplify-server";
+import { getOrganiserSession, createServerSupabaseClient } from "@/lib/supabase-server";
 
-const useS3 = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/quicktime", "video/avi", "video/ogg"];
+const UPLOAD_TYPES = ["logo", "cover", "photo", "video"];
 
 export async function POST(req: NextRequest) {
   const session = await getOrganiserSession();
@@ -15,25 +16,35 @@ export async function POST(req: NextRequest) {
   const type = formData.get("type") as string;
 
   if (!file) return NextResponse.json({ error: "No file provided." }, { status: 400 });
-  if (!["logo", "cover", "photo", "video"].includes(type)) return NextResponse.json({ error: "Invalid upload type." }, { status: 400 });
-
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/quicktime", "video/avi", "video/ogg"];
-  if (!allowed.includes(file.type)) return NextResponse.json({ error: "File type not allowed." }, { status: 400 });
+  if (!UPLOAD_TYPES.includes(type)) return NextResponse.json({ error: "Invalid upload type." }, { status: 400 });
+  if (!ALLOWED_TYPES.includes(file.type)) return NextResponse.json({ error: "File type not allowed." }, { status: 400 });
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const filename = `${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  if (useS3) {
-    const { PutObjectCommand } = await import("@aws-sdk/client-s3");
-    const { s3, S3_BUCKET } = await import("@/lib/s3");
-    const key = `uploads/${session.sub}/${type}/${filename}`;
-    await s3.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, Body: buffer, ContentType: file.type }));
-    const baseUrl = process.env.NEXT_PUBLIC_CDN_URL || `https://${S3_BUCKET}.s3.ap-southeast-2.amazonaws.com`;
-    return NextResponse.json({ fileUrl: `${baseUrl}/${key}` });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    const supabase = await createServerSupabaseClient();
+    const filePath = `uploads/${session.sub}/${type}/${filename}`;
+    const { error } = await supabase.storage
+      .from("uploads")
+      .upload(filePath, buffer, { contentType: file.type, upsert: true });
+
+    if (error) {
+      console.error("Supabase storage upload error:", error);
+      return NextResponse.json({ error: "Upload failed." }, { status: 500 });
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(filePath);
+
+    return NextResponse.json({ fileUrl: publicUrl });
   }
 
-  // Local dev: save to public/uploads/
   const dir = join(process.cwd(), "public", "uploads", type);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, filename), buffer);

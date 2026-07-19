@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 
 export async function GET() {
   const session = await getAdminSession();

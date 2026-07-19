@@ -416,7 +416,7 @@ function SectionContent({ section }: { section: SettingsSection }) {
       return (
         <div>
           <p className="text-[13px] text-muted leading-relaxed mb-6">
-            Password changes are handled via your Cognito account. Use &ldquo;Forgot password&rdquo; on the sign-in page to reset.
+            Password changes are handled via your Supabase account. Use &ldquo;Forgot password&rdquo; on the sign-in page to reset.
           </p>
           <div className="border border-dark-lighter rounded-lg p-4">
             <div className="font-headline text-[11px] font-bold uppercase tracking-widest text-muted-dark mb-1">Password</div>

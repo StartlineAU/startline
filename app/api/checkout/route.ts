@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { calculateTotalWithFee } from "@/lib/platform-fee";
-import { getUserSession } from "@/lib/amplify-server";
+import { getUserSession } from "@/lib/supabase-server";
 import {
   validateParticipants,
   compactParticipant,

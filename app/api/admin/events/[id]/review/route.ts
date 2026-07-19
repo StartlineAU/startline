@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 import { sendEventApprovedEmail, sendEventRejectedEmail } from "@/lib/email";
 import { writeAuditLog } from "@/lib/audit";
 export async function POST(

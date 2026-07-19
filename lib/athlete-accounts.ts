@@ -1,69 +1,46 @@
-import { randomBytes } from "crypto";
-import {
-  CognitoIdentityProviderClient,
-  AdminCreateUserCommand,
-  AdminGetUserCommand,
-  UsernameExistsException,
-} from "@aws-sdk/client-cognito-identity-provider";
+import { createClient } from "@supabase/supabase-js";
 
-const region     = process.env.NEXT_PUBLIC_AWS_REGION ?? "ap-southeast-2";
-const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID ?? "";
-const client     = new CognitoIdentityProviderClient({ region });
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-function generateTempPassword(): string {
-  const rand = randomBytes(8).toString("hex");
-  return rand + "A!";
-}
-
-export async function ensureAthleteCognitoUser(email: string): Promise<string> {
+export async function ensureAthleteUser(email: string): Promise<string> {
   const normalized = email.toLowerCase().trim();
 
-  try {
-    const result = await client.send(new AdminGetUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-    }));
-    return result.Username ?? normalized;
-  } catch (err) {
-    if (!(err instanceof UsernameExistsException) && (err as { name?: string }).name !== "UserNotFoundException") {
-      throw err;
-    }
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return normalized;
   }
 
-  try {
-    await client.send(new AdminCreateUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-      TemporaryPassword: generateTempPassword(),
-      MessageAction: "SUPPRESS",
-    }));
-  } catch (err) {
-    if (!(err instanceof UsernameExistsException)) throw err;
-  }
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 
-  const result = await client.send(new AdminGetUserCommand({
-    UserPoolId: userPoolId,
-    Username: normalized,
-  }));
-  return result.Username ?? normalized;
+  const { data: existing } = await supabase.auth.admin.listUsers();
+  const found = existing?.users.find((u) => u.email === normalized);
+
+  if (found) return found.id;
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: normalized,
+    password: crypto.randomUUID() + "A!1",
+    email_confirm: true,
+  });
+
+  if (error) throw error;
+  return data.user.id;
 }
 
-export async function getCognitoUserStatus(email: string): Promise<{ exists: boolean; status: string | null }> {
+export async function getUserStatusByEmail(email: string): Promise<{ exists: boolean }> {
   const normalized = email.toLowerCase().trim();
 
-  try {
-    const result = await client.send(new AdminGetUserCommand({
-      UserPoolId: userPoolId,
-      Username: normalized,
-    }));
-    return { exists: true, status: result.UserStatus ?? null };
-  } catch (err) {
-    // Only a definitive "no such user" means the account doesn't exist.
-    // Anything else (AccessDenied, throttling, network) must propagate —
-    // otherwise real account holders get told they have no account.
-    if ((err as { name?: string }).name === "UserNotFoundException") {
-      return { exists: false, status: null };
-    }
-    throw err;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { exists: false };
   }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: existing } = await supabase.auth.admin.listUsers();
+  const found = existing?.users.find((u) => u.email === normalized);
+  return { exists: !!found };
 }

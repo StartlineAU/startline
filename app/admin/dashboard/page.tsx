@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { getAdminSession } from "@/lib/amplify-server";
+import { getAdminSession } from "@/lib/supabase-server";
 import { archivePastEvents } from "@/lib/archive-events";
 import { ArrowRight, Clock, CheckCircle, XCircle, Users, UserCircle, ClipboardList, BarChart2, ScrollText } from "lucide-react";
 

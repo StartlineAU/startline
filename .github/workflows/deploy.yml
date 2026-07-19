@@ -1,101 +1,16 @@
 name: Deploy
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
 
-concurrency:
-  group: ${{ github.ref_name }}
-  cancel-in-progress: false
-
 permissions:
-  id-token: write
   contents: read
-  deployments: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: ./.github/actions/load-env
-        with:
-          aws-role-arn: ${{ vars.AWS_ROLE_ARN }}
-          environment: prod
-
-      - name: Resolve Amplify app ID
-        id: amplify-app
-        shell: bash
-        run: |
-          APP_ID=$(aws amplify list-apps --query "apps[?name=='startline'].appId" --output text)
-          echo "app_id=$APP_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Start deployment
-        id: deployment
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const deployment = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.sha,
-              environment: 'prod',
-              description: context.payload.head_commit?.message || '',
-              auto_merge: false,
-              required_contexts: [],
-            })
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: deployment.data.id,
-              state: 'in_progress',
-            })
-            core.setOutput('deployment_id', deployment.data.id)
-
-      - name: Trigger Amplify build
-        id: amplify
-        shell: bash
-        run: |
-          JOB_ID=$(aws amplify start-job \
-            --app-id ${{ steps.amplify-app.outputs.app_id }} \
-            --branch-name main \
-            --job-type RELEASE \
-            --commit-id ${{ github.sha }} \
-            --query 'jobSummary.jobId' --output text)
-          echo "amplify_job_id=$JOB_ID" >> $GITHUB_OUTPUT
-
-          echo "Polling Amplify build $JOB_ID on main..."
-          for i in $(seq 1 60); do
-            STATUS=$(aws amplify get-job \
-              --app-id ${{ steps.amplify-app.outputs.app_id }} \
-              --branch-name main \
-              --job-id "$JOB_ID" \
-              --query 'job.summary.status' --output text)
-            echo "[$i/60] $STATUS"
-            case "$STATUS" in
-              SUCCEED)   echo "Build succeeded"; exit 0 ;;
-              FAILED)    echo "Build failed"; exit 1 ;;
-              CANCELLED) echo "Build cancelled"; exit 1 ;;
-            esac
-            sleep 30
-          done
-          echo "Build timed out after 30 minutes"
-          exit 1
-
-      - name: Finish deployment
-        if: always() && steps.deployment.outputs.deployment_id != ''
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure'
-            await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: parseInt('${{ steps.deployment.outputs.deployment_id }}'),
-              state: state,
-              environment_url: 'https://startlineau.com',
-              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            })
+      - uses: actions/checkout@v7
+      - run: echo "Vercel auto-deploys on push to main"

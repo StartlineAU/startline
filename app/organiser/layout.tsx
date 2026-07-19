@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import NavBar from "@/components/NavBar";
-import AmplifyProvider from "./AmplifyProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import SettingsModal from "@/components/organiser/SettingsModal";
@@ -22,7 +21,6 @@ export const metadata: Metadata = {
 
 export default function OrganiserLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AmplifyProvider>
       <AuthProvider>
         <SettingsProvider>
           <NavBar />
@@ -30,6 +28,5 @@ export default function OrganiserLayout({ children }: { children: React.ReactNod
           <SettingsModal />
         </SettingsProvider>
       </AuthProvider>
-    </AmplifyProvider>
   );
 }

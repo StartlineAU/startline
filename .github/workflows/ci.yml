@@ -5,7 +5,6 @@ on:
     branches: [main]
 
 permissions:
-  id-token: write
   contents: read
   pull-requests: write
   security-events: write
@@ -18,10 +17,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/load-env
-        with:
-          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
-          environment: prod
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,8 +24,6 @@ jobs:
   lint:
     continue-on-error: true
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -38,7 +31,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
@@ -54,7 +46,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: npx prisma generate
       - run: pnpm typecheck
@@ -64,6 +55,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-key
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -71,7 +64,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: npx prisma generate
       - run: pnpm build
@@ -88,7 +80,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: npx prisma generate
       - run: pnpm test
@@ -121,26 +112,35 @@ jobs:
             echo "::warning::These files changed in this PR — review before merging:"
             echo "$CHANGED"
           fi
-      - uses: ./.github/actions/load-env
-        with:
-          aws-role-arn: ${{ vars.AWS_ROLE_ARN_READONLY }}
-          environment: prod
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm install --frozen-lockfile || pnpm approve-builds --all
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install chromium
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
       - name: Seed database
         shell: bash
         run: npx prisma db seed
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Start Next.js dev server
         shell: bash
         run: |
           pnpm dev -p 3000 &
           npx wait-on http://localhost:3000/admin/login --timeout 60000
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - run: pnpm test:e2e
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/startline?schema=public
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
