@@ -2,9 +2,6 @@ import { test, expect } from "@playwright/test";
 import { argosScreenshot } from "@argos-ci/playwright";
 import { adminLogin } from "./helpers";
 
-// fixtodo: restore after adding dev bypass for e2e (no nonprod Cognito pool)
-test.skip();
-
 test.describe("admin login", () => {
   test("dev bypass login redirects to dashboard", async ({ page }) => {
     await page.goto("/admin/login");
@@ -13,7 +10,7 @@ test.describe("admin login", () => {
     await expect(page.locator("h1")).toContainText("Admin");
     await expect(page.locator("h1")).toContainText("sign in");
 
-    await page.getByPlaceholder(/admin@startlineau/i).fill("admin@startlineau.com");
+    await page.getByPlaceholder(/admin@startlineau/i).fill("admin@startline.test");
     await page.locator('input[type="password"]').first().fill("Password123!");
     await page.getByRole("button", { name: /sign in/i }).click();
 

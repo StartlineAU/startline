@@ -54,8 +54,8 @@ export async function getServerSession(): Promise<ServerSession | null> {
     process.env.NEXT_PUBLIC_AUTH_BYPASS === "true";
   if (isBypass) {
     return {
-      sub: "dev-bypass-admin",
-      email: "admin@startline.test",
+      sub: "dev-bypass-organiser",
+      email: "organiser@startline.test",
       groups: ["admins"],
     };
   }

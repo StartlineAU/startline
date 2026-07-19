@@ -2,9 +2,6 @@ import { test, expect } from "@playwright/test";
 import { argosScreenshot } from "@argos-ci/playwright";
 import { organiserLogin } from "./helpers";
 
-// fixtodo: restore after adding dev bypass for e2e (no nonprod Cognito pool)
-test.skip();
-
 test.describe("organiser login", () => {
   test("signs in via modal and redirects to dashboard", async ({ page }) => {
     await organiserLogin(page);

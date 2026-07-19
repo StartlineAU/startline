@@ -1,9 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { organiserLogin } from "./helpers";
 
-// fixtodo: restore after adding dev bypass for e2e (no nonprod Cognito pool)
-test.skip();
-
 test.describe("new listing wizard", () => {
   test("loads the new listing page with 5 steps", async ({ page }) => {
     await organiserLogin(page);
