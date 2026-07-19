@@ -118,6 +118,16 @@ resource "aws_amplify_app" "this" {
   }
 }
 
+resource "null_resource" "enable_pr_previews" {
+  triggers = {
+    app_id = aws_amplify_app.this.id
+  }
+
+  provisioner "local-exec" {
+    command = "aws amplify update-app --app-id ${aws_amplify_app.this.id} --enable-pull-request-preview"
+  }
+}
+
 locals {
   environments = {
     prod = {
