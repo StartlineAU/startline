@@ -4,8 +4,6 @@
 #   - amplify_repository_access_token
 #   - cloudflare_api_token
 #   - resend_api_key
-#   - digitalocean_api_token
-#   - docs_droplet_ip
 # Set them via: aws secretsmanager put-secret-value --secret-id startline/ci-bootstrap ...
 #
 # aws_region   = "ap-southeast-2"
