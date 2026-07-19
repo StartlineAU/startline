@@ -5,25 +5,25 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Meet the team behind StartLine — Australia's fitness event calendar. Founded by Lachlan Martin, Nathan Sweet, Hugo Shrowder, and Noah Helu.",
+    "Meet the team behind Startline — Australia's fitness event calendar. Founded by Lachlan Martin, Nathan Sweet, Hugo Shrowder, and Noah Helu.",
   openGraph: {
-    title: "About Us | StartLine",
+    title: "About Us | Startline",
     description:
-      "Meet the team behind StartLine — Australia's fitness event calendar.",
+      "Meet the team behind Startline — Australia's fitness event calendar.",
     url: "/about",
     images: [
       {
         url: "/images/about/about-hero.jpg",
         width: 1200,
         height: 630,
-        alt: "About StartLine",
+        alt: "About Startline",
       },
     ],
   },
   twitter: {
-    title: "About Us | StartLine",
+    title: "About Us | Startline",
     description:
-      "Meet the team behind StartLine — Australia's fitness event calendar.",
+      "Meet the team behind Startline — Australia's fitness event calendar.",
     images: ["/images/about/about-hero.jpg"],
   },
   alternates: {
@@ -35,7 +35,7 @@ const founders = [
   {
     name: "Lachlan Martin",
     initials: "LM",
-    bio: "Lachlan brings a lifelong passion for fitness and competition to StartLine. With experience building products that connect communities, he drives the vision and strategy behind the platform.",
+    bio: "Lachlan brings a lifelong passion for fitness and competition to Startline. With experience building products that connect communities, he drives the vision and strategy behind the platform.",
   },
   {
     name: "Nathan Sweet",
@@ -45,12 +45,12 @@ const founders = [
   {
     name: "Hugo Shrowder",
     initials: "HS",
-    bio: "Hugo shapes the athlete experience with a sharp eye for design and detail. He ensures every interaction on StartLine feels fast, precise, and purposeful.",
+    bio: "Hugo shapes the athlete experience with a sharp eye for design and detail. He ensures every interaction on Startline feels fast, precise, and purposeful.",
   },
   {
     name: "Noah Helu",
     initials: "NH",
-    bio: "Noah brings a competitive drive and deep understanding of the athlete journey to StartLine. He focuses on building the tools that make event registration and management effortless.",
+    bio: "Noah brings a competitive drive and deep understanding of the athlete journey to Startline. He focuses on building the tools that make event registration and management effortless.",
   },
 ];
 
@@ -76,7 +76,7 @@ export default function AboutPage() {
             Built for the <span className="text-primary">start line.</span>
           </h1>
           <p className="font-headline text-sm sm:text-base font-medium text-muted max-w-xl leading-relaxed mt-3">
-            StartLine is Australia&apos;s fitness event calendar. We connect
+            Startline is Australia&apos;s fitness event calendar. We connect
             athletes with the races, competitions, and communities that push them
             further.
           </p>
@@ -90,7 +90,7 @@ export default function AboutPage() {
             Founders
           </p>
           <h2 className="font-headline text-[32px] sm:text-4xl font-black italic leading-none tracking-tighter text-light mb-4">
-            Meet the team behind <em className="text-primary not-italic">StartLine.</em>
+            Meet the team behind <em className="text-primary not-italic">Startline.</em>
           </h2>
           <p className="text-[15px] text-muted leading-relaxed">
             Three people who share a belief that finding your next challenge
@@ -142,7 +142,7 @@ export default function AboutPage() {
             </h2>
             <p className="text-[15px] text-muted leading-relaxed">
               We believe the hardest part of any event is showing up at the
-              start line — not finding one to enter. StartLine brings every
+              start line — not finding one to enter. Startline brings every
               fitness event in Australia into one place so you can discover,
               compare, and register in minutes, not hours.
             </p>

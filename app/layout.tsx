@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default:  "StartLine - Find Your Next Race",
-    template: "%s | StartLine",
+    default:  "Startline - Find Your Next Race",
+    template: "%s | Startline",
   },
   description:
     "Discover fitness racing, CrossFit, running and hybrid fitness events across Australia. Find, compare and register for competitions near you.",
@@ -40,8 +40,8 @@ export const metadata: Metadata = {
 
   openGraph: {
     type:        "website",
-    siteName:    "StartLine",
-    title:       "StartLine - Find Your Next Race",
+    siteName:    "Startline",
+    title:       "Startline - Find Your Next Race",
     description:
       "Discover fitness racing, CrossFit, running and hybrid fitness events across Australia.",
     url:         SITE_URL,
@@ -50,14 +50,14 @@ export const metadata: Metadata = {
         url:    "/site-preview.png",
         width:  1200,
         height: 630,
-        alt:    "StartLine - Australia's fitness event calendar",
+        alt:    "Startline - Australia's fitness event calendar",
       },
     ],
   },
 
   twitter: {
     card:        "summary_large_image",
-    title:       "StartLine - Find Your Next Race",
+    title:       "Startline - Find Your Next Race",
     description: "Discover fitness racing, CrossFit, running and hybrid fitness events across Australia.",
     images:      ["/site-preview.png"],
   },
