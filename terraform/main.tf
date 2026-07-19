@@ -124,6 +124,7 @@ locals {
       branch_name                  = "main"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
+      enable_pull_request_preview  = true
       vpc_cidr                     = "10.20.0.0/16"
       database_name                = "${var.project_name}_prod"
       database_skip_final_snapshot = false
@@ -137,6 +138,7 @@ locals {
       branch_name                  = "staging"
       amplify_stage                = "BETA"
       auto_build_enabled           = true
+      enable_pull_request_preview  = true
       vpc_cidr                     = "10.21.0.0/16"
       database_name                = "${var.project_name}_staging"
       database_skip_final_snapshot = true
@@ -157,9 +159,10 @@ module "env" {
   project_name   = var.project_name
   amplify_app_id = aws_amplify_app.this.id
 
-  branch_name        = each.value.branch_name
-  amplify_stage      = each.value.amplify_stage
-  auto_build_enabled = each.value.auto_build_enabled
+  branch_name                 = each.value.branch_name
+  amplify_stage               = each.value.amplify_stage
+  auto_build_enabled          = each.value.auto_build_enabled
+  enable_pull_request_preview = each.value.enable_pull_request_preview
 
   vpc_cidr      = each.value.vpc_cidr
   database_name = each.value.database_name
