@@ -282,7 +282,7 @@ enum RegistrationStatus {
 // have an associated Organiser profile (1:1).
 model User {
   id         String   @id @default(uuid())
-  cognitoSub String   @unique
+  cognitoSub String?  @unique
   email      String   @unique
   name       String?  // full name
   username   String?  @unique // public handle, chosen during profile setup
