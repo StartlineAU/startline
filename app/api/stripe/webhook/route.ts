@@ -88,18 +88,18 @@ export async function POST(req: NextRequest) {
 }
 
 async function ensureGuestUser(email: string, name: string): Promise<string> {
+  let cognitoSub: string | null = null;
   try {
-    const cognitoSub = await ensureAthleteCognitoUser(email);
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { cognitoSub, name: name || undefined },
-      create: { email, cognitoSub, name: name || undefined },
-    });
-    return user.id;
+    cognitoSub = await ensureAthleteCognitoUser(email);
   } catch (err) {
-    console.error(`Failed to create athlete account for ${email}:`, err);
-    return "";
+    console.error(`Cognito creation failed for ${email}:`, err);
   }
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: { ...(cognitoSub && { cognitoSub }), name: name || undefined },
+    create: { email, name: name || undefined, ...(cognitoSub ? { cognitoSub } : {}) },
+  });
+  return user.id;
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {

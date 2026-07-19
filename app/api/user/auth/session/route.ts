@@ -9,12 +9,23 @@ export async function POST() {
   }
 
   try {
-    await prisma.user.upsert({
-      where:  { cognitoSub: session.sub },
-      update: { email: session.email },
-      create: { cognitoSub: session.sub, email: session.email },
-      select: { id: true },
-    });
+    const existing = await prisma.user.findUnique({ where: { cognitoSub: session.sub } });
+    if (existing) return NextResponse.json({ ok: true });
+
+    if (session.email) {
+      await prisma.user.upsert({
+        where: { email: session.email },
+        update: { cognitoSub: session.sub, email: session.email },
+        create: { cognitoSub: session.sub, email: session.email },
+        select: { id: true },
+      });
+    } else {
+      await prisma.user.create({
+        data: { cognitoSub: session.sub, email: session.sub },
+        select: { id: true },
+      });
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("User session upsert error:", err);
