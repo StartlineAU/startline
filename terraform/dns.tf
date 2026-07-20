@@ -140,6 +140,7 @@ locals {
   amplify_apex_target      = try(local.amplify_sub_domains_by_prefix[""], "")
   amplify_www_target       = try(local.amplify_sub_domains_by_prefix["www"], "")
   amplify_organiser_target = try(local.amplify_sub_domains_by_prefix["organiser"], "")
+  amplify_admin_target     = try(local.amplify_sub_domains_by_prefix["admin"], "")
 
   # certificate_verification_dns_record looks like
   # "_xxx.startlineau.com. CNAME _yyy.acm-validations.aws."
@@ -191,6 +192,16 @@ resource "aws_route53_record" "organiser_cname" {
   type            = "CNAME"
   ttl             = 300
   records         = [local.amplify_organiser_target]
+  allow_overwrite = true
+}
+
+resource "aws_route53_record" "admin_cname" {
+  count           = local.deploy_amplify_dns ? 1 : 0
+  zone_id         = aws_route53_zone.primary.zone_id
+  name            = "admin.startlineau.com"
+  type            = "CNAME"
+  ttl             = 300
+  records         = [local.amplify_admin_target]
   allow_overwrite = true
 }
 

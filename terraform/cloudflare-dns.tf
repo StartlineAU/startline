@@ -194,6 +194,16 @@ resource "cloudflare_record" "organiser" {
 
 # ===== Upload CDN (CloudFront) =====
 
+resource "cloudflare_record" "admin" {
+  count   = local.deploy_amplify_dns ? 1 : 0
+  zone_id = cloudflare_zone.primary.id
+  name    = "admin"
+  type    = "CNAME"
+  ttl     = 1
+  content = local.amplify_admin_target
+  proxied = true
+}
+
 resource "cloudflare_record" "cdn" {
   count   = local.deploy_amplify_dns ? 1 : 0
   zone_id = cloudflare_zone.primary.id

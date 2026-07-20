@@ -6,7 +6,7 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 |---|---|---|
 | `(user)/` | startlineau.com | Public event browsing |
 | `organiser/` | organiser.startlineau.com | Event management |
-| `admin/` | organiser.startlineau.com | Approvals, org management |
+| `admin/` | admin.startlineau.com | Approvals, org management |
 
 ## Development
 
@@ -185,7 +185,7 @@ Configured in `opencode.json`: stripe, resend, aws, cloudflare. Skills listed be
 - **Scripts table:** Missing `typecheck`, `prisma:generate`, `test:watch`, `stripe:*`, `start`, `test:registration`, `staging:db:start`.
 - **`prisma:migrate`:** README says "Apply Prisma migrations" — the script actually runs `prisma migrate dev` (dev-only, creates migrations), not `prisma migrate deploy`.
 - **Site state:** README describes a live event browsing platform; the site is currently in waitlist mode.
-- **Admin domain:** Implies three separate domains; admin actually shares `organiser.startlineau.com` as a path prefix.
+- **Admin domain:** Implies three separate domains; admin previously shared `organiser.startlineau.com` as a path prefix but now has its own `admin.startlineau.com`.
 
 ## Idempotency
 
