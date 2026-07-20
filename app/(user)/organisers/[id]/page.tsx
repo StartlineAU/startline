@@ -7,8 +7,11 @@ import { getPublicOrganiser } from "@/lib/organisers";
 import { getAllEvents } from "@/lib/events";
 import { toUserEvents } from "@/lib/user-events";
 import { getUpcomingEvents } from "@/lib/utils";
+import { getPublishedOrganiserReviews, averageOverallRating } from "@/lib/reviews";
 import HomeEventCard from "@/components/HomeEventCard";
 import EventGallery from "@/components/EventGallery";
+import OrganiserReviewsClient from "@/components/OrganiserReviewsClient";
+import OrganiserRating from "@/components/OrganiserRating";
 
 export const revalidate = 60;
 
@@ -25,6 +28,9 @@ export default async function OrganiserProfilePage({ params }: { params: Promise
   const name = organiser.orgName ?? "Event Organiser";
   const events = toUserEvents(await getAllEvents()).filter((e) => e.organiserId === organiser.id);
   const upcoming = getUpcomingEvents(events, 100);
+  const reviews = await getPublishedOrganiserReviews(organiser.id);
+  const avg = averageOverallRating(reviews);
+  const rating = avg != null ? { average: avg, count: reviews.length } : null;
 
   const links = [
     organiser.website && { icon: Globe, label: "Website", href: externalUrl(organiser.website, "https://") },
@@ -77,10 +83,13 @@ export default async function OrganiserProfilePage({ params }: { params: Promise
             <h1 className="font-headline text-3xl sm:text-4xl font-black italic tracking-tighter text-light leading-tight">
               {name}
             </h1>
-            <p className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted mt-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-primary" />
-              Organiser since {format(organiser.createdAt, "MMMM yyyy")}
-            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-1.5">
+              <p className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
+                <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                Organiser since {format(organiser.createdAt, "MMMM yyyy")}
+              </p>
+              <OrganiserRating rating={rating} size="md" />
+            </div>
           </div>
         </div>
 
@@ -139,6 +148,8 @@ export default async function OrganiserProfilePage({ params }: { params: Promise
             <EventGallery images={organiser.photos} title={name} />
           </div>
         )}
+
+        <OrganiserReviewsClient organiserId={organiser.id} initialReviews={reviews} />
 
       </section>
     </main>

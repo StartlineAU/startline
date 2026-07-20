@@ -4,11 +4,13 @@ import { MapPin, Clock, Users } from "lucide-react";
 import type { UserEvent } from "@/types";
 import { EVENT_TYPE_LABELS, STATE_LABELS } from "@/types";
 import { cn, formatShortDate, formatTime, formatCompetitionFormat, stripHtml } from "@/lib/utils";
+import OrganiserCardMeta from "@/components/OrganiserCardMeta";
 
 export default function HomeEventCard({ event, className }: { event: UserEvent; className?: string }) {
   const [day, month] = formatShortDate(event.date).split(" ");
   const img = event.image;
   const typeLabel = EVENT_TYPE_LABELS[event.type];
+  const organiserName = event.organizer ?? event.organiser?.orgName ?? null;
 
   return (
     <Link
@@ -66,9 +68,19 @@ export default function HomeEventCard({ event, className }: { event: UserEvent; 
             </p>
           )}
 
-          {event.fromPrice !== null && (
-            <span className="font-headline text-sm font-bold text-primary">From ${event.fromPrice}</span>
-          )}
+          <div className="space-y-1">
+            {organiserName && (
+              <OrganiserCardMeta
+                organiserId={event.organiserId}
+                name={organiserName}
+                rating={event.organiser?.rating}
+                nestedInLink
+              />
+            )}
+            {event.fromPrice !== null && (
+              <span className="font-headline text-sm font-bold text-primary">From ${event.fromPrice}</span>
+            )}
+          </div>
         </div>
       </div>
     </Link>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, CheckCircle, AlertCircle } from "lucide-react";
+import { X, CheckCircle, AlertCircle, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,10 +26,11 @@ function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "
   const sz = size === "lg" ? "w-5 h-5" : size === "md" ? "w-4 h-4" : "w-3.5 h-3.5";
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <svg key={i} className={`${sz} ${i <= Math.round(rating) ? "text-yellow-400" : "text-dark-lighter"}`} fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={cn(sz, i <= Math.round(rating) ? "text-primary fill-primary" : "text-dark-lighter")}
+        />
       ))}
     </div>
   );
@@ -38,7 +40,7 @@ function InteractiveStars({ value, onChange }: { value: number; onChange: (v: nu
   const [hover, setHover] = useState(0);
   return (
     <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map(i => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <button
           key={i}
           type="button"
@@ -46,10 +48,14 @@ function InteractiveStars({ value, onChange }: { value: number; onChange: (v: nu
           onMouseLeave={() => setHover(0)}
           onClick={() => onChange(i)}
           className="transition-transform hover:scale-110"
+          aria-label={`${i} stars`}
         >
-          <svg className={`w-7 h-7 transition-colors ${i <= (hover || value) ? "text-yellow-400" : "text-dark-lighter"}`} fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
+          <Star
+            className={cn(
+              "w-7 h-7 transition-colors",
+              i <= (hover || value) ? "text-primary fill-primary" : "text-dark-lighter"
+            )}
+          />
         </button>
       ))}
     </div>
@@ -62,7 +68,7 @@ function RatingBar({ label, value }: { label: string; value: number | null | und
     <div className="flex items-center gap-3">
       <span className="font-headline text-[11px] uppercase tracking-widest text-muted w-36 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-dark-lighter rounded-full overflow-hidden">
-        <div className="h-full bg-yellow-400 rounded-full transition-all" style={{ width: `${(value / 5) * 100}%` }} />
+        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(value / 5) * 100}%` }} />
       </div>
       <span className="font-headline text-[11px] font-bold text-light w-6 text-right">{value.toFixed(1)}</span>
     </div>
@@ -133,19 +139,19 @@ function ReviewCard({ r }: { r: Review }) {
           {r.atmosphereRating && (
             <div>
               <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mb-0.5">Atmosphere</div>
-              <div className="font-headline text-[13px] font-black text-yellow-400">{r.atmosphereRating}.0</div>
+              <div className="font-headline text-[13px] font-black text-primary">{r.atmosphereRating}.0</div>
             </div>
           )}
           {r.organisationRating && (
             <div>
               <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mb-0.5">Organisation</div>
-              <div className="font-headline text-[13px] font-black text-yellow-400">{r.organisationRating}.0</div>
+              <div className="font-headline text-[13px] font-black text-primary">{r.organisationRating}.0</div>
             </div>
           )}
           {r.experienceRating && (
             <div>
               <div className="font-headline text-[10px] uppercase tracking-widest text-muted-dark mb-0.5">Experience</div>
-              <div className="font-headline text-[13px] font-black text-yellow-400">{r.experienceRating}.0</div>
+              <div className="font-headline text-[13px] font-black text-primary">{r.experienceRating}.0</div>
             </div>
           )}
         </div>
@@ -257,11 +263,14 @@ function WriteReviewModal({ organiserId, onClose, onSuccess }: ModalProps) {
                   <div key={label}>
                     <div className="font-headline text-[10px] uppercase tracking-widest text-muted mb-1.5">{label}</div>
                     <div className="flex gap-0.5">
-                      {[1,2,3,4,5].map(i => (
-                        <button key={i} type="button" onClick={() => onChange(i)}>
-                          <svg className={`w-4 h-4 transition-colors ${i <= value ? "text-yellow-400" : "text-dark-lighter hover:text-yellow-400/50"}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <button key={i} type="button" onClick={() => onChange(i)} aria-label={`${label} ${i}`}>
+                          <Star
+                            className={cn(
+                              "w-4 h-4 transition-colors",
+                              i <= value ? "text-primary fill-primary" : "text-dark-lighter hover:text-primary/50"
+                            )}
+                          />
                         </button>
                       ))}
                     </div>
@@ -425,10 +434,8 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
         /* Empty state */
         <div className="py-12 text-center border border-dashed border-dark-lighter rounded-xl">
           <div className="flex items-center justify-center gap-0.5 mb-3">
-            {[1,2,3,4,5].map(i => (
-              <svg key={i} className="w-6 h-6 text-dark-lighter" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star key={i} className="w-6 h-6 text-dark-lighter" />
             ))}
           </div>
           <div className="font-headline text-[15px] font-black italic text-light mb-1">No reviews yet</div>
@@ -460,9 +467,9 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
                 {dist.map(({ star, count, pct }) => (
                   <div key={star} className="flex items-center gap-2">
                     <span className="font-headline text-[10px] text-muted w-4 text-right">{star}</span>
-                    <svg className="w-3 h-3 text-yellow-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                    <Star className="w-3 h-3 text-primary fill-primary shrink-0" />
                     <div className="flex-1 h-2 bg-dark-lighter rounded-full overflow-hidden">
-                      <div className="h-full bg-yellow-400/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-primary/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                     <span className="font-headline text-[10px] text-muted-dark w-6 text-right">{count}</span>
                   </div>

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { archivePastEvents } from "@/lib/archive-events";
+import { getOrganiserRatings } from "@/lib/reviews";
 import { lowestPrice, type PublicEvent, type PublicWave } from "./event-types";
 
 export async function getAllEvents() {
@@ -45,11 +46,16 @@ export async function getAllEvents() {
       },
     });
 
+    const ratings = await getOrganiserRatings(events.map((e) => e.organiserId));
+
     // ponytail: `any` avoids Prisma type dependency; `pnpm build` verifies correctness
     return events.map((e: any) => ({
       ...e,
       fromPrice: lowestPrice(e.waves),
       registrationCount: e._count.registrations,
+      organiser: e.organiser
+        ? { ...e.organiser, rating: ratings.get(e.organiserId) ?? null }
+        : e.organiser,
     }));
   } catch {
     return [];
