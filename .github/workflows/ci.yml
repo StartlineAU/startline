@@ -3,6 +3,8 @@ name: CI
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: ['*']
 
 permissions:
   id-token: write
@@ -12,7 +14,7 @@ permissions:
 
 jobs:
   gitleaks:
-    continue-on-error: true
+    continue-on-error: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
