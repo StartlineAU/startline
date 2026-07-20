@@ -305,6 +305,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     try {
       const result = await confirmSignIn({ challengeResponse: totpCode });
       if (result.nextStep.signInStep === "DONE") {
+        await fetch("/api/user/mfa", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "enable" }) });
         await fetch("/api/user/auth/session", { method: "POST" });
         await refresh();
         onSuccess?.();

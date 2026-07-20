@@ -2,17 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ShieldAlert, Copy, Check, Key, Plus, Trash2, Fingerprint } from "lucide-react";
+import { Shield, ShieldAlert, Trash2, Fingerprint } from "lucide-react";
 import { useAuthContext } from "@/context/AuthContext";
 
 export default function SecuritySettingsPage() {
   const router = useRouter();
-  const { user, status } = useAuthContext();
+  const { status } = useAuthContext();
 
   const [mfaEnabled, setMfaEnabled] = useState(false);
-  const [recoveryCodesRemaining, setRecoveryCodesRemaining] = useState(0);
-  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,45 +21,9 @@ export default function SecuritySettingsPage() {
     if (status !== "authenticated") return;
     fetch("/api/user/mfa")
       .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) {
-          setMfaEnabled(data.mfaEnabled);
-          setRecoveryCodesRemaining(data.recoveryCodesRemaining);
-        }
-      })
+      .then(data => { if (data) setMfaEnabled(data.mfaEnabled); })
       .catch(() => {});
   }, [status]);
-
-  const handleGenerateRecoveryCodes = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const r = await fetch("/api/user/mfa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate-recovery-codes" }),
-      });
-      const data = await r.json();
-      if (r.ok) {
-        setRecoveryCodes(data.codes);
-        setRecoveryCodesRemaining(data.codes.length);
-      } else {
-        setError(data.error || "Failed to generate codes.");
-      }
-    } catch {
-      setError("Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCopyCodes = () => {
-    if (!recoveryCodes) return;
-    navigator.clipboard.writeText(recoveryCodes.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
 
   const handleDisableMfa = async () => {
     setLoading(true);
@@ -75,8 +36,6 @@ export default function SecuritySettingsPage() {
       });
       if (r.ok) {
         setMfaEnabled(false);
-        setRecoveryCodes(null);
-        setRecoveryCodesRemaining(0);
       } else {
         const data = await r.json();
         setError(data.error || "Failed to disable MFA.");
@@ -91,7 +50,6 @@ export default function SecuritySettingsPage() {
   if (status === "loading" || status === "unauthenticated") return null;
 
   const sectionCls = "border border-dark-lighter rounded-xl p-5 space-y-4";
-  const labelCls = "font-headline text-[11px] font-bold uppercase tracking-widest text-muted block mb-1";
   const btnCls = "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-headline text-[11px] font-bold uppercase tracking-widest border transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
@@ -134,43 +92,6 @@ export default function SecuritySettingsPage() {
               className={btnCls + " border-red-500/30 text-red-400 hover:bg-red-500/10"}>
               <Trash2 className="w-3.5 h-3.5" /> Disable
             </button>
-          )}
-        </div>
-
-        {/* Recovery codes */}
-        <div className="border-t border-dark-lighter pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-muted" />
-                <span className="font-headline text-[11px] font-bold uppercase tracking-widest">Recovery Codes</span>
-              </div>
-              <p className="text-muted text-[11px] mt-1">
-                {recoveryCodesRemaining > 0
-                  ? `${recoveryCodesRemaining} code${recoveryCodesRemaining === 1 ? "" : "s"} remaining`
-                  : "No recovery codes generated yet."}
-              </p>
-            </div>
-            <button onClick={handleGenerateRecoveryCodes} disabled={loading}
-              className={btnCls + " border-primary/30 text-primary hover:bg-primary/10"}>
-              <Plus className="w-3.5 h-3.5" /> Generate
-            </button>
-          </div>
-
-          {recoveryCodes && (
-            <div className="bg-dark rounded-lg p-4 space-y-2">
-              <div className="font-headline text-[10px] uppercase tracking-widest text-amber-400 mb-2">
-                Save these codes — they won&apos;t be shown again.
-              </div>
-              {recoveryCodes.map((code, i) => (
-                <div key={i} className="font-mono text-[14px] tracking-wider text-light font-bold">
-                  {code}
-                </div>
-              ))}
-              <button onClick={handleCopyCodes} className="flex items-center gap-2 mt-2 text-muted hover:text-primary transition-colors font-headline text-[11px] uppercase tracking-widest">
-                {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy all</>}
-              </button>
-            </div>
           )}
         </div>
       </div>
