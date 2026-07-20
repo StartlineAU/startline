@@ -77,22 +77,14 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 
 Infra in `terraform/`:
 
-
-Terraform uses a unified state with a `target_environment` variable (`all`/`prod`/`staging`) to scope applies:
-- **Push to `main`** → `terraform apply -var=target_environment=all` (both environments)
-- **Push to `prod`** → `terraform apply -var=target_environment=prod` (prod resources only) — although prod is protected, so this is via PR merge
-- **PRs** → `terraform plan` runs with the scope matching the base branch
+Terraform uses a unified state. `main` is the sole source of truth — only pushed to `main` triggers Terraform apply.
 
 | Workflow | Trigger | Scope |
 |---|---|---|
-| `terraform-plan.yml` | PR to `main` or `prod` | Plan matching base branch |
-| `terraform-apply.yml` | Push to `main` or `prod` | `all` on main, `prod` on prod |
+| `terraform-plan.yml` | PR to `main` | Plan both environments |
+| `terraform-apply.yml` | Push to `main` | Apply both environments |
 
-`ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational).
-
-Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
-
-Amplify build spec fetches from SM at build time — individual key rotations don't need a TF run.
+`ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational). App deploys via Amplify on push to `main` (staging) or `prod` (production) via the `deploy.yml` workflow.
 
 ### Environments
 
@@ -104,8 +96,6 @@ Two environments managed by Terraform (`main.tf` → `local.environments`). PR p
 | `staging` | `main` | Migrate + seed |
 | PR to `main` | preview | Staging resources, auth bypass |
 | PR to `prod` | preview | Prod resources, auth bypass |
-
-The `ENV` env var is set per Amplify branch (`prod` → `prod`, `main` → `staging`). PR previews inherit the target branch's `ENV` value. The build spec uses `$ENV` to select the Secrets Manager secret (`startline/$ENV/app`).
 
 The `ENV` env var is set per Amplify branch (`prod` → `prod`, `main` → `staging`). PR previews inherit the target branch's `ENV` value. The build spec uses `$ENV` to select the Secrets Manager secret (`startline/$ENV/app`).
 

@@ -147,7 +147,7 @@ locals {
 }
 
 locals {
-  deploy_amplify_dns = var.target_environment == "all" || var.target_environment == "prod"
+  deploy_amplify_dns = true
 }
 
 resource "aws_route53_record" "amplify_cert_validation" {

@@ -92,7 +92,7 @@ moved {
   to   = module.env["prod"].aws_cognito_user_pool_client.web
 }
 
-# count-indexed resources (target_environment-aware applies)
+# count-indexed resources (prod-only DNS records)
 
 moved {
   from = aws_route53_record.amplify_cert_validation
