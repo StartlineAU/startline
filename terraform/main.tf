@@ -117,16 +117,6 @@ resource "aws_amplify_app" "this" {
   }
 }
 
-resource "null_resource" "enable_pr_previews" {
-  triggers = {
-    app_id = aws_amplify_app.this.id
-  }
-
-  provisioner "local-exec" {
-    command = "aws amplify update-app --app-id ${aws_amplify_app.this.id} --enable-pull-request-preview"
-  }
-}
-
 locals {
   environments = {
     prod = {
@@ -146,7 +136,7 @@ locals {
     staging = {
       branch_name                  = "main"
       amplify_stage                = "BETA"
-      auto_build_enabled           = true
+      auto_build_enabled           = false
       enable_pull_request_preview  = true
       vpc_cidr                     = "10.21.0.0/16"
       database_name                = "${var.project_name}_staging"

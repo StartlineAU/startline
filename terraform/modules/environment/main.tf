@@ -461,6 +461,8 @@ resource "aws_amplify_branch" "this" {
   )
 
   lifecycle {
+    create_before_destroy = false
+
     precondition {
       condition     = contains(["PRODUCTION", "BETA", "DEVELOPMENT"], var.amplify_stage)
       error_message = "amplify_stage must be one of PRODUCTION, BETA, or DEVELOPMENT."
