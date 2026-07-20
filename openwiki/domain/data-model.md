@@ -13,7 +13,7 @@ The data layer uses **Prisma ORM v7** against **PostgreSQL 15**. The schema is d
 ## Core Entities
 
 ### User (`users`)
-Every platform user has a User record, created on first Cognito login. Users can optionally create an Organiser profile (1:1). Fields include name, username (public handle), bio, profile picture, city/state (for map centering), and ban status.
+Every platform user has a User record, created on first Cognito login. Users can optionally create an Organiser profile (1:1). Fields include name, username (public handle), bio, profile picture, city/state (for map centering), ban status, MFA toggle (`mfaEnabled`), and encrypted recovery codes (`recoveryCodes`).
 
 ### Organiser (`organisers`)
 Linked 1:1 to a User. Holds business-specific fields:

@@ -35,7 +35,7 @@ tags: [startline, quickstart, overview, fitness-events, australia]
 
 - **Athlete Site** (`startlineau.com`) — Public event browsing, search, registration, reviews
 - **Organiser Portal** (`organiser.startlineau.com`) — Event management, onboarding, payments, registrations
-- **Admin Portal** (`organiser.startlineau.com/admin`) — Approval workflows, organiser management, analytics, audit
+- **Admin Portal** (`admin.startlineau.com`) — Approval workflows, organiser management, analytics, audit
 
 Domain routing is handled by `middleware.ts` in production. In development mode, everything runs on `localhost:3000` with auth bypass available.
 
