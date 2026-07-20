@@ -50,8 +50,9 @@ async function verifyToken(token: string) {
 }
 
 export async function getServerSession(): Promise<ServerSession | null> {
-  const isBypass = process.env.NODE_ENV === "development" ||
-    process.env.NEXT_PUBLIC_AUTH_BYPASS === "true";
+  const noCognito = !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+  const isBypass = noCognito && (process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_AUTH_BYPASS === "true");
   if (isBypass) {
     return {
       sub: "dev-bypass-organiser",
@@ -112,14 +113,23 @@ export async function getUserSession(): Promise<UserSession | null> {
   if (!cognitoSession) return null;
 
   try {
-    // Only write the email when we actually resolved one, so a missing id-token
-    // email never clobbers a good stored address. When present it heals rows
-    // that earlier sign-ins had stamped with the Cognito sub.
-    const emailUpdate = cognitoSession.email ? { email: cognitoSession.email } : {};
-    const user = await prisma.user.upsert({
-      where:  { cognitoSub: cognitoSession.sub },
-      update: emailUpdate,
-      create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email || cognitoSession.sub },
+    const existing = await prisma.user.findUnique({ where: { cognitoSub: cognitoSession.sub } });
+    if (existing) {
+      return { sub: existing.id, email: existing.email, name: existing.name, phoneNumber: cognitoSession.phoneNumber, birthdate: cognitoSession.birthdate };
+    }
+
+    if (cognitoSession.email) {
+      const user = await prisma.user.upsert({
+        where: { email: cognitoSession.email },
+        update: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
+        create: { cognitoSub: cognitoSession.sub, email: cognitoSession.email },
+        select: { id: true, email: true, name: true },
+      });
+      return { sub: user.id, email: user.email, name: user.name, phoneNumber: cognitoSession.phoneNumber, birthdate: cognitoSession.birthdate };
+    }
+
+    const user = await prisma.user.create({
+      data: { cognitoSub: cognitoSession.sub, email: cognitoSession.sub },
       select: { id: true, email: true, name: true },
     });
     return { sub: user.id, email: user.email, name: user.name, phoneNumber: cognitoSession.phoneNumber, birthdate: cognitoSession.birthdate };

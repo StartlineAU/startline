@@ -36,6 +36,7 @@ data "aws_iam_policy_document" "terraform_ci_assume" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_repository}:*:refs/heads/main",
+        "repo:${var.github_repository}:*:refs/heads/prod",
       ]
     }
   }
@@ -110,6 +111,7 @@ resource "aws_iam_policy" "terraform_ci_readonly_extra" {
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/ci-bootstrap*",
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/prod/*",
+          "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:startline/staging/*",
         ]
       },
     ]

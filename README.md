@@ -2,7 +2,7 @@
 
 ## Overview
 
-StartLine helps performance-driven fitness individuals discover competitive events across Australia. Find fitness racing, CrossFit competitions, running races, and hybrid fitness events in one place.
+Startline helps performance-driven fitness individuals discover competitive events across Australia. Find fitness racing, CrossFit competitions, running races, and hybrid fitness events in one place.
 
 ## Tech Stack
 
@@ -69,21 +69,23 @@ Open [http://localhost:3000](http://localhost:3000) to view the site.
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest unit tests |
 | `pnpm test:e2e` | Playwright e2e tests |
-| `pnpm prisma:migrate` | Apply Prisma migrations |
+| `pnpm prisma:migrate` | Create + apply Prisma migrations (dev only, `migrate dev`) |
 | `pnpm prisma:seed` | Seed Cognito + database |
+| `pnpm typecheck` | TypeScript type check |
+| `pnpm prisma:generate` | Generate Prisma client |
 
 ## Environment Variables
 
-Secrets are stored in AWS Secrets Manager and loaded automatically via `.envrc` + direnv:
+Secrets are stored in AWS Secrets Manager and loaded via direnv (`.envrc` is gitignored, managed locally):
 
 - `startline/ci-bootstrap` — CI/CD bootstrap secrets (API keys for Cloudflare, Resend, Amplify)
-- `startline/nonprod/app` — All nonprod env vars (Cognito IDs, Stripe test keys, S3 creds, etc.)
-- `startline/prod/app` — All prod env vars (live values)
+- `startline/staging/app` — Staging env vars (Cognito IDs, Stripe test keys, S3 creds, etc.)
+- `startline/prod/app` — Prod env vars (live values)
 
-The `.envrc` file at the repo root fetches from SM and exports everything into your shell. No `.env` file needed.
+No `.env` file in the repo. See `AGENTS.md` for local setup details.
 
 **Rotating a key:** Update the secret in AWS Secrets Manager, trigger an Amplify rebuild, done. No code changes.
 
 ## License
 
-MIT
+All Rights Reserved

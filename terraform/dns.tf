@@ -130,23 +130,28 @@ resource "aws_route53_record" "dmarc" {
 locals {
   cloudfront_hosted_zone_id = "Z2FDTNDATAQYW2"
 
-  # Each sub_domain.dns_record looks like " CNAME d4wzmtvlx0pe1.cloudfront.net";
-  # extract just the hostname for ALIAS / CNAME targets.
-  amplify_sub_domains_by_prefix = {
+  # Guarded by try() — these only resolve when the Amplify domain association
+  # exists (prod-only). Staging-only apply skips these DNS records entirely.
+  amplify_sub_domains_by_prefix = try({
     for s in aws_amplify_domain_association.this[0].sub_domain :
     s.prefix => regex("([a-z0-9-]+\\.cloudfront\\.net)", s.dns_record)[0]
-  }
+  }, {})
 
-  amplify_apex_target      = local.amplify_sub_domains_by_prefix[""]
-  amplify_www_target       = local.amplify_sub_domains_by_prefix["www"]
-  amplify_organiser_target = local.amplify_sub_domains_by_prefix["organiser"]
+  amplify_apex_target      = try(local.amplify_sub_domains_by_prefix[""], "")
+  amplify_www_target       = try(local.amplify_sub_domains_by_prefix["www"], "")
+  amplify_organiser_target = try(local.amplify_sub_domains_by_prefix["organiser"], "")
 
   # certificate_verification_dns_record looks like
   # "_xxx.startlineau.com. CNAME _yyy.acm-validations.aws."
-  amplify_cert_record = split(" CNAME ", aws_amplify_domain_association.this[0].certificate_verification_dns_record)
+  amplify_cert_record = try(split(" CNAME ", aws_amplify_domain_association.this[0].certificate_verification_dns_record), [])
+}
+
+locals {
+  deploy_amplify_dns = true
 }
 
 resource "aws_route53_record" "amplify_cert_validation" {
+  count           = local.deploy_amplify_dns ? 1 : 0
   zone_id         = aws_route53_zone.primary.zone_id
   name            = trimsuffix(local.amplify_cert_record[0], ".")
   type            = "CNAME"
@@ -156,6 +161,7 @@ resource "aws_route53_record" "amplify_cert_validation" {
 }
 
 resource "aws_route53_record" "apex_alias" {
+  count           = local.deploy_amplify_dns ? 1 : 0
   zone_id         = aws_route53_zone.primary.zone_id
   name            = "startlineau.com"
   type            = "A"
@@ -169,6 +175,7 @@ resource "aws_route53_record" "apex_alias" {
 }
 
 resource "aws_route53_record" "www_cname" {
+  count           = local.deploy_amplify_dns ? 1 : 0
   zone_id         = aws_route53_zone.primary.zone_id
   name            = "www.startlineau.com"
   type            = "CNAME"
@@ -178,6 +185,7 @@ resource "aws_route53_record" "www_cname" {
 }
 
 resource "aws_route53_record" "organiser_cname" {
+  count           = local.deploy_amplify_dns ? 1 : 0
   zone_id         = aws_route53_zone.primary.zone_id
   name            = "organiser.startlineau.com"
   type            = "CNAME"
@@ -187,6 +195,7 @@ resource "aws_route53_record" "organiser_cname" {
 }
 
 resource "aws_route53_record" "cdn_alias" {
+  count           = local.deploy_amplify_dns ? 1 : 0
   zone_id         = aws_route53_zone.primary.zone_id
   name            = "cdn.startlineau.com"
   type            = "A"

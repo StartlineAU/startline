@@ -10,7 +10,7 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 
 ## Development
 
-- **Package manager:** pnpm 11.10.0
+- **Package manager:** pnpm 11.11.0
 - **Dev:** `pnpm dev` (Turbopack). **Build:** `pnpm build` (standalone `next.config.ts`). `@/*` → root.
 - **Docker:** PostgreSQL 15 on :5432 + Mailpit (SMTP :1025, UI :8026). Start: `docker compose up -d`.
 - **Worktree?** Check via `git worktree list`. If yes, Docker infra runs on main checkout — just `pnpm dev`, no `docker compose up`.
@@ -19,8 +19,6 @@ Next.js 15 (App Router) fitness event discovery platform. Three portals:
 ## Auth (Cognito)
 
 JWT verification in `middleware.ts` via `jose`. Tokens in Cognito-managed cookies. Only Cognito group: `admins`. Authorisation at DB level (Prisma).
-
-Uses AWS Cognito with JWT verification in middleware via `jose`. Tokens in Cognito-managed cookies. Only `admins` group used — non-admin users have no special group assignment. Authorisation at the DB level (Prisma).
 
 Production Cognito pool (managed via Terraform). Users created by `prisma/seed.ts` via `AdminCreateUser` + `AdminSetUserPassword` per seed user, plus `AdminAddUserToGroup` for admin only.
 
@@ -69,7 +67,7 @@ prefix = ["/Users/Lachlan/"]
 
 **Key rotation:** Update the SM secret, trigger an Amplify rebuild. No code changes, no TF runs.
 
-**CI:** Composite action at `.github/actions/load-env/` — assumes OIDC role, fetches bootstrap + app secrets, exports as env vars. Used by all 3 workflows.
+**CI:** Composite action at `.github/actions/load-env/` — assumes OIDC role, fetches bootstrap + app secrets, exports as env vars. Used by all workflows.
 
 ## Git worktrees
 
@@ -78,27 +76,28 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 ## Terraform + Amplify CI/CD
 
 Infra in `terraform/`:
-- `terraform-plan.yml` on PR, `terraform-apply.yml` on push to main
-- App deploys via Amplify on push to `main`. PR previews deploy automatically to temp URLs.
-- No app code CI (no lint/test/build checks)
 
-Terraform reads bootstrap secrets from SM via `data "aws_secretsmanager_secret" "bootstrap"`. No `TF_VAR_*` needed.
+Terraform uses a unified state. `main` is the sole source of truth — only pushed to `main` triggers Terraform apply.
 
-Amplify build spec fetches from SM at build time — individual key rotations don't need a TF run.
+| Workflow | Trigger | Scope |
+|---|---|---|
+| `terraform-plan.yml` | PR to `main` | Plan both environments |
+| `terraform-apply.yml` | Push to `main` | Apply both environments |
+
+`ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational). App deploys via Amplify on push to `main` (staging) or `prod` (production) via the `deploy.yml` workflow.
 
 ### Environments
 
-Two environments managed by Terraform (`main.tf` → `local.environments`):
+Two environments managed by Terraform (`main.tf` → `local.environments`). PR previews enabled on both branches:
 
-| Environment | Branch | Resources | Build behavior |
-|---|---|---|---|
-| `prod` | `main` | Prod Cognito, RDS, S3, CDN | Migrate, no seed |
-| `staging` | `staging` | Staging Cognito, RDS, S3, CDN | Migrate + seed |
-| PR previews (any) | feature branches | Uses **staging** resources | No migrate, no seed, auth bypass |
+| Environment | Branch | Build behavior |
+|---|---|---|
+| `prod` | `prod` | Migrate, no seed |
+| `staging` | `main` | Migrate + seed |
+| PR to `main` | preview | Staging resources, auth bypass |
+| PR to `prod` | preview | Prod resources, auth bypass |
 
-The build spec (`local.build_spec`) selects the SM secret based on `AWS_BRANCH_NAME`:
-- `main` → `startline/prod/app`
-- everything else → `startline/staging/app`
+The `ENV` env var is set per Amplify branch (`prod` → `prod`, `main` → `staging`). PR previews inherit the target branch's `ENV` value. The build spec uses `$ENV` to select the Secrets Manager secret (`startline/$ENV/app`).
 
 ## Design system
 
@@ -153,7 +152,7 @@ Use `-s=<name>` for isolated sessions (e.g., `-s=customer`, `-s=organiser`). Pas
 
 Use `gh` CLI — the MCP `server-github` fails for this private org repo.
 
-**`main` is protected.** Never push directly — always use a PR.
+**`main` and `prod` are protected.** Never push directly — always use a PR.
 
 ### Pre-commit gate
 
@@ -176,8 +175,30 @@ Use labels, native issue type (Bug/Feature/Task), Priority/Effort via GraphQL (f
 
 Configured in `opencode.json`: stripe, resend, aws, cloudflare. Skills listed below.
 
+## README accuracy
+
+`README.md` has several known inaccuracies. Do not treat it as authoritative — cross-reference with this file and the actual codebase:
+
+- **License:** README says MIT, actual `LICENSE` file is All Rights Reserved.
+- **Secret name:** README says `startline/nonprod/app`, actual name is `startline/staging/app`.
+- **`.envrc`:** README says it exists at root fetching SM secrets — it does not exist in the repo (gitignored). Devs load env vars another way (direnv + local config).
+- **Scripts table:** Missing `typecheck`, `prisma:generate`, `test:watch`, `stripe:*`, `start`, `test:registration`, `staging:db:start`.
+- **`prisma:migrate`:** README says "Apply Prisma migrations" — the script actually runs `prisma migrate dev` (dev-only, creates migrations), not `prisma migrate deploy`.
+- **Site state:** README describes a live event browsing platform; the site is currently in waitlist mode.
+- **Admin domain:** Implies three separate domains; admin actually shares `organiser.startlineau.com` as a path prefix.
+
 ## Idempotency
 
 - Prisma client singleton in `lib/prisma.ts`.
 - Stripe payment intents: `stripePaymentIntentId` unique on `Registration`.
 - Resend email sends: use idempotency keys.
+
+<!-- OPENWIKI:START -->
+
+## OpenWiki
+
+This repository uses OpenWiki for recurring code documentation. Start with `openwiki/quickstart.md`, then follow its links to architecture, workflows, domain concepts, operations, integrations, testing guidance, and source maps.
+
+The scheduled OpenWiki GitHub Actions workflow refreshes the repository wiki. Do not hand-edit generated OpenWiki pages unless explicitly asked; prefer updating source code/docs and letting OpenWiki regenerate.
+
+<!-- OPENWIKI:END -->

@@ -28,6 +28,12 @@ variable "auto_build_enabled" {
   type        = bool
 }
 
+variable "enable_pull_request_preview" {
+  description = "Enable PR preview deployments for this branch."
+  type        = bool
+  default     = false
+}
+
 variable "extra_branch_environment_variables" {
   description = "Extra env vars to set on the Amplify branch in addition to DATABASE_URL."
   type        = map(string)

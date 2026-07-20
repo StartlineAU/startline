@@ -7,8 +7,13 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 1,
-  workers: process.env.CI ? 2 : 4,
-  reporter: process.env.CI ? [["dot"]] : [["dot"], ["@argos-ci/playwright/reporter", {}]],
+  workers: process.env.CI ? 2 : undefined,
+  reporter: process.env.CI
+    ? [
+        ["list"],
+        ["@argos-ci/playwright/reporter", {}],
+      ]
+    : [["list"]],
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",

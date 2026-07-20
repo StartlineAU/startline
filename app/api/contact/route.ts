@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   try {
     await resend.emails.send({
-      from: "StartLine Contact <events@startlineau.com>",
+      from: "Startline Contact <events@startlineau.com>",
       to: ADMIN_EMAIL,
       replyTo: email,
       subject: `[Contact] ${subject}`,
