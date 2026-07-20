@@ -69,10 +69,19 @@ test.describe("stripe webhook", () => {
 });
 
 test.describe("profile API", () => {
-  test("GET /api/organiser/profile returns 401 without auth", async ({ request }) => {
+  // With Cognito credentials the bypass is inactive → unauthenticated = 401.
+  // Without Cognito the dev bypass is active → returns seed data.
+  test("GET /api/organiser/profile", async ({ request }) => {
     const res = await request.get("/api/organiser/profile");
-    expect(res.status()).toBe(401);
-    const body = await res.json();
-    expect(body.error).toContain("Unauthorised");
+    const hasCognito = !!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+    if (hasCognito) {
+      expect(res.status()).toBe(401);
+      const body = await res.json();
+      expect(body.error).toContain("Unauthorised");
+    } else {
+      expect(res.status()).toBe(200);
+      const body = await res.json();
+      expect(body).toHaveProperty("orgName");
+    }
   });
 });

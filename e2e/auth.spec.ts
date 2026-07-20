@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { argosScreenshot } from "@argos-ci/playwright";
 import { goToHomepage } from "./helpers";
 
+const hasCognito = !!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+
 async function openSignInModal(page: import("@playwright/test").Page) {
   await goToHomepage(page);
   await page.getByRole("button", { name: "SIGN IN" }).click();
@@ -16,6 +18,7 @@ test.describe("auth modal — sign in", () => {
   });
 
   test("unknown email never dead-ends: 'no account found' or password fallback", async ({ page }) => {
+    if (!hasCognito) test.skip();
     await openSignInModal(page);
     await page.getByPlaceholder("you@example.com").fill(`nobody.${Date.now()}@example.com`);
     await page.getByRole("button", { name: "Continue", exact: true }).click();
@@ -90,6 +93,7 @@ test.describe("auth modal — sign up", () => {
   });
 
   test("completing signup lands on the verify-email page, not a 404", async ({ page }) => {
+    if (!hasCognito) test.skip();
     const email = `ux.e2e.${Date.now()}@example.com`;
 
     await openSignInModal(page);

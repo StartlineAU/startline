@@ -72,3 +72,4 @@ terraform/modules/environment/lambda/email-sender.zip
 # opencode internal state
 .opencode/
 skills-lock.json
+screenshots/
