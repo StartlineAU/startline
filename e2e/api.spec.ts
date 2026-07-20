@@ -69,19 +69,12 @@ test.describe("stripe webhook", () => {
 });
 
 test.describe("profile API", () => {
-  // With Cognito credentials the bypass is inactive → unauthenticated = 401.
-  // Without Cognito the dev bypass is active → returns seed data.
+  // Bypass is cookie-based now, not env-var-based. Without the __e2e_bypass
+  // cookie this endpoint returns 401.
   test("GET /api/organiser/profile", async ({ request }) => {
     const res = await request.get("/api/organiser/profile");
-    const hasCognito = !!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
-    if (hasCognito) {
-      expect(res.status()).toBe(401);
-      const body = await res.json();
-      expect(body.error).toContain("Unauthorised");
-    } else {
-      expect(res.status()).toBe(200);
-      const body = await res.json();
-      expect(body).toHaveProperty("orgName");
-    }
+    expect(res.status()).toBe(401);
+    const body = await res.json();
+    expect(body.error).toContain("Unauthorised");
   });
 });

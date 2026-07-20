@@ -33,13 +33,40 @@ Protected path lists defined in `middleware.ts`:
 
 Unauthenticated access to these paths redirects to `startlineau.com`.
 
+## Multi-Factor Authentication + Passkeys
+
+MFA is **optional** for all users and **required for admins** (seed sets admin MFA preference). Only TOTP authenticator app is supported (no SMS).
+
+### Auth Flow Types
+
+| Flow | Method | Second Factor |
+|---|---|---|
+| Password (`USER_SRP_AUTH`) | Email + password | TOTP (if enabled) |
+| Passkey (`USER_AUTH`) | Biometric/PIN via WebAuthn | None (first factor skips second) |
+
+Passkey sign-in passes `options: { authFlowType: "USER_AUTH", preferredChallenge: "WEB_AUTHN" }` to `signIn()`. The default `authenticationFlowType: "USER_SRP_AUTH"` in `lib/amplify-config.ts` stays unchanged — passkey overrides per-call.
+
+### Recovery Codes
+
+AES-256-GCM encrypted, stored in `User.recoveryCodes`. Managed via `lib/recovery-codes.ts` and `app/api/user/mfa/route.ts`. Users can generate/consume codes at `/settings/security`.
+
+### Terraform Configuration
+
+Environment module sets:
+- `mfa_configuration = "OPTIONAL"`
+- `software_token_mfa_configuration { enabled = true }`
+- `ALLOW_USER_AUTH` in `explicit_auth_flows`
+
 ## Auth Bypass
 
-For local development and PR previews, auth can be bypassed by setting `NEXT_PUBLIC_AUTH_BYPASS=true` or `NODE_ENV=development` without a Cognito pool ID. The bypass hard-codes a session as:
+Two independent bypass mechanisms:
 
-- sub: `dev-bypass-organiser`
-- email: `organiser@startline.test`
-- groups: `["admins"]` — grants both organiser and admin access
+### Legacy Bypass (no Cognito pool)
+When `NEXT_PUBLIC_COGNITO_USER_POOL_ID` is unset and `NODE_ENV=development`, bypass activates automatically. Hard-codes session as:
+- sub: `dev-bypass-organiser`, email: `organiser@startline.test`, groups: `["admins"]`
+
+### E2E Cookie Bypass
+For Playwright tests, a `__e2e_bypass=1` cookie provides auth-free access to protected routes. Set via `page.context().addCookies()`. Works in middleware, `getServerSession()`, and `AuthContext`. Only works in `NODE_ENV=development`. Used by `adminLogin()` and `organiserLogin()` helpers in `e2e/helpers.ts` to avoid Cognito dependency and TOTP challenges.
 
 ## Session Types
 

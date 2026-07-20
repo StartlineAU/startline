@@ -401,7 +401,11 @@ resource "aws_cognito_user_pool" "this" {
     }
   }
 
-  mfa_configuration   = "OFF"
+  mfa_configuration   = "OPTIONAL"
+
+  software_token_mfa_configuration {
+    enabled = true
+  }
   deletion_protection = var.cognito_deletion_protection ? "ACTIVE" : "INACTIVE"
 
   tags = {
@@ -417,6 +421,7 @@ resource "aws_cognito_user_pool_client" "web" {
   generate_secret = false
 
   explicit_auth_flows = [
+    "ALLOW_USER_AUTH",
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
   ]

@@ -289,7 +289,9 @@ model User {
   bio        String?
   profilePicUrl String?
   isPublic   Boolean  @default(true) // public profile visible to others
-  isBanned   Boolean  @default(false)
+  isBanned       Boolean  @default(false)
+  mfaEnabled     Boolean  @default(false)
+  recoveryCodes  String?
   city       String? // for map centering on login
   state      String? // for map centering on login
   createdAt  DateTime @default(now())

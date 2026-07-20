@@ -2,15 +2,11 @@ import { test, expect } from "@playwright/test";
 import { argosScreenshot } from "@argos-ci/playwright";
 import { organiserLogin } from "./helpers";
 
-const hasCognito = !!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 
-function guard() {
-  if (!hasCognito) test.skip();
-}
 
 test.describe("organiser login", () => {
   test("signs in via modal and redirects to dashboard", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
 
     await expect(page.locator("h1")).toContainText("Hi there");
@@ -29,7 +25,7 @@ test.describe("organiser login", () => {
 
 test.describe("new listing wizard", () => {
   test("new listing step 1 visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
     await page.waitForLoadState("networkidle");
@@ -37,7 +33,7 @@ test.describe("new listing wizard", () => {
   });
 
   test("new listing step 2 visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
     await page.waitForLoadState("networkidle");
@@ -48,7 +44,7 @@ test.describe("new listing wizard", () => {
   });
 
   test("new listing step 3 visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
     await page.waitForLoadState("networkidle");
@@ -68,7 +64,7 @@ test.describe("new listing wizard", () => {
   });
 
   test("new listing step 4 visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
     await page.waitForLoadState("networkidle");
@@ -94,7 +90,7 @@ test.describe("new listing wizard", () => {
   });
 
   test("new listing final review visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/new-listing");
     await page.waitForLoadState("networkidle");
@@ -129,7 +125,7 @@ test.describe("new listing wizard", () => {
 
 test.describe("organiser dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(2000);
@@ -137,7 +133,7 @@ test.describe("organiser dashboard", () => {
   });
 
   test("dashboard shows stats and events after login", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
 
     await expect(page.locator("h1")).toContainText("Hi there");
@@ -148,7 +144,7 @@ test.describe("organiser dashboard", () => {
   });
 
   test("dashboard has view my events button", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
 
     await expect(page.getByRole("link", { name: /view my events/i })).toBeVisible();
@@ -163,7 +159,7 @@ test.describe("organiser pages", () => {
   });
 
   test("organiser listings page visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/listings");
     await page.waitForLoadState("networkidle");
@@ -171,7 +167,7 @@ test.describe("organiser pages", () => {
   });
 
   test("organiser event dashboard visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/events/seed-event-001/dashboard");
     await page.waitForLoadState("networkidle");
@@ -179,7 +175,7 @@ test.describe("organiser pages", () => {
   });
 
   test("organiser payments page visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/payments");
     await page.waitForLoadState("networkidle");
@@ -187,7 +183,7 @@ test.describe("organiser pages", () => {
   });
 
   test("organiser how it works page visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/how-it-works");
     await page.waitForLoadState("networkidle");
@@ -195,7 +191,7 @@ test.describe("organiser pages", () => {
   });
 
   test("organiser profile page visual snapshot", async ({ page }) => {
-    guard();
+
     await organiserLogin(page);
     await page.goto("/organiser/profile");
     await page.waitForLoadState("networkidle");

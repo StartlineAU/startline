@@ -68,6 +68,11 @@ const isBypass = noCognito && (process.env.NODE_ENV === "development" ||
 export async function middleware(req: NextRequest) {
   if (isBypass) return NextResponse.next();
 
+  if (process.env.NODE_ENV === "development") {
+    const bypass = req.cookies.get("__e2e_bypass")?.value;
+    if (bypass === "1") return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
   const host = req.headers.get("host") ?? "";
 

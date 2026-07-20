@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, ChevronDown, Check, AtSign, ShieldAlert } from "lucide-react";
+import { X, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, User, Phone, ChevronDown, Check, AtSign, ShieldAlert, Fingerprint } from "lucide-react";
 import { signIn, signUp, signOut, resetPassword, confirmResetPassword, confirmSignIn } from "aws-amplify/auth";
 import { useAuthContext } from "@/context/AuthContext";
 import { validateUsername } from "@/lib/username-validation";
 
-type View = "signin" | "signup" | "onboarding" | "username";
+type View = "signin" | "signup" | "onboarding" | "username" | "mfa";
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -24,6 +24,14 @@ function calcAge(dobStr: string): number {
   const m = today.getMonth() - dob.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
   return age;
+}
+
+function totpUri(details: unknown): string | null {
+  if (!details || typeof details !== "object") return null;
+  const fn = (details as Record<string, unknown>).getSetupUri;
+  if (typeof fn !== "function") return null;
+  const uri = fn("Startline");
+  return uri && typeof uri.toString === "function" ? uri.toString() : null;
 }
 
 export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalProps) {
@@ -61,6 +69,9 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
   const [newPwStep,       setNewPwStep]       = useState<"initial" | "sent" | "done">("initial");
   // When signIn returned CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED
   const [challengeFlow,   setChallengeFlow]   = useState(false);
+  const [mfaStep,         setMfaStep]         = useState<"none" | "select" | "setup" | "challenge">("none");
+  const [totpCode,        setTotpCode]        = useState("");
+  const [totpSetupUri,    setTotpSetupUri]    = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,6 +96,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       setCheckingEmail(false); setUserExists(null); setUserStatus(null);
       setResetCode(""); setNewPassword(""); setNewPwConfirm("");
       setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+      setMfaStep("none"); setTotpCode(""); setTotpSetupUri(null);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
     return () => { document.body.style.overflow = ""; };
@@ -165,6 +177,16 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       if (result.nextStep.signInStep === "RESET_PASSWORD") {
         onClose(); router.push("/auth/forgot-password?email=" + encodeURIComponent(email)); return;
       }
+      if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_TOTP_CODE") {
+        setView("mfa"); setMfaStep("challenge"); return;
+      }
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_TOTP_SETUP") {
+        setTotpSetupUri(totpUri(result.nextStep.totpSetupDetails));
+        setView("mfa"); setMfaStep("setup"); return;
+      }
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_MFA_SELECTION") {
+        setView("mfa"); setMfaStep("select"); return;
+      }
       if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED") {
         setPassword("");
         setNewPassword("");
@@ -210,6 +232,116 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
       } else {
         setError(msg || "Something went wrong. Please try again.");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Passkey sign-in ─────────────────────────────────────────────────────────
+  const handlePasskeySignIn = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signOut({ global: false }).catch(() => {});
+      const result = await signIn({
+        username: email,
+        options: { authFlowType: "USER_AUTH", preferredChallenge: "WEB_AUTHN" },
+      });
+
+      if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_TOTP_CODE") {
+        setView("mfa"); setMfaStep("challenge"); return;
+      }
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_TOTP_SETUP") {
+        setTotpSetupUri(totpUri(result.nextStep.totpSetupDetails));
+        setView("mfa"); setMfaStep("setup"); return;
+      }
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_MFA_SELECTION") {
+        setView("mfa"); setMfaStep("select"); return;
+      }
+      if (result.nextStep.signInStep !== "DONE") {
+        setError("Additional verification required. Please contact support."); return;
+      }
+
+      await fetch("/api/user/auth/session", { method: "POST" });
+      await refresh();
+      onSuccess?.();
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Passkey sign-in failed. Try using your password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── MFA confirm ──────────────────────────────────────────────────────────────
+  const handleMfaConfirm = async () => {
+    setError("");
+    if (totpCode.length < 6) { setError("Please enter the full code."); return; }
+    setLoading(true);
+    try {
+      const result = await confirmSignIn({ challengeResponse: totpCode });
+      if (result.nextStep.signInStep === "DONE") {
+        await fetch("/api/user/auth/session", { method: "POST" });
+        await refresh();
+        onSuccess?.();
+        onClose();
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Invalid code. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── MFA setup confirm ──────────────────────────────────────────────────────
+  const handleMfaSetupConfirm = async () => {
+    setError("");
+    if (totpCode.length < 6) { setError("Please enter the full code."); return; }
+    setLoading(true);
+    try {
+      const result = await confirmSignIn({ challengeResponse: totpCode });
+      if (result.nextStep.signInStep === "DONE") {
+        await fetch("/api/user/auth/session", { method: "POST" });
+        await refresh();
+        onSuccess?.();
+        onClose();
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Invalid code. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Handle MFA selection ───────────────────────────────────────────────────
+  const handleMfaSelect = async (type: string) => {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await confirmSignIn({ challengeResponse: type });
+      if (result.nextStep.signInStep === "CONTINUE_SIGN_IN_WITH_TOTP_SETUP") {
+        setTotpSetupUri(totpUri(result.nextStep.totpSetupDetails));
+        setMfaStep("setup");
+      } else if (result.nextStep.signInStep === "CONFIRM_SIGN_IN_WITH_TOTP_CODE") {
+        setMfaStep("challenge");
+      } else if (result.nextStep.signInStep === "DONE") {
+        await fetch("/api/user/auth/session", { method: "POST" });
+        await refresh();
+        onSuccess?.();
+        onClose();
+      } else {
+        setError("Something went wrong. Try again.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Failed to select MFA method.");
     } finally {
       setLoading(false);
     }
@@ -410,6 +542,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setCheckingEmail(false); setUserExists(null); setUserStatus(null);
     setResetCode(""); setNewPassword(""); setNewPwConfirm("");
     setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+    setMfaStep("none"); setTotpCode(""); setTotpSetupUri(null);
   };
 
   const goBackToEmail = () => {
@@ -419,6 +552,7 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
     setError("");
     setResetCode(""); setNewPassword(""); setNewPwConfirm("");
     setResetSent(false); setNewPwStep("initial"); setChallengeFlow(false);
+    setView("signin"); setMfaStep("none"); setTotpCode(""); setTotpSetupUri(null);
   };
 
   const dobDayRef   = useRef<HTMLInputElement>(null);
@@ -503,6 +637,19 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                 )}
               </button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-dark-lighter" /></div>
+              <div className="relative flex justify-center"><span className="bg-dark-darker px-3 font-headline text-[10px] uppercase tracking-widest text-muted-dark">— or —</span></div>
+            </div>
+
+            <button
+              onClick={() => { setEmail(""); handlePasskeySignIn(); }}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-md border border-dark-lighter font-headline text-[12px] font-bold uppercase tracking-widest text-muted hover:text-primary hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Fingerprint className="w-4 h-4" /> Sign in with Passkey
+            </button>
           </>
         )}
 
@@ -742,6 +889,94 @@ export default function SignInModal({ isOpen, onClose, onSuccess }: SignInModalP
                 {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Updating…</> : <>Set password <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
+          </>
+        )}
+
+        {/* ── MFA ── */}
+        {view === "mfa" && (
+          <>
+            <div className="mb-6">
+              <span className="font-headline text-[11px] font-medium uppercase tracking-[0.25em] text-primary block mb-2">Two-Factor Authentication</span>
+              <h2 className="font-headline text-4xl font-black italic tracking-tighter leading-[0.9] mb-2">
+                {mfaStep === "select" ? "Choose your<br /><span className='text-primary'>method.</span>" :
+                 mfaStep === "setup"  ? "Set up<br /><span className='text-primary'>MFA.</span>" :
+                                        "Enter your<br /><span className='text-primary'>code.</span>"}
+              </h2>
+              <p className="text-muted text-[14px] leading-relaxed">
+                {mfaStep === "select" && "Select how you'd like to verify your identity."}
+                {mfaStep === "setup"  && "Scan the QR code with your authenticator app, then enter the code shown."}
+                {mfaStep === "challenge" && "Enter the 6-digit code from your authenticator app."}
+              </p>
+            </div>
+
+            {error && <div className={errCls}>{error}</div>}
+
+            {mfaStep === "select" && (
+              <div className="space-y-3">
+                <button onClick={() => handleMfaSelect("TOTP")} disabled={loading} className={btnCls}>
+                  <ShieldAlert className="w-4 h-4" /> Authenticator App
+                </button>
+              </div>
+            )}
+
+            {mfaStep === "setup" && totpSetupUri && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpSetupUri)}`}
+                    alt="TOTP QR Code"
+                    className="w-48 h-48 rounded-lg"
+                  />
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); handleMfaSetupConfirm(); }} className="space-y-3">
+                  <div>
+                    <label htmlFor="mfa-setup-code" className={labelCls}>Verification Code</label>
+                    <div className="relative">
+                      <ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                      <input
+                        id="mfa-setup-code"
+                        type="text"
+                        inputMode="numeric"
+                        required
+                        value={totpCode}
+                        onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="000000"
+                        className={inputCls + " tracking-[0.5em] text-center font-bold"}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={loading || totpCode.length < 6} className={btnCls}>
+                    {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Verifying…</> : <>Verify & sign in <ArrowRight className="w-4 h-4" /></>}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {mfaStep === "challenge" && (
+              <form onSubmit={(e) => { e.preventDefault(); handleMfaConfirm(); }} className="space-y-4">
+                <div>
+                  <label htmlFor="mfa-challenge-code" className={labelCls}>Authentication Code</label>
+                  <div className="relative">
+                    <ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                    <input
+                      id="mfa-challenge-code"
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="000000"
+                      className={inputCls + " tracking-[0.5em] text-center font-bold"}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <button type="submit" disabled={loading || totpCode.length < 6} className={btnCls}>
+                  {loading ? <><span className="w-2 h-2 bg-dark rounded-full animate-pulse-dot" /> Verifying…</> : <>Verify & sign in <ArrowRight className="w-4 h-4" /></>}
+                </button>
+              </form>
+            )}
           </>
         )}
 
