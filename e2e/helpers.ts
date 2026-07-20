@@ -22,7 +22,7 @@ export async function selectStateFilter(page: Page, state: string): Promise<void
   }
 }
 
-export async function organiserLogin(page: Page, email = "test.organiser@startlineau.com"): Promise<void> {
+export async function organiserLogin(page: Page, email = "organiser@startline.test"): Promise<void> {
   // Sign-in is now a modal on the main site — not on /organiser
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -56,7 +56,7 @@ export async function organiserLogin(page: Page, email = "test.organiser@startli
   await page.waitForURL("**/organiser/dashboard**", { timeout: 30000 });
 }
 
-export async function adminLogin(page: Page, email = "admin@startlineau.com"): Promise<void> {
+export async function adminLogin(page: Page, email = "admin@startline.test"): Promise<void> {
   // Navigate to login page - may need retries for Turbopack cold start
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
