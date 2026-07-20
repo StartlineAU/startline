@@ -62,8 +62,7 @@ locals {
             - >
               corepack enable && pnpm install --frozen-lockfile
               && npx prisma generate
-              && export ENV=staging
-              && if [ "$AWS_BRANCH_NAME" = "main" ]; then export ENV=prod; fi
+              && [ -n "$ENV" ] || export ENV=staging
               && aws secretsmanager get-secret-value
               --secret-id startline/$ENV/app
               --query SecretString --output text
@@ -99,7 +98,7 @@ resource "aws_amplify_app" "this" {
 
   enable_auto_branch_creation = true
 
-  auto_branch_creation_patterns = ["main"]
+  auto_branch_creation_patterns = ["main", "prod"]
 
   auto_branch_creation_config {
     enable_pull_request_preview = true
@@ -131,7 +130,7 @@ resource "null_resource" "enable_pr_previews" {
 locals {
   environments = {
     prod = {
-      branch_name                  = "main"
+      branch_name                  = "prod"
       amplify_stage                = "PRODUCTION"
       auto_build_enabled           = false
       enable_pull_request_preview  = true
@@ -145,7 +144,7 @@ locals {
       enable_daily_stop            = false
     }
     staging = {
-      branch_name                  = "staging"
+      branch_name                  = "main"
       amplify_stage                = "BETA"
       auto_build_enabled           = true
       enable_pull_request_preview  = true
@@ -198,7 +197,11 @@ module "env" {
   cognito_deletion_protection = each.value.cognito_deletion_protection
 
   resend_api_key = local.bootstrap.resend_api_key
-  site_url       = each.key == "prod" ? each.value.site_url : "https://${each.value.branch_name}.${aws_amplify_app.this.default_domain}"
+  site_url       = each.value.site_url
+
+  extra_branch_environment_variables = {
+    ENV = each.key == "prod" ? "prod" : "staging"
+  }
 
   bucket_cors_allowed_origins = each.value.bucket_cors_allowed_origins
 

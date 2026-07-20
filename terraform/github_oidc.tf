@@ -36,6 +36,7 @@ data "aws_iam_policy_document" "terraform_ci_assume" {
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_repository}:*:refs/heads/main",
+        "repo:${var.github_repository}:*:refs/heads/prod",
       ]
     }
   }

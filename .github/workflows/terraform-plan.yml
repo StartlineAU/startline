@@ -2,7 +2,7 @@ name: Terraform plan
 
 on:
   pull_request:
-    branches: [main, staging]
+    branches: [main, prod]
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-*.yml'
@@ -65,7 +65,7 @@ jobs:
         run: |
           terraform init -input=false
           terraform validate -no-tests
-          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false -var="target_environment=${{ github.base_ref == 'main' && 'all' || 'staging' }}" 2>&1 | tee /tmp/plan-output.txt || true
+          terraform plan -out=/tmp/pr.tfplan -no-color -lock=false -input=false -var="target_environment=${{ github.base_ref == 'main' && 'all' || 'prod' }}" 2>&1 | tee /tmp/plan-output.txt || true
 
       - name: Generate Infracost diff
         shell: bash
