@@ -2,8 +2,15 @@ import { test, expect } from "@playwright/test";
 import { argosScreenshot } from "@argos-ci/playwright";
 import { adminLogin } from "./helpers";
 
+const hasCognito = !!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+
+function guard() {
+  if (!hasCognito) test.skip();
+}
+
 test.describe("admin login", () => {
   test("dev bypass login redirects to dashboard", async ({ page }) => {
+    guard();
     await page.goto("/admin/login");
     await page.waitForLoadState("networkidle");
 
@@ -30,12 +37,14 @@ test.describe("admin login", () => {
 
 test.describe("admin dashboard", () => {
   test("dashboard visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.waitForLoadState("networkidle");
     await argosScreenshot(page, "admin-dashboard");
   });
 
   test("dashboard shows stats cards after login", async ({ page }) => {
+    guard();
     await adminLogin(page);
 
     await expect(page.getByText("Pending review")).toBeVisible();
@@ -47,6 +56,7 @@ test.describe("admin dashboard", () => {
   });
 
   test("dashboard has quick action links", async ({ page }) => {
+    guard();
     await adminLogin(page);
 
     await expect(page.getByText("Review pending events")).toBeVisible();
@@ -56,6 +66,7 @@ test.describe("admin dashboard", () => {
   });
 
   test("review queue CTA links to pending events", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.waitForLoadState("networkidle");
 
@@ -68,6 +79,7 @@ test.describe("admin dashboard", () => {
   });
 
   test("pending stats card links to pending events page", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.waitForLoadState("networkidle");
 
@@ -82,6 +94,7 @@ test.describe("admin dashboard", () => {
 
 test.describe("admin events page", () => {
   test("admin events page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -90,6 +103,7 @@ test.describe("admin events page", () => {
   });
 
   test("events page renders with tabs", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events");
     await page.waitForLoadState("networkidle");
@@ -101,6 +115,7 @@ test.describe("admin events page", () => {
   });
 
   test("admin approved events visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=APPROVED");
     await page.waitForLoadState("networkidle");
@@ -109,6 +124,7 @@ test.describe("admin events page", () => {
   });
 
   test("admin rejected events visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=REJECTED");
     await page.waitForLoadState("networkidle");
@@ -116,6 +132,7 @@ test.describe("admin events page", () => {
   });
 
   test("pending tab shows pending events after seed", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -127,6 +144,7 @@ test.describe("admin events page", () => {
   });
 
   test("rejected tab shows rejected events with reason", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=REJECTED");
     await page.waitForLoadState("networkidle");
@@ -136,6 +154,7 @@ test.describe("admin events page", () => {
   });
 
   test("pagination controls appear when count label is visible", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -145,6 +164,7 @@ test.describe("admin events page", () => {
   });
 
   test("can switch between tabs", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -162,6 +182,7 @@ test.describe("admin events page", () => {
 
 test.describe("admin event approval flow", () => {
   test("approve button is visible on pending events", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -172,6 +193,7 @@ test.describe("admin event approval flow", () => {
   });
 
   test("reject button shows rejection form", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -183,6 +205,7 @@ test.describe("admin event approval flow", () => {
   });
 
   test("can approve a pending event and it disappears from list", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/events?status=PENDING");
     await page.waitForLoadState("networkidle");
@@ -202,6 +225,7 @@ test.describe("admin event approval flow", () => {
 
 test.describe("admin organisers page", () => {
   test("organisers page lists accounts", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/organisers");
     await page.waitForLoadState("networkidle");
@@ -210,6 +234,7 @@ test.describe("admin organisers page", () => {
   });
 
   test("organisers page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/organisers");
     await page.waitForLoadState("networkidle");
@@ -219,6 +244,7 @@ test.describe("admin organisers page", () => {
 
 test.describe("admin registrations page", () => {
   test("registrations page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/registrations");
     await page.waitForLoadState("networkidle");
@@ -228,6 +254,7 @@ test.describe("admin registrations page", () => {
 
 test.describe("admin reviews page", () => {
   test("reviews page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/reviews");
     await page.waitForLoadState("networkidle");
@@ -237,6 +264,7 @@ test.describe("admin reviews page", () => {
 
 test.describe("admin users page", () => {
   test("users page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/users");
     await page.waitForLoadState("networkidle");
@@ -246,6 +274,7 @@ test.describe("admin users page", () => {
 
 test.describe("admin analytics page", () => {
   test("analytics page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/analytics");
     await page.waitForLoadState("networkidle");
@@ -255,6 +284,7 @@ test.describe("admin analytics page", () => {
 
 test.describe("admin audit log page", () => {
   test("audit log page visual snapshot", async ({ page }) => {
+    guard();
     await adminLogin(page);
     await page.goto("/admin/audit");
     await page.waitForLoadState("networkidle");
