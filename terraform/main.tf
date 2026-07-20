@@ -129,7 +129,7 @@ locals {
       database_skip_final_snapshot = false
       database_deletion_protection = true
       cognito_deletion_protection  = true
-      bucket_cors_allowed_origins  = ["https://startlineau.com", "https://organiser.startlineau.com"]
+      bucket_cors_allowed_origins  = ["https://startlineau.com", "https://organiser.startlineau.com", "https://admin.startlineau.com"]
       site_url                     = "https://startlineau.com"
       enable_daily_stop            = false
     }
@@ -222,5 +222,10 @@ resource "aws_amplify_domain_association" "this" {
   sub_domain {
     branch_name = module.env["prod"].branch_name
     prefix      = "organiser"
+  }
+
+  sub_domain {
+    branch_name = module.env["prod"].branch_name
+    prefix      = "admin"
   }
 }

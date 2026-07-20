@@ -31,6 +31,7 @@ const ADMIN_PROTECTED = [
 
 const USER_DOMAIN = "startlineau.com";
 const ORGANISER_DOMAIN = "organiser.startlineau.com";
+const ADMIN_DOMAIN = "admin.startlineau.com";
 
 async function getVerifiedPayload(req: NextRequest): Promise<JWTPayload | null> {
   const lastAuthUser = req.cookies.get(
@@ -81,23 +82,26 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    if (ADMIN_PROTECTED.some((p) => pathname.startsWith(p))) {
-      const payload = await getVerifiedPayload(req);
-      if (!payload || !isAdmin(payload)) {
-        return NextResponse.redirect(new URL("/admin/login", req.url));
-      }
-      return NextResponse.next();
-    }
-
     if (
       !pathname.startsWith("/organiser") &&
-      !pathname.startsWith("/admin") &&
       !pathname.startsWith("/_next") &&
       !pathname.startsWith("/api") &&
       !pathname.startsWith("/images") &&
       !pathname.startsWith("/favicon")
     ) {
       return NextResponse.redirect(new URL("https://startlineau.com"));
+    }
+
+    return NextResponse.next();
+  }
+
+  if (host === ADMIN_DOMAIN) {
+    if (ADMIN_PROTECTED.some((p) => pathname.startsWith(p))) {
+      const payload = await getVerifiedPayload(req);
+      if (!payload || !isAdmin(payload)) {
+        return NextResponse.redirect(new URL("/admin/login", req.url));
+      }
+      return NextResponse.next();
     }
 
     return NextResponse.next();

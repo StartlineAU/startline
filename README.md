@@ -21,7 +21,7 @@ Startline helps performance-driven fitness individuals discover competitive even
 Three portals, domain-routed in production:
 - **startlineau.com** — public event browsing
 - **organiser.startlineau.com** — event management
-- **Admin** — approval workflow, organiser management
+- **admin.startlineau.com** — approval workflow, organiser management
 
 ## Getting Started
 
