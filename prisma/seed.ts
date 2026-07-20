@@ -293,7 +293,7 @@ async function main() {
   const event2 = await prisma.event.upsert({
     where: { id: "seed-event-002" }, update: {},
     create: {
-      id: "seed-event-002", organiserId: org.id, status: "PENDING",
+      id: "seed-event-002", organiserId: org.id, status: "PENDING", photos: [],
       title: "Hybrid Hustle Series — Round 3", discipline: "hybrid",
       tagline: "Run. Lift. Repeat.",
       description: "Trail running, loaded carries, obstacle crawls, and a surprise finale.",
@@ -310,7 +310,7 @@ async function main() {
   const event3 = await prisma.event.upsert({
     where: { id: "seed-event-003" }, update: {},
     create: {
-      id: "seed-event-003", organiserId: org.id, status: "DRAFT",
+      id: "seed-event-003", organiserId: org.id, status: "DRAFT", photos: [],
       title: "Team Throwdown Summer Series", discipline: "functional_fitness",
       tagline: "", description: "Draft — details TBC",
       eventDate: "2026-12-05", startTime: "09:00", endTime: "15:00",
@@ -322,7 +322,7 @@ async function main() {
   const event4 = await prisma.event.upsert({
     where: { id: "seed-event-004" }, update: {},
     create: {
-      id: "seed-event-004", organiserId: org.id, status: "REJECTED",
+      id: "seed-event-004", organiserId: org.id, status: "REJECTED", photos: [],
       title: "Autumn Run Festival", discipline: "running",
       tagline: "5K, 10K through the Yarra Valley",
       description: "A scenic trail run through the Yarra Valley vineyards.",
@@ -368,7 +368,7 @@ async function main() {
   for (const e of seedEvents) {
     await prisma.event.upsert({
       where: { id: e.id }, update: {},
-      create: { id: e.id, organiserId: org.id, status: e.status, title: e.title, discipline: e.discipline,
+      create: { id: e.id, organiserId: org.id, status: e.status, title: e.title, discipline: e.discipline, photos: [],
         tagline: e.tagline, description: e.description, eventDate: e.eventDate, startTime: e.startTime, endTime: e.endTime,
         venue: e.venue, city: e.city, state: e.state, format: e.format, level: e.level, categories: e.categories,
         cap: e.cap, waves: e.waves, registrationType: "startline", feeStructure: "athlete" },
