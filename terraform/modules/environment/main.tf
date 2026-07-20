@@ -449,7 +449,7 @@ resource "aws_amplify_branch" "this" {
   stage       = var.amplify_stage
 
   enable_auto_build           = var.auto_build_enabled
-  enable_pull_request_preview  = var.enable_pull_request_preview
+  enable_pull_request_preview = var.enable_pull_request_preview
 
   environment_variables = merge(
     {

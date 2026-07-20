@@ -77,15 +77,16 @@ All worktrees under `~/.herdr/worktrees/startline/`. Docker infra (PostgreSQL, M
 
 Infra in `terraform/`:
 
+
 Terraform uses a unified state with a `target_environment` variable (`all`/`prod`/`staging`) to scope applies:
-- **Push to `staging`** → `terraform apply -var=target_environment=staging` (staging resources only)
 - **Push to `main`** → `terraform apply -var=target_environment=all` (both environments)
+- **Push to `prod`** → `terraform apply -var=target_environment=prod` (prod resources only) — although prod is protected, so this is via PR merge
 - **PRs** → `terraform plan` runs with the scope matching the base branch
 
 | Workflow | Trigger | Scope |
 |---|---|---|
-| `terraform-plan.yml` | PR to `main` or `staging` | Plan matching base branch |
-| `terraform-apply.yml` | Push to `main` or `staging` | `all` on main, `staging` on staging |
+| `terraform-plan.yml` | PR to `main` or `prod` | Plan matching base branch |
+| `terraform-apply.yml` | Push to `main` or `prod` | `all` on main, `prod` on prod |
 
 `ci.yml` runs lint, typecheck, build, test, e2e on PRs (non-blocking, informational).
 
@@ -97,15 +98,16 @@ Amplify build spec fetches from SM at build time — individual key rotations do
 
 Two environments managed by Terraform (`main.tf` → `local.environments`). PR previews enabled on both branches:
 
-| Environment | Branch | Amplify stage | Auto-build | PR previews | DB behavior |
-|---|---|---|---|---|---|
-| `prod` | `main` | PRODUCTION | No (GH Actions triggers) | Yes | Migrate, no seed |
-| `staging` | `staging` | BETA | Yes | Yes | Migrate + seed |
-| PR previews | feature branches | — | — | Yes | Uses staging DB, no migrate/seed, auth bypass |
+| Environment | Branch | Build behavior |
+|---|---|---|
+| `prod` | `prod` | Migrate, no seed |
+| `staging` | `main` | Migrate + seed |
+| PR to `main` | preview | Staging resources, auth bypass |
+| PR to `prod` | preview | Prod resources, auth bypass |
 
-The build spec (`local.build_spec`) selects the SM secret based on `AWS_BRANCH_NAME`:
-- `main` → `startline/prod/app`
-- everything else → `startline/staging/app`
+The `ENV` env var is set per Amplify branch (`prod` → `prod`, `main` → `staging`). PR previews inherit the target branch's `ENV` value. The build spec uses `$ENV` to select the Secrets Manager secret (`startline/$ENV/app`).
+
+The `ENV` env var is set per Amplify branch (`prod` → `prod`, `main` → `staging`). PR previews inherit the target branch's `ENV` value. The build spec uses `$ENV` to select the Secrets Manager secret (`startline/$ENV/app`).
 
 ## Design system
 
@@ -160,7 +162,7 @@ Use `-s=<name>` for isolated sessions (e.g., `-s=customer`, `-s=organiser`). Pas
 
 Use `gh` CLI — the MCP `server-github` fails for this private org repo.
 
-**`main` is protected.** Never push directly — always use a PR.
+**`main` and `prod` are protected.** Never push directly — always use a PR.
 
 ### Pre-commit gate
 
