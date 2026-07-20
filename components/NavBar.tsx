@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  User, LogOut, Building2, ShieldCheck, Plus, Settings, Bell,
+  User, LogOut, Building2, ShieldCheck, Shield, Plus, Settings, Bell,
   CheckCircle2, XCircle, Menu, X, LayoutDashboard, CalendarDays,
   CreditCard, BookOpen, ArrowLeft, ChevronDown, Users, Star,
   UserCircle, ClipboardList, BarChart2, ScrollText,
@@ -345,6 +345,13 @@ export default function NavBar() {
                       </Link>
                     )}
 
+                    {role !== "admin" && (
+                      <Link href="/settings/security" onClick={() => setIsUserOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                        <Shield className="w-4 h-4" /> Security
+                      </Link>
+                    )}
+
                     {role === "organiser" && (
                       <>
                         <Link href="/organiser/new-listing" onClick={() => setIsUserOpen(false)}
@@ -421,6 +428,13 @@ export default function NavBar() {
                     <Plus className="w-4 h-4" /> Post an Event
                   </Link>
                 </>
+              )}
+
+              {status === "authenticated" && role !== "admin" && (
+                <Link href="/settings/security" onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg font-headline text-[13px] font-bold uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                  <Shield className="w-4 h-4" /> Security
+                </Link>
               )}
 
               <div className="border-t border-white/10 mt-1.5 pt-3 pb-2">
