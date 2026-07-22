@@ -109,9 +109,8 @@ export default function Footer() {
                   </Link>
                 ))}
               </div>
+              </div>
             </div>
-
-
 
             <div>
               <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
