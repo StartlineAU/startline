@@ -56,6 +56,7 @@ export default function Footer() {
                 {[
                   { href: "/contact", label: "Contact" },
                   { href: "/organiser-setup", label: "Become an Organiser" },
+                  { href: "/organiser", label: "Organiser Login" },
                 ].map((link) => (
                   <Link
                     key={link.href}
@@ -88,6 +89,7 @@ export default function Footer() {
               </h4>
               <div className="space-y-2">
                 {[
+                  { href: "/faq", label: "FAQ" },
                   { href: "/feedback", label: "Feedback" },
                 ].map((link) => (
                   <Link
@@ -109,10 +111,47 @@ export default function Footer() {
                 href="https://www.instagram.com/startlineau/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors"
+                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
               >
                 Instagram
               </a>
+              <a
+                href="https://www.facebook.com/startlineau"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+              >
+                Facebook
+              </a>
+              <a
+                href="https://www.strava.com/clubs/startlineau"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+              >
+                Strava
+              </a>
+            </div>
+
+            <div>
+              <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
+                Legal
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { href: "/privacy", label: "Privacy Policy" },
+                  { href: "/terms", label: "Terms of Service" },
+                  { href: "/cookies", label: "Cookie Policy" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>
