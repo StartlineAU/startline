@@ -80,6 +80,14 @@ export default function Footer() {
                 >
                   About
                 </Link>
+                <a
+                  href="https://www.instagram.com/startlineau/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
+                >
+                  Instagram
+                </a>
               </div>
             </div>
 
@@ -103,35 +111,7 @@ export default function Footer() {
               </div>
             </div>
 
-            <div>
-              <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
-                Follow
-              </h4>
-              <a
-                href="https://www.instagram.com/startlineau/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
-              >
-                Instagram
-              </a>
-              <a
-                href="https://www.facebook.com/startlineau"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
-              >
-                Facebook
-              </a>
-              <a
-                href="https://www.strava.com/clubs/startlineau"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block font-headline text-xs font-medium uppercase tracking-widest text-muted hover:text-primary transition-colors py-0.5"
-              >
-                Strava
-              </a>
-            </div>
+
 
             <div>
               <h4 className="font-headline text-[10px] font-medium uppercase tracking-widest text-muted mb-3">
