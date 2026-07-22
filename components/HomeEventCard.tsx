@@ -15,13 +15,16 @@ export default function HomeEventCard({ event, className }: { event: UserEvent; 
   return (
     <Link
       href={`/events/${event.id}`}
-      className={cn("group", className ?? "flex-shrink-0 w-[280px] sm:w-[340px]")}
+      className={cn(
+        "group flex flex-col self-stretch",
+        className ?? "flex-shrink-0 w-[280px] sm:w-[340px]"
+      )}
       style={{ scrollSnapAlign: "start" }}
     >
-      <div className="h-full bg-dark border border-dark-lighter rounded-2xl group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-black/50 transition-all duration-300 transform-gpu">
+      <div className="h-full flex flex-col bg-dark border border-dark-lighter rounded-2xl group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-xl group-hover:shadow-black/50 transition-all duration-300 transform-gpu">
 
         {/* Image */}
-        <div className="relative w-full aspect-video overflow-hidden rounded-t-2xl">
+        <div className="relative w-full aspect-video overflow-hidden rounded-t-2xl shrink-0">
           <Image
             src={img}
             alt={event.title}
@@ -38,8 +41,8 @@ export default function HomeEventCard({ event, className }: { event: UserEvent; 
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4">
+        {/* Content — flex column so price anchors to the bottom across cards */}
+        <div className="p-4 flex flex-col flex-1 min-h-0">
           <span className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary block mb-1">
             {typeLabel}
           </span>
@@ -62,25 +65,27 @@ export default function HomeEventCard({ event, className }: { event: UserEvent; 
             </div>
           </div>
 
+          {organiserName && (
+            <OrganiserCardMeta
+              organiserId={event.organiserId}
+              name={organiserName}
+              rating={event.organiser?.rating}
+              nestedInLink
+              className="mb-3"
+            />
+          )}
+
           {event.description && (
             <p className="font-headline text-xs text-muted leading-relaxed line-clamp-2 mb-3">
               {stripHtml(event.description)}
             </p>
           )}
 
-          <div className="space-y-1">
-            {organiserName && (
-              <OrganiserCardMeta
-                organiserId={event.organiserId}
-                name={organiserName}
-                rating={event.organiser?.rating}
-                nestedInLink
-              />
-            )}
-            {event.fromPrice !== null && (
-              <span className="font-headline text-sm font-bold text-primary">From ${event.fromPrice}</span>
-            )}
-          </div>
+          {event.fromPrice !== null && (
+            <span className="mt-auto pt-1 font-headline text-sm font-bold text-primary">
+              From ${event.fromPrice}
+            </span>
+          )}
         </div>
       </div>
     </Link>

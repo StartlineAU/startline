@@ -25,6 +25,7 @@ interface Profile {
   orgName: string; contactName: string; phone: string; contactEmail: string;
   facebook: string; bio: string; abn: string;
   logoUrl: string; logoPosition: string; coverImageUrl: string; coverPosition: string;
+  followerCount?: number;
 }
 
 interface ReviewData {
@@ -89,6 +90,7 @@ export default function ProfilePage() {
           logoPosition:  prof.logoPosition   ?? "50% 50%",
           coverImageUrl: prof.coverImageUrl  ?? "",
           coverPosition: prof.coverPosition  ?? "50% 50%",
+          followerCount: typeof prof.followerCount === "number" ? prof.followerCount : 0,
         });
       }
       if (prof && Array.isArray(prof.photos)) setProfilePhotos(prof.photos);
@@ -238,7 +240,9 @@ export default function ProfilePage() {
               <div className="font-headline text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-dark mt-0.5">Rating</div>
             </div>
             <div className="text-center">
-              <div className="font-headline text-xl sm:text-2xl font-black italic tracking-tighter text-white">0</div>
+              <div className="font-headline text-xl sm:text-2xl font-black italic tracking-tighter text-white">
+                {loading ? "—" : (profile.followerCount ?? 0)}
+              </div>
               <div className="font-headline text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-dark mt-0.5">Followers</div>
             </div>
           </div>

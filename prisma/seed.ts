@@ -514,6 +514,25 @@ async function main() {
   }
   console.log(`  Registrations: ${regCount}`);
 
+  // ── Organiser follows ────────────────────────────────────────────────
+  const followerUserIds = [
+    userBySub[subsByEmail["user@startline.test"] ?? ""],
+    userBySub[subsByEmail["admin@startline.test"] ?? ""],
+  ].filter(Boolean) as string[];
+
+  let followCount = 0;
+  for (const userId of followerUserIds) {
+    await prisma.organiserFollow.upsert({
+      where: {
+        userId_organiserId: { userId, organiserId: org.id },
+      },
+      update: {},
+      create: { userId, organiserId: org.id },
+    });
+    followCount++;
+  }
+  console.log(`  Organiser follows: ${followCount}`);
+
   // ── Notifications ────────────────────────────────────────────────────
 
   const notifications = [

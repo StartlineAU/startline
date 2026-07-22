@@ -62,19 +62,6 @@ function InteractiveStars({ value, onChange }: { value: number; onChange: (v: nu
   );
 }
 
-function RatingBar({ label, value }: { label: string; value: number | null | undefined }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-center gap-3">
-      <span className="font-headline text-[11px] uppercase tracking-widest text-muted w-36 shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-dark-lighter rounded-full overflow-hidden">
-        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(value / 5) * 100}%` }} />
-      </div>
-      <span className="font-headline text-[11px] font-bold text-light w-6 text-right">{value.toFixed(1)}</span>
-    </div>
-  );
-}
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const days = Math.floor(diff / 86400000);
@@ -379,24 +366,19 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
     ? reviews.reduce((s, r) => s + r.overallRating, 0) / reviews.length
     : 0;
 
-  const avgComms = reviews.filter(r => r.atmosphereRating).length
-    ? reviews.filter(r => r.atmosphereRating).reduce((s, r) => s + (r.atmosphereRating ?? 0), 0) / reviews.filter(r => r.atmosphereRating).length
-    : null;
+  function avgSub(
+    pick: (r: Review) => number | null | undefined
+  ): number | null {
+    const vals = reviews.map(pick).filter((v): v is number => typeof v === "number" && v > 0);
+    if (!vals.length) return null;
+    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+  }
 
-  const avgOrg = reviews.filter(r => r.organisationRating).length
-    ? reviews.filter(r => r.organisationRating).reduce((s, r) => s + (r.organisationRating ?? 0), 0) / reviews.filter(r => r.organisationRating).length
-    : null;
-
-  const avgExp = reviews.filter(r => r.experienceRating).length
-    ? reviews.filter(r => r.experienceRating).reduce((s, r) => s + (r.experienceRating ?? 0), 0) / reviews.filter(r => r.experienceRating).length
-    : null;
-
-  // Distribution
-  const dist = [5, 4, 3, 2, 1].map(star => ({
-    star,
-    count: reviews.filter(r => Math.round(r.overallRating) === star).length,
-    pct: reviews.length ? Math.round((reviews.filter(r => Math.round(r.overallRating) === star).length / reviews.length) * 100) : 0,
-  }));
+  const metrics = [
+    { label: "Atmosphere", value: avgSub((r) => r.atmosphereRating) },
+    { label: "Organisation", value: avgSub((r) => r.organisationRating) },
+    { label: "Experience", value: avgSub((r) => r.experienceRating) },
+  ].filter((m) => m.value != null) as { label: string; value: number }[];
 
   return (
     <div id="reviews">
@@ -460,29 +442,29 @@ export default function ReviewsSection({ reviews, organiserId, loading, onNewRev
               </div>
             </div>
 
-            {/* Right: breakdown */}
-            <div className="flex flex-col justify-center gap-3">
-              {/* Star distribution */}
-              <div className="space-y-1.5">
-                {dist.map(({ star, count, pct }) => (
-                  <div key={star} className="flex items-center gap-2">
-                    <span className="font-headline text-[10px] text-muted w-4 text-right">{star}</span>
-                    <Star className="w-3 h-3 text-primary fill-primary shrink-0" />
-                    <div className="flex-1 h-2 bg-dark-lighter rounded-full overflow-hidden">
-                      <div className="h-full bg-primary/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+            {/* Right: metric averages as long bars */}
+            <div className="flex flex-col justify-center gap-4">
+              {metrics.length > 0 ? (
+                metrics.map(({ label, value }) => (
+                  <div key={label}>
+                    <div className="font-headline text-[10px] font-bold uppercase tracking-widest text-muted mb-1.5">
+                      {label}
                     </div>
-                    <span className="font-headline text-[10px] text-muted-dark w-6 text-right">{count}</span>
+                    <div className="h-2 bg-dark-lighter rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ width: `${(value / 5) * 100}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 font-headline text-[12px] font-bold text-light">
+                      {value.toFixed(1)}
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Category ratings */}
-              {(avgComms || avgOrg || avgExp) && (
-                <div className="pt-3 border-t border-dark-lighter space-y-2">
-                  <RatingBar label="Atmosphere"     value={avgComms} />
-                  <RatingBar label="Organisation"   value={avgOrg}   />
-                  <RatingBar label="Experience"     value={avgExp}   />
-                </div>
+                ))
+              ) : (
+                <p className="font-headline text-xs text-muted">
+                  No category ratings yet.
+                </p>
               )}
             </div>
           </div>

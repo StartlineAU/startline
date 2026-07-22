@@ -2,23 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { Globe, Instagram, Facebook, CalendarDays } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { getPublicOrganiser } from "@/lib/organisers";
 import { getAllEvents } from "@/lib/events";
 import { toUserEvents } from "@/lib/user-events";
 import { getUpcomingEvents } from "@/lib/utils";
 import { getPublishedOrganiserReviews, averageOverallRating } from "@/lib/reviews";
+import { getOrganiserPublicStats } from "@/lib/organiser-follows";
 import HomeEventCard from "@/components/HomeEventCard";
 import EventGallery from "@/components/EventGallery";
 import OrganiserReviewsClient from "@/components/OrganiserReviewsClient";
 import OrganiserRating from "@/components/OrganiserRating";
+import OrganiserFollowSection from "@/components/OrganiserFollowSection";
 
 export const revalidate = 60;
-
-function externalUrl(value: string, base: string): string {
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${base}${value.replace(/^@/, "")}`;
-}
 
 export default async function OrganiserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -31,12 +28,7 @@ export default async function OrganiserProfilePage({ params }: { params: Promise
   const reviews = await getPublishedOrganiserReviews(organiser.id);
   const avg = averageOverallRating(reviews);
   const rating = avg != null ? { average: avg, count: reviews.length } : null;
-
-  const links = [
-    organiser.website && { icon: Globe, label: "Website", href: externalUrl(organiser.website, "https://") },
-    organiser.instagram && { icon: Instagram, label: "Instagram", href: externalUrl(organiser.instagram, "https://instagram.com/") },
-    organiser.facebook && { icon: Facebook, label: "Facebook", href: externalUrl(organiser.facebook, "https://facebook.com/") },
-  ].filter(Boolean) as { icon: typeof Globe; label: string; href: string }[];
+  const stats = await getOrganiserPublicStats(organiser.id);
 
   return (
     <main className="min-h-screen bg-dark-darker pt-14">
@@ -79,66 +71,71 @@ export default async function OrganiserProfilePage({ params }: { params: Promise
               </div>
             )}
           </div>
-          <div className="min-w-0 pb-1">
-            <h1 className="font-headline text-3xl sm:text-4xl font-black italic tracking-tighter text-light leading-tight">
-              {name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-3 mt-1.5">
-              <p className="flex items-center gap-1.5 font-headline text-xs font-medium uppercase tracking-widest text-muted">
-                <CalendarDays className="w-3.5 h-3.5 text-primary" />
-                Organiser since {format(organiser.createdAt, "MMMM yyyy")}
-              </p>
-              <OrganiserRating rating={rating} size="md" />
+
+          <div className="flex flex-1 min-w-0 flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 pb-1">
+            <div className="min-w-0 shrink-0">
+              <h1 className="font-headline text-3xl sm:text-4xl font-black italic tracking-tighter text-light leading-tight">
+                {name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                <p className="font-headline text-xs font-medium uppercase tracking-widest text-muted">
+                  Organiser since {format(organiser.createdAt, "MMMM yyyy")}
+                </p>
+                <OrganiserRating rating={rating} size="md" />
+              </div>
             </div>
+
+            <OrganiserFollowSection
+              organiserId={organiser.id}
+              initialStats={stats}
+            />
           </div>
         </div>
 
-        {/* ── Bio + links ── */}
-        <div className="mt-6 max-w-3xl">
-          {organiser.bio && (
+        {/* ── Bio ── */}
+        {organiser.bio && (
+          <div className="mt-6 max-w-3xl">
             <p className="text-sm font-medium text-muted leading-relaxed">{organiser.bio}</p>
-          )}
-          {links.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {links.map(({ icon: Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 font-headline text-[11px] font-bold uppercase tracking-widest text-muted border border-dark-lighter hover:border-primary/40 hover:text-primary px-3.5 py-2 rounded-md transition-colors"
-                >
-                  <Icon className="w-3.5 h-3.5" /> {label}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* ── Upcoming events ── */}
+        {/* ── Upcoming events + map placeholder ── */}
         <div className="mt-10">
           <h2 className="font-headline text-xs font-medium uppercase tracking-widest text-primary mb-4">
             Upcoming Events ({upcoming.length})
           </h2>
-          {upcoming.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {upcoming.map((event) => (
-                <HomeEventCard key={event.id} event={event} className="w-full" />
-              ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+            <div>
+              {upcoming.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+                  {upcoming.map((event) => (
+                    <HomeEventCard key={event.id} event={event} className="w-full" />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-dark rounded-xl px-6 py-10 text-center">
+                  <p className="font-headline text-sm font-medium text-muted">
+                    No upcoming events right now — check back soon.
+                  </p>
+                  <Link
+                    href="/events"
+                    className="inline-block mt-3 font-headline text-xs font-bold uppercase tracking-widest text-primary hover:underline"
+                  >
+                    Browse all events
+                  </Link>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="bg-dark rounded-xl px-6 py-10 text-center">
-              <p className="font-headline text-sm font-medium text-muted">
-                No upcoming events right now — check back soon.
-              </p>
-              <Link
-                href="/events"
-                className="inline-block mt-3 font-headline text-xs font-bold uppercase tracking-widest text-primary hover:underline"
-              >
-                Browse all events
-              </Link>
+
+            <div className="lg:sticky lg:top-20 h-[320px] lg:h-[min(70vh,640px)] rounded-2xl border border-dark-lighter bg-dark overflow-hidden">
+              <div className="h-full flex flex-col items-center justify-center gap-2 px-6 text-center">
+                <MapPin className="w-6 h-6 text-primary/60" />
+                <p className="font-headline text-xs font-bold uppercase tracking-widest text-muted">
+                  Map coming soon
+                </p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ── Photos ── */}
