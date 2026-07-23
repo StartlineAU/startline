@@ -22,6 +22,8 @@ export async function getAllEvents() {
         address: true,
         city: true,
         state: true,
+        latitude: true,
+        longitude: true,
         format: true,
         level: true,
         categories: true,

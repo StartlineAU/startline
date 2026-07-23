@@ -274,6 +274,10 @@ function EventsListingInner() {
   }, [typeFilters, stateFilters, formatFilters, levelFilters, dateFilter, priceRange]);
 
   const handleSelect = useCallback((id: string) => {
+    if (!id) {
+      setSelectedId(null);
+      return;
+    }
     setSelectedId((prev) => {
       const next = prev === id ? null : id;
       if (next) {
@@ -286,12 +290,12 @@ function EventsListingInner() {
 
   const viewToggle = (
     <div className="flex items-center gap-0.5 bg-dark rounded-xl border border-dark-lighter p-0.5 flex-shrink-0">
-      <button onClick={() => setView("list")}
+      <button onClick={() => setView("list")} data-testid="view-mode-list"
         className={`flex items-center gap-1.5 px-3 h-8 lg:h-9 rounded-lg font-headline text-xs font-bold uppercase tracking-widest transition-colors duration-150 ${view === "list" ? "bg-white/10 text-light" : "text-muted hover:text-light"}`}
       >
         <LayoutGrid className="w-3.5 h-3.5" /> List
       </button>
-      <button onClick={() => { setView("map"); setMapEverViewed(true); }}
+      <button onClick={() => { setView("map"); setMapEverViewed(true); }} data-testid="view-mode-map"
         className={`flex items-center gap-1.5 px-3 h-8 lg:h-9 rounded-lg font-headline text-xs font-bold uppercase tracking-widest transition-colors duration-150 ${view === "map" ? "bg-white/10 text-light" : "text-muted hover:text-light"}`}
       >
         <MapPin className="w-3.5 h-3.5" /> Map
@@ -542,7 +546,7 @@ function EventsListingInner() {
 
   // List + map split — shown for the "Map" tab. Map mounts lazily on first
   // visit to this tab, then stays mounted (hidden via CSS) to avoid
-  // re-initialising MapLibre / re-fetching tiles on every toggle.
+  // re-initialising Mapbox / re-fetching tiles on every toggle.
   const mapContent = (
     <div className={view === "map" ? "flex flex-col lg:flex-row flex-1 min-h-0" : "hidden"}>
       <div ref={listRef} className="flex flex-col w-full lg:w-[480px] xl:w-[564px] lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-dark-lighter bg-dark-darker overflow-y-auto max-h-[38vh] lg:max-h-none px-4 py-3 lg:py-4">

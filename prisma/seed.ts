@@ -12,6 +12,12 @@ import {
   UsernameExistsException,
   UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
+import { getEventCoords } from "../lib/australia-coords";
+
+function seedCoords(city: string, state: string) {
+  const [latitude, longitude] = getEventCoords(city, state);
+  return { latitude, longitude };
+}
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -267,7 +273,7 @@ async function main() {
     ].join(""),
     eventDate: "2026-08-15", endDate: "2026-08-16", startTime: "07:30", endTime: "17:00",
     venue: "Melbourne Sports & Aquatic Centre", address: "30 Aughtie Drive, Albert Park",
-    city: "Melbourne", state: "vic", format: "both", level: "high",
+    city: "Melbourne", state: "vic", ...seedCoords("Melbourne", "vic"), format: "both", level: "high",
     categories: ["Individual Scaled", "Individual RX", "Individual Elite", "Team of 2"],
     cap: 320, minAge: 16,
     waves: [
@@ -305,7 +311,7 @@ async function main() {
       tagline: "Run. Lift. Repeat.",
       description: "Trail running, loaded carries, obstacle crawls, and a surprise finale.",
       eventDate: "2026-09-06", startTime: "08:00", endTime: "14:00",
-      venue: "Kokoda Track Memorial Walkway", city: "Scoresby", state: "vic",
+      venue: "Kokoda Track Memorial Walkway", city: "Scoresby", state: "vic", ...seedCoords("Scoresby", "vic"),
       format: "individual", level: "open", categories: ["Open Male", "Open Female", "Masters 40+"],
       cap: 150, minAge: 16, waves: [{ label: "General Entry", date: "2026-07-01", price: "75", qty: 150 }],
       inclusions: "Race entry, finisher medal, recovery snack bag", refundPolicy: "Flexible",
@@ -377,7 +383,7 @@ async function main() {
       where: { id: e.id }, update: {},
       create: { id: e.id, organiserId: org.id, status: e.status, title: e.title, discipline: e.discipline, photos: [],
         tagline: e.tagline, description: e.description, eventDate: e.eventDate, startTime: e.startTime, endTime: e.endTime,
-        venue: e.venue, city: e.city, state: e.state, format: e.format, level: e.level, categories: e.categories,
+        venue: e.venue, city: e.city, state: e.state, ...seedCoords(e.city, e.state), format: e.format, level: e.level, categories: e.categories,
         cap: e.cap, waves: e.waves, registrationType: "startline", feeStructure: "athlete" },
     });
   }

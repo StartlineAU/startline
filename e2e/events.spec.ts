@@ -28,6 +28,20 @@ test.describe("events page", () => {
     await expect(page.getByText("Event", { exact: true })).toBeVisible();
     await expect(page.getByText("Where", { exact: true })).toBeVisible();
   });
+
+  test("list/map view toggle is present", async ({ page }) => {
+    await page.goto("/events");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("view-mode-list")).toBeVisible();
+    await expect(page.getByTestId("view-mode-map")).toBeVisible();
+  });
+
+  test("switching to map mode shows map container", async ({ page }) => {
+    await page.goto("/events");
+    await page.waitForLoadState("networkidle");
+    await page.getByTestId("view-mode-map").click();
+    await expect(page.getByTestId("events-map")).toBeVisible();
+  });
 });
 
 test.describe("event detail page", () => {
