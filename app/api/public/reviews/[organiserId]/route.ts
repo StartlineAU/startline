@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getPublishedOrganiserReviews } from "@/lib/reviews";
+import { getUserSession } from "@/lib/amplify-server";
+import { displayNameFromUser, getPublishedOrganiserReviews } from "@/lib/reviews";
 
 function badRequest(msg: string) {
   return NextResponse.json({ error: msg }, { status: 400 });
@@ -35,10 +36,23 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ organiserId: string }> }
 ) {
+  const session = await getUserSession();
+  if (!session) {
+    return NextResponse.json({ error: "Sign in to write a review." }, { status: 401 });
+  }
+
   const { organiserId } = await params;
   const organiser = await assertPublicOrganiser(organiserId);
   if (!organiser) {
     return NextResponse.json({ error: "Organiser not found." }, { status: 404 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: { id: true, name: true, username: true, email: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "Sign in to write a review." }, { status: 401 });
   }
 
   let body: Record<string, unknown>;
@@ -55,11 +69,9 @@ export async function POST(
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const reviewBody = typeof body.body === "string" ? body.body.trim() : "";
-  const reviewerName = typeof body.reviewerName === "string" ? body.reviewerName.trim() : "";
 
   if (!title || title.length > 100) return badRequest("Title is required (max 100 characters).");
   if (!reviewBody || reviewBody.length > 800) return badRequest("Review body is required (max 800 characters).");
-  if (!reviewerName || reviewerName.length > 80) return badRequest("Name is required (max 80 characters).");
 
   const optionalRating = (v: unknown) => {
     if (v == null || v === "") return null;
@@ -74,25 +86,25 @@ export async function POST(
     return badRequest("Sub-ratings must be integers from 1 to 5 when provided.");
   }
 
-  const eventTitle =
-    typeof body.eventTitle === "string" && body.eventTitle.trim()
-      ? body.eventTitle.trim().slice(0, 200)
-      : null;
-
   let eventId: string | null = null;
+  let eventTitle: string | null = null;
   if (typeof body.eventId === "string" && body.eventId) {
     const event = await prisma.event.findFirst({
-      where: { id: body.eventId, organiserId },
+      where: { id: body.eventId, organiserId, status: "APPROVED" },
       select: { id: true, title: true },
     });
     if (!event) return badRequest("Event not found for this organiser.");
     eventId = event.id;
+    eventTitle = event.title;
   }
+
+  const reviewerName = displayNameFromUser(user);
 
   try {
     const created = await prisma.review.create({
       data: {
         organiserId,
+        userId: user.id,
         eventId,
         eventTitle,
         overallRating,
@@ -105,9 +117,15 @@ export async function POST(
         isVerified: false,
         isPublished: true,
       },
-      select: { id: true },
+      select: { id: true, reviewerName: true, eventId: true, eventTitle: true },
     });
-    return NextResponse.json({ id: created.id, ok: true }, { status: 201 });
+    return NextResponse.json({
+      id: created.id,
+      reviewerName: created.reviewerName,
+      eventId: created.eventId,
+      eventTitle: created.eventTitle,
+      ok: true,
+    }, { status: 201 });
   } catch (err) {
     console.error("Public review create error:", err);
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });

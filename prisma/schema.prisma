@@ -176,6 +176,8 @@ model Review {
   eventId     String?
   event       Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
   eventTitle  String?
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Ratings 1–5
   overallRating       Int
@@ -192,6 +194,8 @@ model Review {
 
   createdAt DateTime @default(now())
 
+  @@index([organiserId])
+  @@index([userId])
   @@map("reviews")
 }
 
@@ -315,6 +319,7 @@ model User {
   organiser     Organiser?
   registrations Registration[]
   follows       OrganiserFollow[]
+  reviews       Review[]
 
   @@map("users")
 }

@@ -1,13 +1,21 @@
 import prisma from "@/lib/prisma";
+import {
+  toOrganiserRating,
+  type OrganiserRating,
+} from "@/lib/review-helpers";
 
-export type OrganiserRating = {
-  average: number;
-  count: number;
-};
+export type { OrganiserRating, TopRatedEvent } from "@/lib/review-helpers";
+export {
+  averageOverallRating,
+  displayNameFromUser,
+  toOrganiserRating,
+  topRatedEventsFromReviews,
+} from "@/lib/review-helpers";
 
 export type PublicReview = {
   id: string;
   reviewerName: string;
+  eventId: string | null;
   eventTitle: string | null;
   overallRating: number;
   atmosphereRating: number | null;
@@ -18,26 +26,6 @@ export type PublicReview = {
   isVerified: boolean;
   createdAt: string;
 };
-
-/** Average overall rating rounded to 1 decimal. Returns null when empty. */
-export function averageOverallRating(
-  ratings: Array<{ overallRating: number } | number>
-): number | null {
-  if (ratings.length === 0) return null;
-  const sum = ratings.reduce((acc, r) => {
-    const n = typeof r === "number" ? r : r.overallRating;
-    return acc + n;
-  }, 0);
-  return Math.round((sum / ratings.length) * 10) / 10;
-}
-
-export function toOrganiserRating(
-  average: number | null | undefined,
-  count: number
-): OrganiserRating | null {
-  if (!count || average == null || !Number.isFinite(average)) return null;
-  return { average: Math.round(average * 10) / 10, count };
-}
 
 /** Batch organiser rating aggregates for the given IDs (published reviews only). */
 export async function getOrganiserRatings(
@@ -74,6 +62,7 @@ export async function getPublishedOrganiserReviews(
       select: {
         id: true,
         reviewerName: true,
+        eventId: true,
         eventTitle: true,
         overallRating: true,
         atmosphereRating: true,

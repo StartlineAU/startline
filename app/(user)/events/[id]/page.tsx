@@ -2,7 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Calendar, ExternalLink, Trophy, Clock, Ticket } from "lucide-react";
-import { getAllEvents } from "@/lib/events";
+import { getAllEvents, getPublicEventById } from "@/lib/events";
 import { todayIso } from "@/lib/event-types";
 import { parsePrizePool } from "@/lib/prize-pool";
 import { sanitizeHtml } from "@/lib/sanitize-html";
@@ -36,8 +36,7 @@ export async function generateStaticParams() {
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const raw = await getAllEvents();
-  const found = raw.find((e: { id: string }) => e.id === id);
+  const found = await getPublicEventById(id);
   if (!found) notFound();
 
   const event = toUserEvent(found);
